@@ -33,4 +33,10 @@ final class RainIntensityTests: XCTestCase {
         // Snow reserves paper white (spec §3); it never runs the ink.
         XCTAssertEqual(conditions(.snow, mm: 3).rainIntensity, 0)
     }
+
+    func testRecentRainUnderCloudySkyStillBleeds() {
+        // WMO "current code" can read cloudy while the last hour's mm > 0
+        // (rain just stopped). The paper is still wet — only snow suppresses.
+        XCTAssertGreaterThan(conditions(.cloudy, mm: 1.0).rainIntensity, 0)
+    }
 }

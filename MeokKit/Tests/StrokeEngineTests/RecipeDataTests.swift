@@ -4,9 +4,11 @@ import XCTest
 /// Sanity guards on authored recipe data — cheap typo insurance.
 final class RecipeDataTests: XCTestCase {
     func testCarpIsAnOrderedRecipeWithSumiEconomy() {
+        // Loose bounds — enough to catch emptied or exploded data without
+        // pinning the art (only the keeper's 5–10 is an actual spec bound).
         let strokes = Recipes.carp.strokes
-        XCTAssertGreaterThanOrEqual(strokes.count, 8)
-        XCTAssertLessThanOrEqual(strokes.count, 12)
+        XCTAssertGreaterThanOrEqual(strokes.count, 5)
+        XCTAssertLessThanOrEqual(strokes.count, 15)
     }
 
     func testCarpPointsStayInsideUnitSquare() {

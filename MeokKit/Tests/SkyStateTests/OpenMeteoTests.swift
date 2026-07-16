@@ -8,19 +8,47 @@ final class OpenMeteoTests: XCTestCase {
         return try Data(contentsOf: url)
     }
 
+    /// 2026-07-16 15:45 KST — the moment the fixtures were recorded.
+    private var fixtureInstant: Date {
+        var components = DateComponents()
+        (components.year, components.month, components.day) = (2026, 7, 16)
+        (components.hour, components.minute) = (15, 45)
+        components.timeZone = TimeZone(identifier: "Asia/Seoul")
+        return Calendar(identifier: .gregorian).date(from: components)!
+    }
+
     func testDecodesClearSeoulFixture() throws {
-        let conditions = try OpenMeteo.conditions(fromJSON: fixture("open-meteo-seoul-clear"))
+        let conditions = try OpenMeteo.conditions(
+            fromJSON: fixture("open-meteo-seoul-clear"), now: fixtureInstant)
 
         XCTAssertEqual(conditions.weather, .clear)
         XCTAssertEqual(conditions.precipitation, 0.0)
         XCTAssertEqual(conditions.windSpeed, 1.32)
-        // Fixture timestamp: 2026-07-16T15:45 in Asia/Seoul.
+        // Derived from `now` in the response's own utc_offset (Seoul, +9):
+        // 15:45 in July → day, summer.
         XCTAssertEqual(conditions.timeOfDay, .day)
         XCTAssertEqual(conditions.season, .summer)
     }
 
+    func testTimeOfDayFollowsResponseUTCOffsetNotDeviceZone() throws {
+        // Same instant, but interpreted through the response's +9 offset:
+        // 2026-01-15T20:00Z is 05:00 on Jan 16 in Seoul → dawn, winter —
+        // regardless of the machine's local time zone.
+        var components = DateComponents()
+        (components.year, components.month, components.day, components.hour) = (2026, 1, 15, 20)
+        components.timeZone = TimeZone(identifier: "UTC")
+        let instant = Calendar(identifier: .gregorian).date(from: components)!
+
+        let conditions = try OpenMeteo.conditions(
+            fromJSON: fixture("open-meteo-seoul-clear"), now: instant)
+
+        XCTAssertEqual(conditions.timeOfDay, .dawn)
+        XCTAssertEqual(conditions.season, .winter)
+    }
+
     func testDecodesRainSeoulFixture() throws {
-        let conditions = try OpenMeteo.conditions(fromJSON: fixture("open-meteo-seoul-rain"))
+        let conditions = try OpenMeteo.conditions(
+            fromJSON: fixture("open-meteo-seoul-rain"), now: fixtureInstant)
 
         XCTAssertEqual(conditions.weather, .rain)
         XCTAssertEqual(conditions.precipitation, 3.2)

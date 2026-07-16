@@ -18,9 +18,23 @@ final class SkyStoreTests: XCTestCase {
         XCTAssertEqual(resolved, fetched)
     }
 
-    func testFallbackUsesCacheWhenFetchMissing() {
-        let resolved = SkyStore.resolve(fetched: nil, cached: cached, now: .now, timeZone: seoul)
-        XCTAssertEqual(resolved, cached)
+    func testFallbackUsesCachedWeatherButCurrentClock() {
+        // Cache was saved at night; it's noon now. Weather is worth caching,
+        // time-of-day is not — the sky must not render night at noon.
+        var nightCache = cached
+        (nightCache.timeOfDay, nightCache.season) = (.night, .winter)
+        var components = DateComponents()
+        (components.year, components.month, components.day, components.hour) = (2026, 7, 16, 12)
+        components.timeZone = seoul
+        let noon = Calendar(identifier: .gregorian).date(from: components)!
+
+        let resolved = SkyStore.resolve(fetched: nil, cached: nightCache, now: noon, timeZone: seoul)
+
+        XCTAssertEqual(resolved.weather, nightCache.weather)
+        XCTAssertEqual(resolved.precipitation, nightCache.precipitation)
+        XCTAssertEqual(resolved.windSpeed, nightCache.windSpeed)
+        XCTAssertEqual(resolved.timeOfDay, .day)
+        XCTAssertEqual(resolved.season, .summer)
     }
 
     func testColdStartFallsBackToClearDefault() {

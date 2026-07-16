@@ -37,13 +37,24 @@ public final class SkyStore: @unchecked Sendable {
     }
 
     /// The fallback ladder. Pure; the reason a sky always exists.
+    /// Cached entries keep their weather but re-derive time-of-day and
+    /// season from the clock — a cache saved at night must not render
+    /// night at noon.
     public static func resolve(
         fetched: WorldConditions?,
         cached: WorldConditions?,
         now: Date,
         timeZone: TimeZone
     ) -> WorldConditions {
-        fetched ?? cached ?? clearDefault(now: now, timeZone: timeZone)
+        if let fetched { return fetched }
+        guard var conditions = cached else {
+            return clearDefault(now: now, timeZone: timeZone)
+        }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        conditions.timeOfDay = OpenMeteo.timeOfDay(hour: calendar.component(.hour, from: now))
+        conditions.season = OpenMeteo.season(month: calendar.component(.month, from: now))
+        return conditions
     }
 
     /// Cold-start default: clear sky at the local hour and season.

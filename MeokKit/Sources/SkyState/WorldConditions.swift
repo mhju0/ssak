@@ -24,9 +24,11 @@ public struct WorldConditions: Codable, Equatable, Sendable {
     public var season: Season
 
     /// How hard the ink should run, 0…1. Perceptual sqrt curve where
-    /// 8 mm/h ≈ downpour; only liquid rain bleeds — snow reserves paper.
+    /// 8 mm/h ≈ downpour. Driven by measured precipitation regardless of
+    /// the sky code (rain that just stopped still wets the paper) — except
+    /// snow, which reserves paper white instead of running the ink.
     public var rainIntensity: Double {
-        guard weather == .rain || weather == .storm else { return 0 }
+        guard weather != .snow else { return 0 }
         return min(1, (precipitation / 8).squareRoot())
     }
 

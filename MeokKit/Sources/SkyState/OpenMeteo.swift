@@ -5,7 +5,6 @@ import Foundation
 public enum OpenMeteo {
     struct Response: Decodable {
         struct Current: Decodable {
-            var time: String
             var precipitation: Double
             var weather_code: Int
             var wind_speed_10m: Double
@@ -15,21 +14,22 @@ public enum OpenMeteo {
     }
 
     /// Maps a raw Open-Meteo response to WorldConditions. Time-of-day and
-    /// season derive from the response's own local timestamp.
-    public static func conditions(fromJSON data: Data) throws -> WorldConditions {
+    /// season derive from `now` interpreted in the response's own UTC offset
+    /// (the "current" fetch is by definition about right now — no fragile
+    /// timestamp parsing).
+    public static func conditions(fromJSON data: Data, now: Date = .now) throws -> WorldConditions {
         let response = try JSONDecoder().decode(Response.self, from: data)
         let current = response.current
 
-        // current.time is local ISO8601 without offset, e.g. "2026-07-16T15:45".
-        let hour = Int(current.time.dropFirst(11).prefix(2)) ?? 12
-        let month = Int(current.time.dropFirst(5).prefix(2)) ?? 6
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: response.utc_offset_seconds) ?? .current
 
         return WorldConditions(
             weather: weather(fromWMOCode: current.weather_code),
             precipitation: current.precipitation,
             windSpeed: current.wind_speed_10m,
-            timeOfDay: timeOfDay(hour: hour),
-            season: season(month: month)
+            timeOfDay: timeOfDay(hour: calendar.component(.hour, from: now)),
+            season: season(month: calendar.component(.month, from: now))
         )
     }
 

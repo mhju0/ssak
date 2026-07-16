@@ -202,7 +202,7 @@ struct DevControls: View {
                     .foregroundStyle(.secondary)
             }
             HStack {
-                Text("Ink \(inkDensity, specifier: "%.2f")")
+                Text(verbatim: String(format: "Ink %.2f", inkDensity))
                     .font(.caption.monospaced())
                 Slider(value: $inkDensity, in: 0...1)
                     .frame(width: 160)
@@ -212,7 +212,7 @@ struct DevControls: View {
             }
             HStack {
                 Toggle(isOn: $overrideBleed) {
-                    Text("Bleed \(bleedValue, specifier: "%.2f")")
+                    Text(verbatim: String(format: "Bleed %.2f", bleedValue))
                         .font(.caption.monospaced())
                 }
                 .fixedSize()
@@ -230,8 +230,10 @@ struct DevControls: View {
                 }
                 .pickerStyle(.segmented)
                 .fixedSize()
-                Button("Capture PNG") {
+                Button {
                     lastCapture = capturePNG(from: host)
+                } label: {
+                    Text(verbatim: "Capture PNG")
                 }
                 .buttonStyle(.bordered)
             }

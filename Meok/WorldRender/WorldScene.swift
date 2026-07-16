@@ -20,9 +20,10 @@ final class WorldScene: SKScene {
         didSet {
             mountain.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
             // The carp soaks with the rain. Stamps are baked per style, so
-            // rebuild only when wetness moved enough to matter.
+            // rebuild only when wetness actually moved — with a threshold
+            // small enough that even drizzle (~0.07) registers.
             let wetness = CGFloat(rainBleed) * 0.7
-            if abs(wetness - carpWetness) > 0.1 {
+            if abs(wetness - carpWetness) > 0.02 {
                 layoutFigures(reveal: false)
             }
         }
@@ -109,19 +110,7 @@ enum PaperShader {
         return shader
     }
 
-    private static let source = """
-    float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-    }
-
-    float vnoise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
-                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-    }
-
+    private static let source = ShaderLib.noise2D + """
     void main() {
         vec2 px = v_tex_coord * u_size;
 
