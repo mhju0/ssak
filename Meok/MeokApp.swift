@@ -43,11 +43,23 @@ struct ContentView: View {
             #endif
         }
         .statusBarHidden(true)
-        .task { await sky.refresh() }
+        .task {
+            await sky.refresh()
+            // Seed the initial bleed even when refresh didn't change anything
+            // (onChange only fires on actual changes).
+            applyBleed()
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task { await sky.refresh() }
         }
+        .onChange(of: sky.conditions) { applyBleed() }
+        .onChange(of: host.bleedOverride) { applyBleed() }
+    }
+
+    /// The world bleeds with the real rain unless the debug override forces it.
+    private func applyBleed() {
+        host.scene?.rainBleed = host.bleedOverride ?? Float(sky.conditions.rainIntensity)
     }
 }
 
@@ -78,6 +90,8 @@ extension String.StringInterpolation {
 final class WorldHost: ObservableObject {
     weak var skView: SKView?
     var scene: WorldScene?
+    /// DEBUG-only: forces rain-bleed intensity; nil follows the real sky.
+    @Published var bleedOverride: Float?
 }
 
 struct WorldView: UIViewRepresentable {
@@ -105,6 +119,8 @@ struct DevControls: View {
     let host: WorldHost
     @State private var lastCapture: String?
     @State private var inkDensity: Float = 0.55
+    @State private var overrideBleed = false
+    @State private var bleedValue: Float = 0
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
@@ -122,6 +138,18 @@ struct DevControls: View {
                         host.scene?.inkDensity = value
                     }
             }
+            HStack {
+                Toggle(isOn: $overrideBleed) {
+                    Text("Bleed \(bleedValue, specifier: "%.2f")")
+                        .font(.caption.monospaced())
+                }
+                .fixedSize()
+                Slider(value: $bleedValue, in: 0...1)
+                    .frame(width: 160)
+                    .disabled(!overrideBleed)
+            }
+            .onChange(of: overrideBleed) { syncBleedOverride() }
+            .onChange(of: bleedValue) { syncBleedOverride() }
             Button("Capture PNG") {
                 lastCapture = capturePNG()
             }
@@ -132,15 +160,25 @@ struct DevControls: View {
             // CLI screenshot-review harness: launch args drive the same code
             // paths as the controls above, then PNGs are pulled from the app
             // container. `-meok-ink 0.9` seeds the density slider;
+            // `-meok-bleed 0.7` turns on the bleed override;
             // `-meok-capture` presses the capture button.
             if UserDefaults.standard.object(forKey: "meok-ink") != nil {
                 inkDensity = UserDefaults.standard.float(forKey: "meok-ink")
                 host.scene?.inkDensity = inkDensity
             }
+            if UserDefaults.standard.object(forKey: "meok-bleed") != nil {
+                bleedValue = UserDefaults.standard.float(forKey: "meok-bleed")
+                overrideBleed = true
+                syncBleedOverride()
+            }
             guard ProcessInfo.processInfo.arguments.contains("-meok-capture") else { return }
             try? await Task.sleep(for: .seconds(1))
             lastCapture = capturePNG()
         }
+    }
+
+    private func syncBleedOverride() {
+        host.bleedOverride = overrideBleed ? bleedValue : nil
     }
 
     /// Renders the current scene to a PNG in Documents; returns the file name.

@@ -10,6 +10,11 @@ final class WorldScene: SKScene {
         didSet { mountain.shader?.uniformNamed("u_density")?.floatValue = inkDensity }
     }
 
+    /// How hard the rain runs the ink, 0…1 (WorldConditions.rainIntensity).
+    var rainBleed: Float = 0 {
+        didSet { mountain.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed }
+    }
+
     override init() {
         super.init(size: .zero)
         scaleMode = .resizeFill

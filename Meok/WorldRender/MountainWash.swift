@@ -10,6 +10,7 @@ enum MountainWash {
         shader.uniforms = [
             SKUniform(name: "u_size", vectorFloat2: .zero),
             SKUniform(name: "u_density", float: 0.55),
+            SKUniform(name: "u_bleed", float: 0),
         ]
         node.shader = shader
         return node
@@ -40,9 +41,10 @@ enum MountainWash {
         return 0.55 + peak + shoulder + wiggle;
     }
 
-    void main() {
-        vec2 uv = v_tex_coord;
-        vec2 px = uv * u_size;
+    // Dry-mountain ink density at uv — sampleable, so wet bleed can pull
+    // ink from above.
+    float inkAt(vec2 uv, vec2 sizePx) {
+        vec2 px = uv * sizePx;
 
         float r = ridge(uv.x);
 
@@ -70,7 +72,27 @@ enum MountainWash {
         float blotch = 0.85 + (fbm(px * 0.012) - 0.5) * 0.42;
         float streak = 1.0 + (vnoise(vec2(px.x * 0.008, px.y * 0.05)) - 0.5) * 0.22;
 
-        float density = (wash + pool) * body * breakup * mist * blotch * streak;
+        return (wash + pool) * body * breakup * mist * blotch * streak;
+    }
+
+    void main() {
+        float density = inkAt(v_tex_coord, u_size);
+
+        // Wet paper: ink runs downward in uneven columns, more with heavier
+        // rain. Each fragment looks up-column for ink that would reach it.
+        if (u_bleed > 0.001) {
+            float drip = vnoise(vec2(v_tex_coord.x * u_size.x * 0.06, 4.2));
+            drip *= drip;
+            float run = u_bleed * (0.04 + 0.30 * drip);
+            float acc = 0.0;
+            for (int i = 1; i <= 8; i++) {
+                float t = float(i) / 8.0;
+                vec2 above = vec2(v_tex_coord.x, v_tex_coord.y + t * run);
+                acc = max(acc, inkAt(above, u_size) * (1.0 - t * 0.8));
+            }
+            density = max(density, acc * (0.3 + 0.5 * u_bleed));
+        }
+
         density *= u_density;
 
         vec3 ink = vec3(0.16, 0.155, 0.148);

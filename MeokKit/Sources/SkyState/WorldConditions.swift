@@ -23,6 +23,13 @@ public struct WorldConditions: Codable, Equatable, Sendable {
     public var timeOfDay: TimeOfDay
     public var season: Season
 
+    /// How hard the ink should run, 0…1. Perceptual sqrt curve where
+    /// 8 mm/h ≈ downpour; only liquid rain bleeds — snow reserves paper.
+    public var rainIntensity: Double {
+        guard weather == .rain || weather == .storm else { return 0 }
+        return min(1, (precipitation / 8).squareRoot())
+    }
+
     public init(
         weather: Weather,
         precipitation: Double,
