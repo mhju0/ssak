@@ -10,9 +10,9 @@ struct RenderStyle {
 }
 
 enum StrokeTextures {
-    /// Soft brush dab: gaussian-ish radial falloff.
+    /// Brush dab: firm ink core with a feathered rim.
     static let soft = radialDab { distance in
-        pow(max(0, 1 - distance), 1.8)
+        distance < 0.42 ? 1 : pow(max(0, 1 - (distance - 0.42) / 0.58), 1.6)
     }
 
     /// Pooled dab: ink gathered toward the rim as a wash dries.
@@ -72,7 +72,7 @@ final class RecipeNode: SKNode {
                 var radius = CGFloat(dab.radius) * scale
                 // Flow compensation: heavily overlapped (wide) sections get
                 // fainter stamps so built-up coverage is uniform ink, not mud.
-                let flow = min(max(spacing * scale / max(radius, 0.5) * 0.7, 0.02), 0.55)
+                let flow = min(max(spacing * scale / max(radius, 0.5) * 0.95, 0.02), 0.6)
                 var alpha = CGFloat(stroke.ink) * flow
 
                 // The brush depletes as the stroke travels.

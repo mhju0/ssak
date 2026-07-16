@@ -27,21 +27,41 @@ final class SkyMonitor: ObservableObject {
     }
 }
 
+/// Which scene the debug harness is showing; the world outside DEBUG.
+enum DevSheet: String, CaseIterable {
+    case world, strokes, carp
+
+    static var launchDefault: DevSheet {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-meok-strokes") { return .strokes }
+        if arguments.contains("-meok-carp") { return .carp }
+        return .world
+    }
+
+    /// Seconds the CLI capture harness waits for the reveal to finish.
+    var captureSettle: Double {
+        switch self {
+        case .world: 1
+        case .strokes: 3.5
+        case .carp: 7
+        }
+    }
+}
+
 struct ContentView: View {
     @StateObject private var host = WorldHost()
     @StateObject private var sky = SkyMonitor()
     @Environment(\.scenePhase) private var scenePhase
-    @State private var showStrokeSheet =
-        ProcessInfo.processInfo.arguments.contains("-meok-strokes")
+    @State private var devSheet = DevSheet.launchDefault
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            WorldView(host: host, showStrokeSheet: showStrokeSheet)
+            WorldView(host: host, sheet: devSheet)
                 .ignoresSafeArea()
             #if DEBUG
             SkyOverlay(conditions: sky.conditions)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            DevControls(host: host, showStrokeSheet: $showStrokeSheet)
+            DevControls(host: host, devSheet: $devSheet)
             #endif
         }
         .statusBarHidden(true)
@@ -98,7 +118,7 @@ final class WorldHost: ObservableObject {
 
 struct WorldView: UIViewRepresentable {
     let host: WorldHost
-    var showStrokeSheet = false
+    var sheet = DevSheet.world
 
     func makeUIView(context: Context) -> SKView {
         let view = SKView()
@@ -116,12 +136,13 @@ struct WorldView: UIViewRepresentable {
 
     func updateUIView(_ uiView: SKView, context: Context) {
         #if DEBUG
-        if showStrokeSheet {
-            if !(uiView.scene is StrokeSheetScene) {
-                uiView.presentScene(StrokeSheetScene())
-            }
-        } else if let world = host.scene, uiView.scene !== world {
-            uiView.presentScene(world)
+        switch sheet {
+        case .strokes:
+            if !(uiView.scene is StrokeSheetScene) { uiView.presentScene(StrokeSheetScene()) }
+        case .carp:
+            if !(uiView.scene is CarpSheetScene) { uiView.presentScene(CarpSheetScene()) }
+        case .world:
+            if let world = host.scene, uiView.scene !== world { uiView.presentScene(world) }
         }
         #endif
     }
@@ -130,7 +151,7 @@ struct WorldView: UIViewRepresentable {
 #if DEBUG
 struct DevControls: View {
     let host: WorldHost
-    @Binding var showStrokeSheet: Bool
+    @Binding var devSheet: DevSheet
     @State private var lastCapture: String?
     @State private var inkDensity: Float = 0.55
     @State private var overrideBleed = false
@@ -165,14 +186,18 @@ struct DevControls: View {
             .onChange(of: overrideBleed) { syncBleedOverride() }
             .onChange(of: bleedValue) { syncBleedOverride() }
             HStack {
-                Button(showStrokeSheet ? "World" : "Strokes") {
-                    showStrokeSheet.toggle()
+                Picker("Scene", selection: $devSheet) {
+                    ForEach(DevSheet.allCases, id: \.self) {
+                        Text($0.rawValue.capitalized)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .fixedSize()
                 Button("Capture PNG") {
                     lastCapture = capturePNG()
                 }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
         }
         .padding()
         .task {
@@ -191,9 +216,8 @@ struct DevControls: View {
                 syncBleedOverride()
             }
             guard ProcessInfo.processInfo.arguments.contains("-meok-capture") else { return }
-            // The stroke sheet needs its reveal to finish before capturing.
-            let settle: Double = showStrokeSheet ? 3.5 : 1
-            try? await Task.sleep(for: .seconds(settle))
+            // Sheets need their reveal to finish before capturing.
+            try? await Task.sleep(for: .seconds(devSheet.captureSettle))
             lastCapture = capturePNG()
         }
     }
