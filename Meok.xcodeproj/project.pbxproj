@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A00000000000000000000010 /* SkyState in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000011 /* SkyState */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		A00000000000000000000004 /* Meok.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Meok.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00000000000000000000010 /* SkyState in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -64,6 +69,9 @@
 				A00000000000000000000001 /* Meok */,
 			);
 			name = Meok;
+			packageProductDependencies = (
+				A00000000000000000000011 /* SkyState */,
+			);
 			productName = Meok;
 			productReference = A00000000000000000000004 /* Meok.app */;
 			productType = "com.apple.product-type.application";
@@ -87,6 +95,9 @@
 			);
 			mainGroup = A00000000000000000000002;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A00000000000000000000012 /* XCLocalSwiftPackageReference "MeokKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A00000000000000000000003 /* Products */;
 			projectDirPath = "";
@@ -242,6 +253,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A00000000000000000000012 /* XCLocalSwiftPackageReference "MeokKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = MeokKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A00000000000000000000011 /* SkyState */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SkyState;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A0000000000000000000000A /* Project object */;
 }

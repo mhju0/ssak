@@ -1,3 +1,4 @@
+import SkyState
 import SpriteKit
 import SwiftUI
 
@@ -10,20 +11,68 @@ struct MeokApp: App {
     }
 }
 
+/// Publishes the real sky to the app. Refreshes on foreground; between
+/// refreshes the store's cached/default ladder guarantees a value.
+@MainActor
+final class SkyMonitor: ObservableObject {
+    @Published private(set) var conditions: WorldConditions
+    private let store = SkyStore()
+
+    init() {
+        conditions = store.current()
+    }
+
+    func refresh() async {
+        conditions = await store.refresh()
+    }
+}
+
 struct ContentView: View {
     @StateObject private var host = WorldHost()
+    @StateObject private var sky = SkyMonitor()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             WorldView(host: host)
                 .ignoresSafeArea()
             #if DEBUG
+            SkyOverlay(conditions: sky.conditions)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             DevControls(host: host)
             #endif
         }
         .statusBarHidden(true)
+        .task { await sky.refresh() }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await sky.refresh() }
+        }
     }
 }
+
+#if DEBUG
+struct SkyOverlay: View {
+    let conditions: WorldConditions
+
+    var body: some View {
+        Text(verbatim: """
+        \(conditions.weather.rawValue) · \(conditions.precipitation, format: "%.1f")mm/h
+        wind \(conditions.windSpeed, format: "%.1f")m/s
+        \(conditions.timeOfDay.rawValue) · \(conditions.season.rawValue)
+        """)
+        .font(.caption.monospaced())
+        .foregroundStyle(.secondary)
+        .padding(8)
+    }
+}
+
+extension String.StringInterpolation {
+    mutating func appendInterpolation(_ value: Double, format: String) {
+        appendLiteral(String(format: format, value))
+    }
+}
+#endif
 
 /// Holds references to the live SKView/scene so SwiftUI debug controls can reach them.
 final class WorldHost: ObservableObject {
