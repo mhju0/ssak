@@ -3,12 +3,20 @@ import SpriteKit
 /// The scroll: composited ink layers over living hanji paper. L0 (paper) only for now.
 final class WorldScene: SKScene {
     private let paper = SKSpriteNode(texture: .flatWhite)
+    private let mountain = MountainWash.makeNode()
+
+    /// Overall wash strength of the mountain layer (0 = bare paper).
+    var inkDensity: Float = 0.55 {
+        didSet { mountain.shader?.uniformNamed("u_density")?.floatValue = inkDensity }
+    }
 
     override init() {
         super.init(size: .zero)
         scaleMode = .resizeFill
         paper.shader = PaperShader.make()
         addChild(paper)
+        mountain.zPosition = 1
+        addChild(mountain)
     }
 
     @available(*, unavailable)
@@ -19,9 +27,11 @@ final class WorldScene: SKScene {
         guard size.width > 0, size.height > 0 else { return }
         let center = CGPoint(x: size.width / 2, y: size.height / 2)
         let sizeUniform = vector_float2(Float(size.width), Float(size.height))
-        paper.position = center
-        paper.size = size
-        paper.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+        for node in [paper, mountain] {
+            node.position = center
+            node.size = size
+            node.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+        }
     }
 }
 

@@ -55,6 +55,7 @@ struct WorldView: UIViewRepresentable {
 struct DevControls: View {
     let host: WorldHost
     @State private var lastCapture: String?
+    @State private var inkDensity: Float = 0.55
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
@@ -63,6 +64,15 @@ struct DevControls: View {
                     .font(.caption2.monospaced())
                     .foregroundStyle(.secondary)
             }
+            HStack {
+                Text("Ink \(inkDensity, specifier: "%.2f")")
+                    .font(.caption.monospaced())
+                Slider(value: $inkDensity, in: 0...1)
+                    .frame(width: 160)
+                    .onChange(of: inkDensity) { _, value in
+                        host.scene?.inkDensity = value
+                    }
+            }
             Button("Capture PNG") {
                 lastCapture = capturePNG()
             }
@@ -70,9 +80,14 @@ struct DevControls: View {
         }
         .padding()
         .task {
-            // CLI screenshot-review harness: `-meok-capture` exercises the
-            // same capture path as the button, then the PNG is pulled from
-            // the app container.
+            // CLI screenshot-review harness: launch args drive the same code
+            // paths as the controls above, then PNGs are pulled from the app
+            // container. `-meok-ink 0.9` seeds the density slider;
+            // `-meok-capture` presses the capture button.
+            if UserDefaults.standard.object(forKey: "meok-ink") != nil {
+                inkDensity = UserDefaults.standard.float(forKey: "meok-ink")
+                host.scene?.inkDensity = inkDensity
+            }
             guard ProcessInfo.processInfo.arguments.contains("-meok-capture") else { return }
             try? await Task.sleep(for: .seconds(1))
             lastCapture = capturePNG()
