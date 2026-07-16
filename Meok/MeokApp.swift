@@ -31,15 +31,17 @@ struct ContentView: View {
     @StateObject private var host = WorldHost()
     @StateObject private var sky = SkyMonitor()
     @Environment(\.scenePhase) private var scenePhase
+    @State private var showStrokeSheet =
+        ProcessInfo.processInfo.arguments.contains("-meok-strokes")
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            WorldView(host: host)
+            WorldView(host: host, showStrokeSheet: showStrokeSheet)
                 .ignoresSafeArea()
             #if DEBUG
             SkyOverlay(conditions: sky.conditions)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            DevControls(host: host)
+            DevControls(host: host, showStrokeSheet: $showStrokeSheet)
             #endif
         }
         .statusBarHidden(true)
@@ -96,6 +98,7 @@ final class WorldHost: ObservableObject {
 
 struct WorldView: UIViewRepresentable {
     let host: WorldHost
+    var showStrokeSheet = false
 
     func makeUIView(context: Context) -> SKView {
         let view = SKView()
@@ -111,12 +114,23 @@ struct WorldView: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: SKView, context: Context) {}
+    func updateUIView(_ uiView: SKView, context: Context) {
+        #if DEBUG
+        if showStrokeSheet {
+            if !(uiView.scene is StrokeSheetScene) {
+                uiView.presentScene(StrokeSheetScene())
+            }
+        } else if let world = host.scene, uiView.scene !== world {
+            uiView.presentScene(world)
+        }
+        #endif
+    }
 }
 
 #if DEBUG
 struct DevControls: View {
     let host: WorldHost
+    @Binding var showStrokeSheet: Bool
     @State private var lastCapture: String?
     @State private var inkDensity: Float = 0.55
     @State private var overrideBleed = false
@@ -150,8 +164,13 @@ struct DevControls: View {
             }
             .onChange(of: overrideBleed) { syncBleedOverride() }
             .onChange(of: bleedValue) { syncBleedOverride() }
-            Button("Capture PNG") {
-                lastCapture = capturePNG()
+            HStack {
+                Button(showStrokeSheet ? "World" : "Strokes") {
+                    showStrokeSheet.toggle()
+                }
+                Button("Capture PNG") {
+                    lastCapture = capturePNG()
+                }
             }
             .buttonStyle(.bordered)
         }
@@ -172,7 +191,9 @@ struct DevControls: View {
                 syncBleedOverride()
             }
             guard ProcessInfo.processInfo.arguments.contains("-meok-capture") else { return }
-            try? await Task.sleep(for: .seconds(1))
+            // The stroke sheet needs its reveal to finish before capturing.
+            let settle: Double = showStrokeSheet ? 3.5 : 1
+            try? await Task.sleep(for: .seconds(settle))
             lastCapture = capturePNG()
         }
     }
