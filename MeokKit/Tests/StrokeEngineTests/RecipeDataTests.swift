@@ -26,4 +26,18 @@ final class RecipeDataTests: XCTestCase {
             XCTAssertFalse(stroke.dabs(spacing: spacing).isEmpty, "stroke \(index)")
         }
     }
+
+    func testKeeperPosesKeepStaffageEconomy() {
+        // Spec D8: the keeper is 5–10 strokes with a 갓 silhouette.
+        for (name, recipe) in [("standing", Recipes.keeperStanding), ("seated", Recipes.keeperSeated)] {
+            XCTAssertGreaterThanOrEqual(recipe.strokes.count, 5, name)
+            XCTAssertLessThanOrEqual(recipe.strokes.count, 10, name)
+            for (index, stroke) in recipe.strokes.enumerated() {
+                for point in stroke.points {
+                    XCTAssert((0 ... 1).contains(point.x), "\(name) stroke \(index)")
+                    XCTAssert((0 ... 1).contains(point.y), "\(name) stroke \(index)")
+                }
+            }
+        }
+    }
 }

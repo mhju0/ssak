@@ -73,4 +73,84 @@ public enum Recipes {
             StrokePoint(0.705, 0.545, pressure: 0.85),
         ], width: 0.032, ink: 1.0, dryness: 0.0, pooling: 0.85, duration: 0.2),
     ])
+
+    /// The keeper, standing with staff: 7 strokes. The 갓 is the darkest ink
+    /// (readability rule: hierarchy by stroke weight).
+    public static let keeperStanding = StrokeRecipe(strokes: [
+        // 갓 brim: one wide shallow cone.
+        Stroke(points: [
+            StrokePoint(0.34, 0.775, pressure: 0.28),
+            StrokePoint(0.50, 0.825, pressure: 0.6),
+            StrokePoint(0.66, 0.775, pressure: 0.28),
+        ], width: 0.06, ink: 0.95, dryness: 0.15, pooling: 0.3, duration: 0.35),
+        // 갓 crown.
+        Stroke(points: [
+            StrokePoint(0.47, 0.84, pressure: 0.7),
+            StrokePoint(0.53, 0.885, pressure: 0.5),
+        ], width: 0.09, ink: 0.95, dryness: 0.1, pooling: 0.3, duration: 0.2),
+        // Face hint — barely there.
+        Stroke(points: [
+            StrokePoint(0.50, 0.77, pressure: 0.5),
+            StrokePoint(0.50, 0.72, pressure: 0.35),
+        ], width: 0.05, ink: 0.35, dryness: 0.2, pooling: 0.1, duration: 0.15),
+        // Robe: one pull, flaring to the hem.
+        Stroke(points: [
+            StrokePoint(0.50, 0.72, pressure: 0.45),
+            StrokePoint(0.47, 0.48, pressure: 0.8),
+            StrokePoint(0.44, 0.20, pressure: 1.0),
+        ], width: 0.20, ink: 0.7, dryness: 0.25, pooling: 0.4, duration: 0.5),
+        // Sleeve falling open.
+        Stroke(points: [
+            StrokePoint(0.54, 0.68, pressure: 0.35),
+            StrokePoint(0.62, 0.48, pressure: 0.55),
+            StrokePoint(0.66, 0.30, pressure: 0.22),
+        ], width: 0.10, ink: 0.6, dryness: 0.35, pooling: 0.25, duration: 0.35),
+        // Hem shadow.
+        Stroke(points: [
+            StrokePoint(0.38, 0.16, pressure: 0.5),
+            StrokePoint(0.58, 0.18, pressure: 0.35),
+        ], width: 0.05, ink: 0.42, dryness: 0.4, pooling: 0.2, duration: 0.25),
+        // Staff.
+        Stroke(points: [
+            StrokePoint(0.655, 0.62, pressure: 0.5),
+            StrokePoint(0.69, 0.14, pressure: 0.35),
+        ], width: 0.022, ink: 0.85, dryness: 0.08, pooling: 0.25, duration: 0.35),
+    ])
+
+    /// The keeper, seated: 6 strokes, hunched forward.
+    public static let keeperSeated = StrokeRecipe(strokes: [
+        // 갓 brim.
+        Stroke(points: [
+            StrokePoint(0.34, 0.635, pressure: 0.28),
+            StrokePoint(0.50, 0.685, pressure: 0.6),
+            StrokePoint(0.66, 0.635, pressure: 0.28),
+        ], width: 0.06, ink: 0.95, dryness: 0.15, pooling: 0.3, duration: 0.35),
+        // 갓 crown.
+        Stroke(points: [
+            StrokePoint(0.47, 0.70, pressure: 0.7),
+            StrokePoint(0.53, 0.745, pressure: 0.5),
+        ], width: 0.09, ink: 0.95, dryness: 0.1, pooling: 0.3, duration: 0.2),
+        // Hunched back sliding to the ground.
+        Stroke(points: [
+            StrokePoint(0.50, 0.62, pressure: 0.5),
+            StrokePoint(0.42, 0.45, pressure: 0.9),
+            StrokePoint(0.38, 0.22, pressure: 0.85),
+        ], width: 0.20, ink: 0.7, dryness: 0.25, pooling: 0.4, duration: 0.5),
+        // Lap and folded knees.
+        Stroke(points: [
+            StrokePoint(0.40, 0.30, pressure: 0.7),
+            StrokePoint(0.60, 0.26, pressure: 0.9),
+            StrokePoint(0.70, 0.30, pressure: 0.3),
+        ], width: 0.13, ink: 0.62, dryness: 0.3, pooling: 0.3, duration: 0.4),
+        // Arm resting toward the knees.
+        Stroke(points: [
+            StrokePoint(0.52, 0.55, pressure: 0.35),
+            StrokePoint(0.62, 0.38, pressure: 0.5),
+        ], width: 0.09, ink: 0.55, dryness: 0.35, pooling: 0.2, duration: 0.3),
+        // Ground shadow under the sitting fold.
+        Stroke(points: [
+            StrokePoint(0.36, 0.16, pressure: 0.4),
+            StrokePoint(0.66, 0.18, pressure: 0.45),
+        ], width: 0.05, ink: 0.38, dryness: 0.45, pooling: 0.2, duration: 0.25),
+    ])
 }
