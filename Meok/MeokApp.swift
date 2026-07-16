@@ -42,7 +42,7 @@ enum DevSheet: String, CaseIterable {
     /// Seconds the CLI capture harness waits for the reveal to finish.
     var captureSettle: Double {
         switch self {
-        case .world: 1
+        case .world: 11
         case .strokes: 3.5
         case .carp: 7
         case .keeper: 5
@@ -61,13 +61,22 @@ struct ContentView: View {
             WorldView(host: host, sheet: devSheet)
                 .ignoresSafeArea()
             #if DEBUG
-            SkyOverlay(conditions: sky.conditions)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            DevControls(host: host, devSheet: $devSheet)
+            // -meok-clean hides the debug chrome so full-screen simctl
+            // screenshots/recordings are presentation-ready. (The in-app
+            // texture(from:) capture can render stale shader uniforms, so
+            // gate materials go through simctl instead.)
+            if !ProcessInfo.processInfo.arguments.contains("-meok-clean") {
+                SkyOverlay(conditions: sky.conditions)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                DevControls(host: host, devSheet: $devSheet)
+            }
             #endif
         }
         .statusBarHidden(true)
         .task {
+            #if DEBUG
+            harnessSeed()
+            #endif
             await sky.refresh()
             // Seed the initial bleed even when refresh didn't change anything
             // (onChange only fires on actual changes).
@@ -85,6 +94,28 @@ struct ContentView: View {
     private func applyBleed() {
         host.scene?.rainBleed = host.bleedOverride ?? Float(sky.conditions.rainIntensity)
     }
+
+    #if DEBUG
+    /// CLI screenshot-review harness: launch defaults drive the same paths
+    /// as the debug controls. `-meok-ink 0.9` seeds wash density,
+    /// `-meok-bleed 0.7` forces the bleed override, `-meok-capture` saves a
+    /// scene PNG after the reveal settles.
+    private func harnessSeed() {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: "meok-ink") != nil {
+            host.scene?.inkDensity = defaults.float(forKey: "meok-ink")
+        }
+        if defaults.object(forKey: "meok-bleed") != nil {
+            host.bleedOverride = defaults.float(forKey: "meok-bleed")
+        }
+        if ProcessInfo.processInfo.arguments.contains("-meok-capture") {
+            Task {
+                try? await Task.sleep(for: .seconds(devSheet.captureSettle))
+                _ = capturePNG(from: host)
+            }
+        }
+    }
+    #endif
 }
 
 #if DEBUG
@@ -126,8 +157,10 @@ struct WorldView: UIViewRepresentable {
         let view = SKView()
         view.preferredFramesPerSecond = 60
         #if DEBUG
-        view.showsFPS = true
-        view.showsNodeCount = true
+        if !ProcessInfo.processInfo.arguments.contains("-meok-clean") {
+            view.showsFPS = true
+            view.showsNodeCount = true
+        }
         #endif
         let scene = WorldScene()
         view.presentScene(scene)
@@ -198,57 +231,41 @@ struct DevControls: View {
                 .pickerStyle(.segmented)
                 .fixedSize()
                 Button("Capture PNG") {
-                    lastCapture = capturePNG()
+                    lastCapture = capturePNG(from: host)
                 }
                 .buttonStyle(.bordered)
             }
         }
         .padding()
-        .task {
-            // CLI screenshot-review harness: launch args drive the same code
-            // paths as the controls above, then PNGs are pulled from the app
-            // container. `-meok-ink 0.9` seeds the density slider;
-            // `-meok-bleed 0.7` turns on the bleed override;
-            // `-meok-capture` presses the capture button.
-            if UserDefaults.standard.object(forKey: "meok-ink") != nil {
-                inkDensity = UserDefaults.standard.float(forKey: "meok-ink")
-                host.scene?.inkDensity = inkDensity
-            }
-            if UserDefaults.standard.object(forKey: "meok-bleed") != nil {
-                bleedValue = UserDefaults.standard.float(forKey: "meok-bleed")
-                overrideBleed = true
-                syncBleedOverride()
-            }
-            guard ProcessInfo.processInfo.arguments.contains("-meok-capture") else { return }
-            // Sheets need their reveal to finish before capturing.
-            try? await Task.sleep(for: .seconds(devSheet.captureSettle))
-            lastCapture = capturePNG()
-        }
     }
 
     private func syncBleedOverride() {
         host.bleedOverride = overrideBleed ? bleedValue : nil
     }
+}
 
-    /// Renders the current scene to a PNG in Documents; returns the file name.
-    private func capturePNG() -> String? {
-        guard let view = host.skView,
-              let scene = view.scene,
-              let texture = view.texture(from: scene)
-        else { return nil }
-        let image = UIImage(cgImage: texture.cgImage())
-        guard let data = image.pngData() else { return nil }
-        let name = "meok-\(Int(Date().timeIntervalSince1970)).png"
-        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(name)
-        do {
-            try data.write(to: url)
-            print("Captured scene → \(url.path)")
-            return name
-        } catch {
-            print("Capture failed: \(error)")
-            return nil
-        }
+/// Renders the current scene to a PNG in Documents; returns the file name.
+/// Note: texture(from:) can render stale shader-uniform values — fine for
+/// the recipe sheets; use `simctl io screenshot` + `-meok-clean` for the
+/// live world.
+@MainActor
+func capturePNG(from host: WorldHost) -> String? {
+    guard let view = host.skView,
+          let scene = view.scene,
+          let texture = view.texture(from: scene)
+    else { return nil }
+    let image = UIImage(cgImage: texture.cgImage())
+    guard let data = image.pngData() else { return nil }
+    let name = "meok-\(Int(Date().timeIntervalSince1970)).png"
+    let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent(name)
+    do {
+        try data.write(to: url)
+        print("Captured scene → \(url.path)")
+        return name
+    } catch {
+        print("Capture failed: \(error)")
+        return nil
     }
 }
 #endif

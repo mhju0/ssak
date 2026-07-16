@@ -1,9 +1,14 @@
 import SpriteKit
+import StrokeEngine
 
-/// The scroll: composited ink layers over living hanji paper. L0 (paper) only for now.
+/// The scroll: composited ink layers over living hanji paper —
+/// L0 paper, L1 mountain wash, and the M0 cast (carp, keeper).
 final class WorldScene: SKScene {
     private let paper = SKSpriteNode(texture: .flatWhite)
     private let mountain = MountainWash.makeNode()
+    private var carp: RecipeNode?
+    private var keeper: RecipeNode?
+    private var carpWetness: CGFloat = 0
 
     /// Overall wash strength of the mountain layer (0 = bare paper).
     var inkDensity: Float = 0.55 {
@@ -12,7 +17,15 @@ final class WorldScene: SKScene {
 
     /// How hard the rain runs the ink, 0…1 (WorldConditions.rainIntensity).
     var rainBleed: Float = 0 {
-        didSet { mountain.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed }
+        didSet {
+            mountain.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
+            // The carp soaks with the rain. Stamps are baked per style, so
+            // rebuild only when wetness moved enough to matter.
+            let wetness = CGFloat(rainBleed) * 0.7
+            if abs(wetness - carpWetness) > 0.1 {
+                layoutFigures(reveal: false)
+            }
+        }
     }
 
     override init() {
@@ -36,6 +49,42 @@ final class WorldScene: SKScene {
             node.position = center
             node.size = size
             node.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+        }
+        layoutFigures(reveal: true)
+    }
+
+    /// The M0 composite cast: carp in the valley pond, keeper on the path
+    /// at staffage scale.
+    private func layoutFigures(reveal: Bool) {
+        carp?.removeFromParent()
+        keeper?.removeFromParent()
+        carpWetness = CGFloat(rainBleed) * 0.7
+
+        let carpNode = RecipeNode(
+            recipe: Recipes.carp,
+            style: RenderStyle(wetness: carpWetness),
+            scale: size.width * 0.42
+        )
+        carpNode.position = CGPoint(x: size.width * 0.07, y: size.height * 0.03)
+        carpNode.zPosition = 2
+        addChild(carpNode)
+        carp = carpNode
+
+        let keeperNode = RecipeNode(
+            recipe: Recipes.keeperStanding,
+            scale: size.height * 0.055
+        )
+        keeperNode.position = CGPoint(x: size.width * 0.66, y: size.height * 0.385)
+        keeperNode.zPosition = 2
+        addChild(keeperNode)
+        keeper = keeperNode
+
+        if reveal {
+            let carpEnd = carpNode.reveal(after: 0.5)
+            keeperNode.reveal(after: carpEnd + 0.3)
+        } else {
+            carpNode.showInstantly()
+            keeperNode.showInstantly()
         }
     }
 }
