@@ -31,6 +31,9 @@ final class WorldScene: SKScene {
     private let mist = SKSpriteNode(texture: .flatWhite)
     private var carp: RecipeNode?
     private var keeper: RecipeNode?
+    private var keeperMount: SKNode?
+    /// Keeper's walk position survives figure rebuilds (rain re-styling).
+    private var keeperX: CGFloat?
     private var carpWetness: CGFloat = 0
     private var bakePending = false
     private var needsBake = false
@@ -217,6 +220,47 @@ final class WorldScene: SKScene {
 
     // MARK: Scrolling
 
+    // MARK: The keeper walks
+
+    /// Tap: the keeper walks along the path corridor toward the tapped
+    /// x at a calm pace. Mid-walk taps retarget; arrival settles back to
+    /// the standing pose.
+    func walkKeeper(towardSceneX x: CGFloat) {
+        guard let mount = keeperMount, let keeper else { return }
+        let margin = size.width * 0.08
+        let target = min(max(x, margin), size.width - margin)
+        let distance = abs(target - mount.position.x)
+        guard distance > 4 else { return }
+
+        // Face the direction of travel (mirror in place).
+        mount.xScale = target < mount.position.x ? -1 : 1
+
+        // Gentle walk-bob on the figure while the mount travels.
+        if keeper.action(forKey: "bob") == nil {
+            let rise = SKAction.moveBy(x: 0, y: 2.5, duration: 0.32)
+            rise.timingMode = .easeInEaseOut
+            keeper.run(.repeatForever(.sequence([rise, rise.reversed()])), withKey: "bob")
+        }
+
+        mount.removeAction(forKey: "walk")
+        let pace = size.width * 0.12   // calm: ~8s across the screen
+        let walk = SKAction.moveTo(x: target, duration: distance / pace)
+        walk.timingMode = .easeInEaseOut
+        mount.run(.sequence([
+            walk,
+            .run { [weak self] in self?.settleKeeper() },
+        ]), withKey: "walk")
+        keeperX = target
+    }
+
+    private func settleKeeper() {
+        guard let keeper else { return }
+        keeper.removeAction(forKey: "bob")
+        let settle = SKAction.moveTo(y: 0, duration: 0.2)
+        settle.timingMode = .easeOut
+        keeper.run(settle)
+    }
+
     /// Jumps the camera to an altitude fraction (harness + future wayfinding).
     func parkCamera(atFraction fraction: CGFloat) {
         cameraFraction = fraction
@@ -340,16 +384,24 @@ final class WorldScene: SKScene {
         addChild(carpNode)
         carp = carpNode
 
+        // The keeper rides a mount node anchored at his feet-center, so
+        // facing flips mirror in place and the walk-bob moves only the
+        // figure, not the mount.
         let keeperNode = RecipeNode(
             recipe: Recipes.keeperStanding,
             scale: size.height * 0.055
         )
-        keeperNode.position = CGPoint(
-            x: size.width * 0.62,
+        let keeperFrame = keeperNode.calculateAccumulatedFrame()
+        keeperNode.position = CGPoint(x: -keeperFrame.midX, y: 0)
+        let mount = SKNode()
+        mount.position = CGPoint(
+            x: keeperX ?? size.width * 0.62,
             y: zoneHeight * CGFloat(Zone.hermitage.rawValue) + zoneHeight * 0.42)
-        keeperNode.zPosition = 2
-        addChild(keeperNode)
+        mount.zPosition = 2
+        mount.addChild(keeperNode)
+        addChild(mount)
         keeper = keeperNode
+        keeperMount = mount
 
         if reveal {
             let carpEnd = carpNode.reveal(after: 0.5)

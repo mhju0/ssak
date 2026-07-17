@@ -116,6 +116,17 @@ struct ContentView: View {
         if defaults.object(forKey: "meok-cam") != nil {
             host.scene?.parkCamera(atFraction: CGFloat(defaults.float(forKey: "meok-cam")))
         }
+        if defaults.object(forKey: "meok-walk") != nil {
+            // Simulated tap for the harness (simctl can't touch the screen):
+            // walk toward the given x fraction once the launch reveal has
+            // painted the keeper in (~10s).
+            let fraction = CGFloat(defaults.float(forKey: "meok-walk"))
+            Task {
+                try? await Task.sleep(for: .seconds(11))
+                guard let scene = host.scene else { return }
+                scene.walkKeeper(towardSceneX: fraction * scene.size.width)
+            }
+        }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-meok-capture") {
             Task {
@@ -194,6 +205,9 @@ struct WorldView: UIViewRepresentable {
             target: context.coordinator, action: #selector(Coordinator.pan(_:)))
         pan.maximumNumberOfTouches = 1
         view.addGestureRecognizer(pan)
+        let tap = UITapGestureRecognizer(
+            target: context.coordinator, action: #selector(Coordinator.tap(_:)))
+        view.addGestureRecognizer(tap)
         return view
     }
 
@@ -214,6 +228,14 @@ struct WorldView: UIViewRepresentable {
             default:
                 break
             }
+        }
+
+        /// Drag scrolls the mountain; tap walks the keeper (spec §3).
+        @objc func tap(_ gesture: UITapGestureRecognizer) {
+            guard let scene, let view = gesture.view as? SKView,
+                  view.scene === scene else { return }
+            let point = scene.convertPoint(fromView: gesture.location(in: view))
+            scene.walkKeeper(towardSceneX: point.x)
         }
     }
 
