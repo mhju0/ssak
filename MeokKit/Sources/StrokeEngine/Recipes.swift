@@ -253,6 +253,26 @@ public enum Recipes {
         ], width: 0.018, ink: 0.55, dryness: 0.3, pooling: 0.1, duration: 0.15),
     ])
 
+    /// Grass tuft: four flicks from a base — L4 foreground accent.
+    public static let grassTuft = StrokeRecipe(strokes: [
+        Stroke(points: [
+            StrokePoint(0.50, 0.05, pressure: 0.5),
+            StrokePoint(0.42, 0.50, pressure: 0.1),
+        ], width: 0.03, ink: 0.6, dryness: 0.25, pooling: 0.15, duration: 0.2),
+        Stroke(points: [
+            StrokePoint(0.55, 0.06, pressure: 0.5),
+            StrokePoint(0.61, 0.55, pressure: 0.08),
+        ], width: 0.03, ink: 0.58, dryness: 0.25, pooling: 0.15, duration: 0.2),
+        Stroke(points: [
+            StrokePoint(0.45, 0.05, pressure: 0.45),
+            StrokePoint(0.34, 0.35, pressure: 0.08),
+        ], width: 0.025, ink: 0.52, dryness: 0.3, pooling: 0.12, duration: 0.18),
+        Stroke(points: [
+            StrokePoint(0.60, 0.05, pressure: 0.4),
+            StrokePoint(0.69, 0.30, pressure: 0.06),
+        ], width: 0.022, ink: 0.48, dryness: 0.3, pooling: 0.12, duration: 0.18),
+    ])
+
     /// Pond bank: one wet sweep and three reeds.
     public static let pondBank = StrokeRecipe(strokes: [
         Stroke(points: [

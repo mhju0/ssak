@@ -10,9 +10,25 @@ import StrokeEngine
 /// Procedural layers are baked to textures and re-baked only when a uniform
 /// changes — per-pixel-per-frame shader noise was GPU-bound on device (#12).
 final class WorldScene: SKScene {
+    /// Vertical scroll rates per depth layer: L1 far drifts slowest, L2 mid
+    /// carries the mist, L3 playfield is the world (rate 1), L4 foreground
+    /// slides past fastest.
+    private enum Parallax {
+        static let far: CGFloat = 0.3
+        static let mid: CGFloat = 0.55
+        // Barely faster than the playfield: enough to read as nearer in
+        // motion without tufts drifting far from their ground band.
+        static let fore: CGFloat = 1.15
+    }
+
     private let cam = SKCameraNode()
     private let paper = SKSpriteNode(texture: .flatWhite)
+    private let farLayer = SKNode()
+    private let midLayer = SKNode()
+    private let foreLayer = SKNode()
     private let mountain = SKSpriteNode(texture: .flatWhite)
+    private let midRidge = SKSpriteNode(texture: .flatWhite)
+    private let mist = SKSpriteNode(texture: .flatWhite)
     private var carp: RecipeNode?
     private var keeper: RecipeNode?
     private var carpWetness: CGFloat = 0
@@ -59,8 +75,20 @@ final class WorldScene: SKScene {
         addChild(cam)
         paper.zPosition = -100
         cam.addChild(paper)
-        mountain.zPosition = 1
-        addChild(mountain)
+
+        farLayer.zPosition = 0.5
+        farLayer.addChild(mountain)
+        addChild(farLayer)
+
+        midLayer.zPosition = 0.8
+        midRidge.xScale = -1     // the far ridge, mirrored: a second range
+        midLayer.addChild(midRidge)
+        mist.zPosition = 0.1
+        midLayer.addChild(mist)
+        addChild(midLayer)
+
+        foreLayer.zPosition = 3
+        addChild(foreLayer)
     }
 
     @available(*, unavailable)
@@ -78,15 +106,75 @@ final class WorldScene: SKScene {
         paper.size = size
         paper.position = .zero
 
-        // The mountain composition fills the top screen — the peak zone.
-        mountain.size = size
-        mountain.position = CGPoint(x: size.width / 2, y: worldHeight - size.height / 2)
-
         setCameraY(size.height / 2 + cameraFraction * (worldHeight - size.height))
+        layoutParallax()
         bakeBackground()
         layoutDressing()
         layoutFigures(reveal: true)
     }
+
+    /// Anchors each parallax element. A sprite at layer-local y₀ appears at
+    /// screen offset (y₀ − rate·cameraY), so anchors are solved from "be at
+    /// screen offset s when the camera is at c": y₀ = s + rate·c.
+    private func layoutParallax() {
+        let zoneHeight = size.height
+        let cameraTop = worldHeight - zoneHeight / 2
+
+        // L1: the far mountain fills the screen at the peak and sinks slowly
+        // as the keeper descends toward the valley.
+        mountain.size = size
+        mountain.position = CGPoint(x: size.width / 2, y: Parallax.far * cameraTop)
+
+        // L2: a mirrored, lighter second range behind the forest slopes…
+        midRidge.size = CGSize(width: size.width, height: zoneHeight * 0.8)
+        midRidge.position = CGPoint(
+            x: size.width / 2,
+            y: -0.15 * zoneHeight + Parallax.mid * 3.5 * zoneHeight)
+        // …dissolving into a paper-tone mist band below it.
+        mist.size = CGSize(width: size.width, height: zoneHeight * 0.55)
+        mist.position = CGPoint(
+            x: size.width / 2,
+            y: Parallax.mid * 3.0 * zoneHeight)
+        mist.texture = Self.mistTexture
+
+        // L4: grass tufts that slide past in the foreground.
+        foreLayer.removeAllChildren()
+        guard let view else { return }
+        let tufts: [(camera: CGFloat, x: CGFloat, screenOffset: CGFloat)] = [
+            (0.5, 0.12, -0.38), (1.5, 0.82, -0.40), (2.5, 0.08, -0.42), (3.5, 0.86, -0.38),
+        ]
+        for tuft in tufts {
+            let node = RecipeNode(recipe: Recipes.grassTuft, scale: size.width * 0.14)
+            node.showInstantly()
+            let frame = node.calculateAccumulatedFrame()
+            let sprite = SKSpriteNode(texture: view.texture(from: node))
+            sprite.size = frame.size
+            sprite.position = CGPoint(
+                x: size.width * tuft.x + frame.midX,
+                y: tuft.screenOffset * zoneHeight
+                    + Parallax.fore * tuft.camera * zoneHeight + frame.midY)
+            foreLayer.addChild(sprite)
+        }
+    }
+
+    /// Paper-tone gradient band — ink-wash mist is paper showing through.
+    private static let mistTexture: SKTexture = {
+        let size = CGSize(width: 8, height: 128)
+        let paperTone = UIColor(red: 0.937, green: 0.912, blue: 0.852, alpha: 1)
+        let image = UIGraphicsImageRenderer(size: size).image { context in
+            let colors = [
+                paperTone.withAlphaComponent(0).cgColor,
+                paperTone.withAlphaComponent(0.85).cgColor,
+                paperTone.withAlphaComponent(0).cgColor,
+            ]
+            let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: colors as CFArray, locations: [0, 0.5, 1])!
+            context.cgContext.drawLinearGradient(
+                gradient, start: .zero, end: CGPoint(x: 0, y: size.height), options: [])
+        }
+        return SKTexture(image: image)
+    }()
 
     // MARK: Zone dressing
 
@@ -155,7 +243,14 @@ final class WorldScene: SKScene {
 
     override func update(_ currentTime: TimeInterval) {
         guard size.height > 0 else { return }
-        let zone = Zone.at(cameraY: cam.position.y, screenHeight: size.height)
+
+        // Layers offset by (1 − rate)·cameraY scroll at rate× camera speed.
+        let cameraY = cam.position.y
+        farLayer.position.y = cameraY * (1 - Parallax.far)
+        midLayer.position.y = cameraY * (1 - Parallax.mid)
+        foreLayer.position.y = cameraY * (1 - Parallax.fore)
+
+        let zone = Zone.at(cameraY: cameraY, screenHeight: size.height)
         if zone != lastZone {
             lastZone = zone
             onZoneChange?(zone)
@@ -199,6 +294,16 @@ final class WorldScene: SKScene {
         mountainSource.shader?.uniformNamed("u_density")?.floatValue = inkDensity
         mountainSource.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
         mountain.texture = view.texture(from: mountainSource)
+
+        // L2 re-bakes the same composition much lighter — depth by wash
+        // density, per the art-direction hierarchy. Fresh node again: a
+        // once-rendered node's uniform edits can bake stale (#9).
+        let ridgeSource = MountainWash.makeNode()
+        ridgeSource.size = size
+        ridgeSource.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+        ridgeSource.shader?.uniformNamed("u_density")?.floatValue = inkDensity * 0.4
+        ridgeSource.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed * 0.5
+        midRidge.texture = view.texture(from: ridgeSource)
     }
 
     // MARK: Figures

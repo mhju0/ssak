@@ -33,6 +33,7 @@ final class RecipeDataTests: XCTestCase {
         let props: [(String, StrokeRecipe)] = [
             ("pine", Recipes.pine), ("rock", Recipes.rock), ("hut", Recipes.hut),
             ("gardenBeds", Recipes.gardenBeds), ("pondBank", Recipes.pondBank),
+            ("grassTuft", Recipes.grassTuft),
         ]
         for (name, recipe) in props {
             XCTAssertFalse(recipe.strokes.isEmpty, name)
