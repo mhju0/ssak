@@ -31,7 +31,8 @@ public enum OpenMeteo {
             windSpeed: current.wind_speed_10m,
             timeOfDay: Solar.timeOfDay(
                 date: now, latitude: response.latitude, longitude: response.longitude),
-            season: season(month: calendar.component(.month, from: now)),
+            season: season(
+                month: calendar.component(.month, from: now), latitude: response.latitude),
             darkness: Solar.darkness(
                 date: now, latitude: response.latitude, longitude: response.longitude)
         )
@@ -57,8 +58,11 @@ public enum OpenMeteo {
         }
     }
 
-    static func season(month: Int) -> WorldConditions.Season {
-        switch month {
+    /// Meteorological seasons, hemisphere-aware: July is summer in Seoul
+    /// and winter in Sydney.
+    static func season(month: Int, latitude: Double = 90) -> WorldConditions.Season {
+        let shifted = latitude < 0 ? (month + 5) % 12 + 1 : month
+        return switch shifted {
         case 3...5: .spring
         case 6...8: .summer
         case 9...11: .autumn

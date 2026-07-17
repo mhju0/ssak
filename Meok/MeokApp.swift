@@ -16,13 +16,22 @@ struct MeokApp: App {
 @MainActor
 final class SkyMonitor: ObservableObject {
     @Published private(set) var conditions: WorldConditions
+    @Published private(set) var city: City
     private let store = SkyStore()
 
     init() {
+        city = store.city
         conditions = store.current()
     }
 
     func refresh() async {
+        conditions = await store.refresh()
+    }
+
+    /// The scroll moves to another sky: persist the pick and refetch.
+    func setCity(_ newCity: City) async {
+        store.city = newCity
+        city = newCity
         conditions = await store.refresh()
     }
 }
@@ -55,11 +64,24 @@ struct ContentView: View {
     @StateObject private var sky = SkyMonitor()
     @Environment(\.scenePhase) private var scenePhase
     @State private var devSheet = DevSheet.launchDefault
+    @State private var showSettings = false
+    private let cleanChrome = ProcessInfo.processInfo.arguments.contains("-meok-clean")
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             WorldView(host: host, sheet: devSheet)
                 .ignoresSafeArea()
+            if !cleanChrome {
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .padding(12)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            }
             #if DEBUG
             // -meok-clean hides the debug chrome so full-screen simctl
             // screenshots/recordings are presentation-ready. (The in-app
@@ -73,6 +95,9 @@ struct ContentView: View {
             #endif
         }
         .statusBarHidden(true)
+        .sheet(isPresented: $showSettings) {
+            SettingsView(sky: sky)
+        }
         .task {
             harnessSeed()
             await sky.refresh()

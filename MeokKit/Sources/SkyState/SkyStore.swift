@@ -23,19 +23,35 @@ public struct SkyCache {
 /// Fetches the real sky for the default city and always resolves to a value:
 /// live fetch → cached → clear-sky default. Never blank, never an error.
 public final class SkyStore: @unchecked Sendable {
-    /// Seoul, the default city until the picker (#18) / location (M7) land.
-    public static let seoulLatitude = 37.5665
-    public static let seoulLongitude = 126.978
-    public static let seoulURL = URL(string:
-        "https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978"
-        + "&current=precipitation,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto")!
+    private static let cityKey = "meok.sky.city"
+
+    /// Current-conditions endpoint for a city.
+    public static func url(for city: City) -> URL {
+        URL(string: "https://api.open-meteo.com/v1/forecast"
+            + "?latitude=\(city.latitude)&longitude=\(city.longitude)"
+            + "&current=precipitation,weather_code,wind_speed_10m"
+            + "&wind_speed_unit=ms&timezone=auto")!
+    }
 
     private let cache: SkyCache
     private let session: URLSession
+    private let defaults: UserDefaults
+
+    /// The picked city; persisted. Seoul until the player chooses.
+    public var city: City {
+        get {
+            defaults.data(forKey: Self.cityKey)
+                .flatMap { try? JSONDecoder().decode(City.self, from: $0) } ?? .seoul
+        }
+        set {
+            defaults.set(try? JSONEncoder().encode(newValue), forKey: Self.cityKey)
+        }
+    }
 
     public init(defaults: UserDefaults = .standard, session: URLSession = .shared) {
         self.cache = SkyCache(defaults: defaults)
         self.session = session
+        self.defaults = defaults
     }
 
     /// The fallback ladder. Pure; the reason a sky always exists.
@@ -46,24 +62,28 @@ public final class SkyStore: @unchecked Sendable {
         fetched: WorldConditions?,
         cached: WorldConditions?,
         now: Date,
-        timeZone: TimeZone
+        timeZone: TimeZone,
+        city: City = .seoul
     ) -> WorldConditions {
         if let fetched { return fetched }
         guard var conditions = cached else {
-            return clearDefault(now: now, timeZone: timeZone)
+            return clearDefault(now: now, timeZone: timeZone, city: city)
         }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         conditions.timeOfDay = Solar.timeOfDay(
-            date: now, latitude: seoulLatitude, longitude: seoulLongitude)
+            date: now, latitude: city.latitude, longitude: city.longitude)
         conditions.darkness = Solar.darkness(
-            date: now, latitude: seoulLatitude, longitude: seoulLongitude)
-        conditions.season = OpenMeteo.season(month: calendar.component(.month, from: now))
+            date: now, latitude: city.latitude, longitude: city.longitude)
+        conditions.season = OpenMeteo.season(
+            month: calendar.component(.month, from: now), latitude: city.latitude)
         return conditions
     }
 
     /// Cold-start default: clear sky under the real sun.
-    public static func clearDefault(now: Date, timeZone: TimeZone) -> WorldConditions {
+    public static func clearDefault(
+        now: Date, timeZone: TimeZone, city: City = .seoul
+    ) -> WorldConditions {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         return WorldConditions(
@@ -71,27 +91,30 @@ public final class SkyStore: @unchecked Sendable {
             precipitation: 0,
             windSpeed: 0,
             timeOfDay: Solar.timeOfDay(
-                date: now, latitude: seoulLatitude, longitude: seoulLongitude),
-            season: OpenMeteo.season(month: calendar.component(.month, from: now)),
+                date: now, latitude: city.latitude, longitude: city.longitude),
+            season: OpenMeteo.season(
+                month: calendar.component(.month, from: now), latitude: city.latitude),
             darkness: Solar.darkness(
-                date: now, latitude: seoulLatitude, longitude: seoulLongitude)
+                date: now, latitude: city.latitude, longitude: city.longitude)
         )
     }
 
     /// Current best-known conditions without touching the network.
     public func current(now: Date = .now, timeZone: TimeZone = .current) -> WorldConditions {
-        Self.resolve(fetched: nil, cached: cache.load(), now: now, timeZone: timeZone)
+        Self.resolve(fetched: nil, cached: cache.load(), now: now, timeZone: timeZone, city: city)
     }
 
-    /// Fetches live conditions; on any failure falls back down the ladder.
+    /// Fetches live conditions for the picked city; on any failure falls
+    /// back down the ladder.
     public func refresh(now: Date = .now, timeZone: TimeZone = .current) async -> WorldConditions {
         let fetched: WorldConditions?
-        if let (data, _) = try? await session.data(from: Self.seoulURL) {
-            fetched = try? OpenMeteo.conditions(fromJSON: data)
+        if let (data, _) = try? await session.data(from: Self.url(for: city)) {
+            fetched = try? OpenMeteo.conditions(fromJSON: data, now: now)
         } else {
             fetched = nil
         }
         if let fetched { cache.save(fetched) }
-        return Self.resolve(fetched: fetched, cached: cache.load(), now: now, timeZone: timeZone)
+        return Self.resolve(
+            fetched: fetched, cached: cache.load(), now: now, timeZone: timeZone, city: city)
     }
 }
