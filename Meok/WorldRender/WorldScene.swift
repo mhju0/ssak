@@ -3,12 +3,19 @@ import StrokeEngine
 
 /// The scroll: composited ink layers over living hanji paper —
 /// L0 paper, L1 mountain wash, and the M0 cast (carp, keeper).
+///
+/// The paper and mountain are procedural shaders, but evaluating their
+/// noise per pixel per frame is GPU-bound on real phones (iPhone 13 mini:
+/// ~35 fps at 0% CPU). Neither changes between weather updates, so both
+/// are baked into one background texture and re-baked only when a uniform
+/// actually changes.
 final class WorldScene: SKScene {
-    private let paper = SKSpriteNode(texture: .flatWhite)
-    private let mountain = MountainWash.makeNode()
+    private let background = SKSpriteNode(texture: .flatWhite)
     private var carp: RecipeNode?
     private var keeper: RecipeNode?
     private var carpWetness: CGFloat = 0
+    private var bakePending = false
+    private var needsBake = false
     /// When the launch reveal finishes; wetness rebuilds before then must
     /// restart the reveal, not skip it (the paint-in is the signature moment,
     /// and real weather arrives ~1s after launch).
@@ -16,13 +23,13 @@ final class WorldScene: SKScene {
 
     /// Overall wash strength of the mountain layer (0 = bare paper).
     var inkDensity: Float = 0.55 {
-        didSet { mountain.shader?.uniformNamed("u_density")?.floatValue = inkDensity }
+        didSet { scheduleBake() }
     }
 
     /// How hard the rain runs the ink, 0…1 (WorldConditions.rainIntensity).
     var rainBleed: Float = 0 {
         didSet {
-            mountain.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
+            scheduleBake()
             // The carp soaks with the rain. Stamps are baked per style, so
             // rebuild only when wetness actually moved — with a threshold
             // small enough that even drizzle (~0.07) registers.
@@ -36,26 +43,64 @@ final class WorldScene: SKScene {
     override init() {
         super.init(size: .zero)
         scaleMode = .resizeFill
-        paper.shader = PaperShader.make()
-        addChild(paper)
-        mountain.zPosition = 1
-        addChild(mountain)
+        addChild(background)
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
+    override func didMove(to view: SKView) {
+        super.didMove(to: view)
+        if needsBake { bakeBackground() }
+    }
+
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         guard size.width > 0, size.height > 0 else { return }
-        let center = CGPoint(x: size.width / 2, y: size.height / 2)
-        let sizeUniform = vector_float2(Float(size.width), Float(size.height))
-        for node in [paper, mountain] {
-            node.position = center
-            node.size = size
-            node.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
-        }
+        background.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        background.size = size
+        bakeBackground()
         layoutFigures(reveal: true)
+    }
+
+    /// Coalesces bursts of uniform changes (slider drags) into one re-bake.
+    private func scheduleBake() {
+        guard !bakePending else { return }
+        bakePending = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.bakePending = false
+            self?.bakeBackground()
+        }
+    }
+
+    /// Renders paper + mountain offscreen into the background texture.
+    /// Shader nodes are created fresh per bake so every uniform is set
+    /// before first render (SKView.texture(from:) can render stale values
+    /// for uniforms updated after presentation — issue #9).
+    private func bakeBackground() {
+        guard let view, size.width > 0, size.height > 0 else {
+            needsBake = true
+            return
+        }
+        needsBake = false
+
+        let sizeUniform = vector_float2(Float(size.width), Float(size.height))
+        let paper = SKSpriteNode(texture: .flatWhite)
+        paper.size = size
+        paper.shader = PaperShader.make()
+        paper.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+
+        let mountain = MountainWash.makeNode()
+        mountain.size = size
+        mountain.zPosition = 1
+        mountain.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+        mountain.shader?.uniformNamed("u_density")?.floatValue = inkDensity
+        mountain.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
+
+        let container = SKNode()
+        container.addChild(paper)
+        container.addChild(mountain)
+        background.texture = view.texture(from: container)
     }
 
     /// The M0 composite cast: carp in the valley pond, keeper on the path

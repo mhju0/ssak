@@ -74,9 +74,7 @@ struct ContentView: View {
         }
         .statusBarHidden(true)
         .task {
-            #if DEBUG
             harnessSeed()
-            #endif
             await sky.refresh()
             // Seed the initial bleed even when refresh didn't change anything
             // (onChange only fires on actual changes).
@@ -95,11 +93,10 @@ struct ContentView: View {
         host.scene?.rainBleed = host.bleedOverride ?? Float(sky.conditions.rainIntensity)
     }
 
-    #if DEBUG
-    /// CLI screenshot-review harness: launch defaults drive the same paths
-    /// as the debug controls. `-meok-ink 0.9` seeds wash density,
-    /// `-meok-bleed 0.7` forces the bleed override, `-meok-capture` saves a
-    /// scene PNG after the reveal settles.
+    /// Harness overrides, available in every configuration so device A/B
+    /// tests work from a Release scheme: `-meok-ink 0.9` seeds wash density,
+    /// `-meok-bleed 0.7` forces the bleed override. Capture (`-meok-capture`,
+    /// DEBUG-only) saves a scene PNG after the reveal settles.
     private func harnessSeed() {
         let defaults = UserDefaults.standard
         if defaults.object(forKey: "meok-ink") != nil {
@@ -108,14 +105,15 @@ struct ContentView: View {
         if defaults.object(forKey: "meok-bleed") != nil {
             host.bleedOverride = defaults.float(forKey: "meok-bleed")
         }
+        #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-meok-capture") {
             Task {
                 try? await Task.sleep(for: .seconds(devSheet.captureSettle))
                 _ = capturePNG(from: host)
             }
         }
+        #endif
     }
-    #endif
 }
 
 #if DEBUG
