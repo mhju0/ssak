@@ -18,6 +18,10 @@ public struct SkyCache {
             try? JSONDecoder().decode(WorldConditions.self, from: $0)
         }
     }
+
+    public func clear() {
+        defaults.removeObject(forKey: Self.key)
+    }
 }
 
 /// Fetches the real sky for the default city and always resolves to a value:
@@ -38,12 +42,15 @@ public final class SkyStore: @unchecked Sendable {
     private let defaults: UserDefaults
 
     /// The picked city; persisted. Seoul until the player chooses.
+    /// Switching cities clears the weather cache — another city's cached
+    /// rain under this sky would be a faked sky (pillar 1).
     public var city: City {
         get {
             defaults.data(forKey: Self.cityKey)
                 .flatMap { try? JSONDecoder().decode(City.self, from: $0) } ?? .seoul
         }
         set {
+            if newValue != city { cache.clear() }
             defaults.set(try? JSONEncoder().encode(newValue), forKey: Self.cityKey)
         }
     }

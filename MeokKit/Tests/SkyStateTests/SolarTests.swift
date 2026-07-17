@@ -36,9 +36,11 @@ final class SolarTests: XCTestCase {
     }
 
     func testEquinoxSunriseNearSixThirtyFive() {
-        // Seoul equinox sunrise ≈ 06:35 KST — elevation crosses zero there.
+        // Seoul equinox *apparent* sunrise ≈ 06:35 KST; geometric center
+        // elevation there ≈ −0.8° (refraction + semidiameter). The sun moves
+        // ~0.2°/min at the horizon, so ±2° keeps this minutes-level.
         let el = elevation(seoulDate(2026, 3, 20, 6, 35))
-        XCTAssertEqual(el, 0, accuracy: 5)
+        XCTAssertEqual(el, -0.8, accuracy: 2)
     }
 
     // MARK: Darkness curve

@@ -33,6 +33,7 @@ enum PaperShader {
         float fiberV = vnoise(vec2(px.x * 0.45, px.y * 0.012));
         float tooth = vnoise(px * 0.18);
 
+        // Warm hanji tone — keep in sync with WorldScene.mistTexture.
         vec3 base = vec3(0.937, 0.912, 0.852);
         float grain = (mottle - 0.5) * 0.05
                     + (fiberH - 0.5) * 0.034

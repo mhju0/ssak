@@ -84,11 +84,12 @@ final class OpenMeteoTests: XCTestCase {
         XCTAssertEqual(OpenMeteo.timeOfDay(hour: 20), .night)
         XCTAssertEqual(OpenMeteo.timeOfDay(hour: 0), .night)
 
-        XCTAssertEqual(OpenMeteo.season(month: 12), .winter)
-        XCTAssertEqual(OpenMeteo.season(month: 2), .winter)
-        XCTAssertEqual(OpenMeteo.season(month: 3), .spring)
-        XCTAssertEqual(OpenMeteo.season(month: 6), .summer)
-        XCTAssertEqual(OpenMeteo.season(month: 9), .autumn)
-        XCTAssertEqual(OpenMeteo.season(month: 11), .autumn)
+        let seoulLat = 37.5665
+        XCTAssertEqual(OpenMeteo.season(month: 12, latitude: seoulLat), .winter)
+        XCTAssertEqual(OpenMeteo.season(month: 2, latitude: seoulLat), .winter)
+        XCTAssertEqual(OpenMeteo.season(month: 3, latitude: seoulLat), .spring)
+        XCTAssertEqual(OpenMeteo.season(month: 6, latitude: seoulLat), .summer)
+        XCTAssertEqual(OpenMeteo.season(month: 9, latitude: seoulLat), .autumn)
+        XCTAssertEqual(OpenMeteo.season(month: 11, latitude: seoulLat), .autumn)
     }
 }

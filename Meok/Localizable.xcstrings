@@ -1,7 +1,56 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-
+    "City" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도시"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "완료"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정"
+          }
+        }
+      }
+    },
+    "The scroll lives under this city's real sky." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "족자는 이 도시의 실제 하늘 아래 살아갑니다."
+          }
+        }
+      }
+    },
+    "Weather data by Open-Meteo.com (CC BY 4.0)" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "날씨 데이터 제공: Open-Meteo.com (CC BY 4.0)"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }

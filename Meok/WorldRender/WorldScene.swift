@@ -47,8 +47,10 @@ final class WorldScene: SKScene {
     /// Applied at layout; the harness seeds it for fixed-altitude captures.
     var cameraFraction: CGFloat = 1
 
-    /// Debug overlay hook: fires when the camera crosses into another zone.
-    var onZoneChange: ((Zone) -> Void)?
+    /// Debug overlay hook: fires when the camera crosses a zone boundary or
+    /// its altitude fraction moves a step (quantized to avoid per-frame churn).
+    var onAltitudeChange: ((Zone, CGFloat) -> Void)?
+    private var lastAltitudeStep = -1
 
     var worldHeight: CGFloat { size.height * CGFloat(Zone.allCases.count) }
 
@@ -116,7 +118,7 @@ final class WorldScene: SKScene {
         paper.size = size
         paper.position = .zero
 
-        setCameraY(size.height / 2 + cameraFraction * (worldHeight - size.height))
+        parkCamera(atFraction: cameraFraction)
         layoutParallax()
         bakeBackground()
         layoutDressing()
@@ -154,22 +156,36 @@ final class WorldScene: SKScene {
             (0.5, 0.12, -0.38), (1.5, 0.82, -0.40), (2.5, 0.08, -0.42), (3.5, 0.86, -0.38),
         ]
         for tuft in tufts {
-            let node = RecipeNode(recipe: Recipes.grassTuft, scale: size.width * 0.14)
-            node.showInstantly()
-            let frame = node.calculateAccumulatedFrame()
-            let sprite = SKSpriteNode(texture: view.texture(from: node))
-            sprite.size = frame.size
-            sprite.position = CGPoint(
-                x: size.width * tuft.x + frame.midX,
-                y: tuft.screenOffset * zoneHeight
-                    + Parallax.fore * tuft.camera * zoneHeight + frame.midY)
+            guard let sprite = flattenedSprite(
+                recipe: Recipes.grassTuft, scale: size.width * 0.14, view: view)
+            else { continue }
+            sprite.position.x += size.width * tuft.x
+            sprite.position.y += tuft.screenOffset * zoneHeight
+                + Parallax.fore * tuft.camera * zoneHeight
             foreLayer.addChild(sprite)
         }
+    }
+
+    /// Renders a recipe once and flattens it to a single sprite (positioned
+    /// at its frame center — add the anchor offset to place it). Static art
+    /// costs one node this way (#12).
+    private func flattenedSprite(
+        recipe: StrokeRecipe, scale: CGFloat, view: SKView
+    ) -> SKSpriteNode? {
+        let node = RecipeNode(recipe: recipe, scale: scale)
+        node.showInstantly()
+        let frame = node.calculateAccumulatedFrame()
+        guard frame.width > 0 else { return nil }
+        let sprite = SKSpriteNode(texture: view.texture(from: node))
+        sprite.size = frame.size
+        sprite.position = CGPoint(x: frame.midX, y: frame.midY)
+        return sprite
     }
 
     /// Paper-tone gradient band — ink-wash mist is paper showing through.
     private static let mistTexture: SKTexture = {
         let size = CGSize(width: 8, height: 128)
+        // Warm hanji tone — keep in sync with the base in PaperShader.
         let paperTone = UIColor(red: 0.937, green: 0.912, blue: 0.852, alpha: 1)
         let image = UIGraphicsImageRenderer(size: size).image { context in
             let colors = [
@@ -201,16 +217,11 @@ final class WorldScene: SKScene {
         for zone in Zone.allCases {
             let zoneBottom = size.height * CGFloat(zone.rawValue)
             for prop in ZoneDressing.props(for: zone) {
-                let inkScale = size.width * prop.scale
-                let node = RecipeNode(recipe: prop.recipe, scale: inkScale)
-                node.showInstantly()
-
-                let frame = node.calculateAccumulatedFrame()
-                let sprite = SKSpriteNode(texture: view.texture(from: node))
-                sprite.size = frame.size
-                sprite.position = CGPoint(
-                    x: size.width * prop.x + frame.midX,
-                    y: zoneBottom + size.height * prop.y + frame.midY)
+                guard let sprite = flattenedSprite(
+                    recipe: prop.recipe, scale: size.width * prop.scale, view: view)
+                else { continue }
+                sprite.position.x += size.width * prop.x
+                sprite.position.y += zoneBottom + size.height * prop.y
                 sprite.zPosition = 1.5
                 addChild(sprite)
                 dressing.append(sprite)
@@ -250,7 +261,6 @@ final class WorldScene: SKScene {
             walk,
             .run { [weak self] in self?.settleKeeper() },
         ]), withKey: "walk")
-        keeperX = target
     }
 
     private func settleKeeper() {
@@ -302,9 +312,13 @@ final class WorldScene: SKScene {
         foreLayer.position.y = cameraY * (1 - Parallax.fore)
 
         let zone = Zone.at(cameraY: cameraY, screenHeight: size.height)
-        if zone != lastZone {
+        let range = worldHeight - size.height
+        let fraction = range > 0 ? (cameraY - size.height / 2) / range : 0
+        let step = Int(fraction * 50)
+        if zone != lastZone || step != lastAltitudeStep {
             lastZone = zone
-            onZoneChange?(zone)
+            lastAltitudeStep = step
+            onAltitudeChange?(zone, fraction)
         }
     }
 
@@ -367,7 +381,10 @@ final class WorldScene: SKScene {
     /// hermitage path at staffage scale.
     private func layoutFigures(reveal: Bool) {
         carp?.removeFromParent()
-        keeper?.removeFromParent()
+        // A rebuild mid-walk keeps the keeper where he actually stands,
+        // not where he was headed.
+        if let mount = keeperMount { keeperX = mount.position.x }
+        keeperMount?.removeFromParent()
         carpWetness = CGFloat(rainBleed) * 0.7
 
         let zoneHeight = size.height

@@ -39,6 +39,24 @@ final class CityTests: XCTestCase {
         defaults.removePersistentDomain(forName: suite)
     }
 
+    func testSwitchingCityInvalidatesTheWeatherCache() throws {
+        // Pillar 1: never faked. Seoul's cached rain must not render under
+        // Sydney's sky — a city switch clears the cache, and the ladder
+        // falls to the clear default for the new city.
+        let suite = "meok-city-cache-tests"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+
+        let store = SkyStore(defaults: defaults)
+        SkyCache(defaults: defaults).save(WorldConditions(
+            weather: .rain, precipitation: 5, windSpeed: 3, timeOfDay: .day, season: .summer))
+        XCTAssertEqual(store.current().weather, .rain)   // cache in effect
+
+        store.city = City.presets.first { $0.name == "Sydney" }!
+        XCTAssertEqual(store.current().weather, .clear)  // cache cleared
+        defaults.removePersistentDomain(forName: suite)
+    }
+
     func testSouthernHemisphereSeasonIsFlipped() {
         // July: Seoul is summer, Sydney is winter. January: the reverse.
         XCTAssertEqual(OpenMeteo.season(month: 7, latitude: 37.6), .summer)

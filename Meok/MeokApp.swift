@@ -87,7 +87,7 @@ struct ContentView: View {
             // screenshots/recordings are presentation-ready. (The in-app
             // texture(from:) capture can render stale shader uniforms, so
             // gate materials go through simctl instead.)
-            if !ProcessInfo.processInfo.arguments.contains("-meok-clean") {
+            if !cleanChrome {
                 SkyOverlay(conditions: sky.conditions, zoneName: host.zoneName)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 DevControls(host: host, devSheet: $devSheet)
@@ -192,11 +192,13 @@ extension String.StringInterpolation {
 final class WorldHost: ObservableObject {
     weak var skView: SKView?
     var scene: WorldScene?
-    /// DEBUG-only: forces rain-bleed intensity; nil follows the real sky.
+    /// Harness override (works in all configurations): forces rain-bleed
+    /// intensity; nil follows the real sky.
     @Published var bleedOverride: Float?
-    /// DEBUG-only: forces darkness; nil follows the real sun.
+    /// Harness override (works in all configurations): forces darkness;
+    /// nil follows the real sun.
     @Published var darkOverride: Float?
-    /// Zone under the camera, for the debug overlay.
+    /// Zone + altitude under the camera, for the debug overlay.
     @Published var zoneName = ""
 }
 
@@ -218,8 +220,8 @@ struct WorldView: UIViewRepresentable {
         }
         #endif
         let scene = WorldScene()
-        scene.onZoneChange = { [weak host] zone in
-            host?.zoneName = zone.name
+        scene.onAltitudeChange = { [weak host] zone, fraction in
+            host?.zoneName = String(format: "%@ · alt %.2f", zone.name, fraction)
         }
         view.presentScene(scene)
         host.skView = view

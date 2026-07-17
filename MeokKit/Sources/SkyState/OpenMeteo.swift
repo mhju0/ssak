@@ -60,7 +60,7 @@ public enum OpenMeteo {
 
     /// Meteorological seasons, hemisphere-aware: July is summer in Seoul
     /// and winter in Sydney.
-    static func season(month: Int, latitude: Double = 90) -> WorldConditions.Season {
+    static func season(month: Int, latitude: Double) -> WorldConditions.Season {
         let shifted = latitude < 0 ? (month + 5) % 12 + 1 : month
         return switch shifted {
         case 3...5: .spring
