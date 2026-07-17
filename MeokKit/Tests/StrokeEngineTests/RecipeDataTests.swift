@@ -29,6 +29,24 @@ final class RecipeDataTests: XCTestCase {
         }
     }
 
+    func testPropRecipesStayInBoundsAndProduceDabs() {
+        let props: [(String, StrokeRecipe)] = [
+            ("pine", Recipes.pine), ("rock", Recipes.rock), ("hut", Recipes.hut),
+            ("gardenBeds", Recipes.gardenBeds), ("pondBank", Recipes.pondBank),
+        ]
+        for (name, recipe) in props {
+            XCTAssertFalse(recipe.strokes.isEmpty, name)
+            for (index, stroke) in recipe.strokes.enumerated() {
+                for point in stroke.points {
+                    XCTAssert((0 ... 1).contains(point.x), "\(name) stroke \(index)")
+                    XCTAssert((0 ... 1).contains(point.y), "\(name) stroke \(index)")
+                }
+                let spacing = max(stroke.width / 2 * 0.38, 0.0015)
+                XCTAssertFalse(stroke.dabs(spacing: spacing).isEmpty, "\(name) stroke \(index)")
+            }
+        }
+    }
+
     func testKeeperPosesKeepStaffageEconomy() {
         // Spec D8: the keeper is 5–10 strokes with a 갓 silhouette.
         for (name, recipe) in [("standing", Recipes.keeperStanding), ("seated", Recipes.keeperSeated)] {

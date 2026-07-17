@@ -84,7 +84,40 @@ final class WorldScene: SKScene {
 
         setCameraY(size.height / 2 + cameraFraction * (worldHeight - size.height))
         bakeBackground()
+        layoutDressing()
         layoutFigures(reveal: true)
+    }
+
+    // MARK: Zone dressing
+
+    private var dressing: [SKNode] = []
+
+    /// Places each zone's props. Props are static, so each is flattened to
+    /// a single sprite at layout — dressing costs one node per prop instead
+    /// of hundreds of dab sprites (device perf lesson, #12).
+    private func layoutDressing() {
+        dressing.forEach { $0.removeFromParent() }
+        dressing = []
+        guard let view else { return }
+
+        for zone in Zone.allCases {
+            let zoneBottom = size.height * CGFloat(zone.rawValue)
+            for prop in ZoneDressing.props(for: zone) {
+                let inkScale = size.width * prop.scale
+                let node = RecipeNode(recipe: prop.recipe, scale: inkScale)
+                node.showInstantly()
+
+                let frame = node.calculateAccumulatedFrame()
+                let sprite = SKSpriteNode(texture: view.texture(from: node))
+                sprite.size = frame.size
+                sprite.position = CGPoint(
+                    x: size.width * prop.x + frame.midX,
+                    y: zoneBottom + size.height * prop.y + frame.midY)
+                sprite.zPosition = 1.5
+                addChild(sprite)
+                dressing.append(sprite)
+            }
+        }
     }
 
     // MARK: Scrolling
