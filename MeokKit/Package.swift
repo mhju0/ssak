@@ -18,7 +18,7 @@ let package = Package(
             resources: [.copy("Fixtures")]
         ),
         .target(name: "StrokeEngine"),
-        .testTarget(name: "StrokeEngineTests", dependencies: ["StrokeEngine"]),
+        .testTarget(name: "StrokeEngineTests", dependencies: ["StrokeEngine", "GameKernel"]),
         .target(name: "GameKernel", dependencies: ["SkyState"]),
         .testTarget(name: "GameKernelTests", dependencies: ["GameKernel"]),
         .target(name: "Persistence", dependencies: ["GameKernel"]),
