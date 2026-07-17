@@ -21,6 +21,26 @@
         }
       }
     },
+    "%lld of %lld species under your sky" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 하늘의 어종 %lld / %lld"
+          }
+        }
+      }
+    },
+    "%lld of %lld weather variants" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "날씨 변이 %lld / %lld"
+          }
+        }
+      }
+    },
     "A new sky for this one." : {
       "localizations" : {
         "ko" : {
@@ -111,6 +131,16 @@
         }
       }
     },
+    "Ledger" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도감"
+          }
+        }
+      }
+    },
     "Level up!" : {
       "localizations" : {
         "ko" : {
@@ -121,12 +151,42 @@
         }
       }
     },
+    "Lv %lld" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lv %lld"
+          }
+        }
+      }
+    },
+    "Not native to your sky." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 하늘의 물고기가 아닙니다."
+          }
+        }
+      }
+    },
     "Now!" : {
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "지금!"
+          }
+        }
+      }
+    },
+    "One that got away…" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "놓친 그 물고기…"
           }
         }
       }

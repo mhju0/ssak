@@ -71,6 +71,7 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var gameStore: GameStore?
     @State private var showFishing = ProcessInfo.processInfo.arguments.contains("-meok-fish-demo")
+    @State private var showLedger = ProcessInfo.processInfo.arguments.contains("-meok-ledger")
     private let cleanChrome = ProcessInfo.processInfo.arguments.contains("-meok-clean")
 
     var body: some View {
@@ -95,13 +96,25 @@ struct ContentView: View {
                 .padding(.bottom, 30)
             }
             if !cleanChrome {
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .padding(12)
+                HStack(spacing: 0) {
+                    if gameStore != nil {
+                        Button {
+                            showLedger = true
+                        } label: {
+                            Image(systemName: "book.closed")
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .padding(12)
+                        }
+                    }
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .padding(12)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             }
@@ -120,6 +133,11 @@ struct ContentView: View {
         .statusBarHidden(true)
         .sheet(isPresented: $showSettings) {
             SettingsView(sky: sky)
+        }
+        .sheet(isPresented: $showLedger) {
+            if let gameStore {
+                LedgerView(store: gameStore, city: sky.city)
+            }
         }
         .fullScreenCover(isPresented: $showFishing) {
             if let gameStore {
