@@ -9,6 +9,10 @@ final class WorldScene: SKScene {
     private var carp: RecipeNode?
     private var keeper: RecipeNode?
     private var carpWetness: CGFloat = 0
+    /// When the launch reveal finishes; wetness rebuilds before then must
+    /// restart the reveal, not skip it (the paint-in is the signature moment,
+    /// and real weather arrives ~1s after launch).
+    private var revealUntil = Date.distantPast
 
     /// Overall wash strength of the mountain layer (0 = bare paper).
     var inkDensity: Float = 0.55 {
@@ -24,7 +28,7 @@ final class WorldScene: SKScene {
             // small enough that even drizzle (~0.07) registers.
             let wetness = CGFloat(rainBleed) * 0.7
             if abs(wetness - carpWetness) > 0.02 {
-                layoutFigures(reveal: false)
+                layoutFigures(reveal: Date() < revealUntil)
             }
         }
     }
@@ -82,7 +86,8 @@ final class WorldScene: SKScene {
 
         if reveal {
             let carpEnd = carpNode.reveal(after: 0.5)
-            keeperNode.reveal(after: carpEnd + 0.3)
+            let keeperEnd = keeperNode.reveal(after: carpEnd + 0.3)
+            revealUntil = Date().addingTimeInterval(keeperEnd)
         } else {
             carpNode.showInstantly()
             keeperNode.showInstantly()

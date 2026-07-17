@@ -134,6 +134,8 @@ final class RecipeNode: SKNode {
         self.stamps = stamps
         self.revealDuration = max(0, clock - recipe.strokeGap)
         super.init()
+        // ponytail: one sprite per dab (~1–3k nodes per recipe); flatten
+        // finished recipes to a texture if node counts ever hurt frame rate.
         stamps.forEach { addChild($0.sprite) }
     }
 
