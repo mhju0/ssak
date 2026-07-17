@@ -66,7 +66,7 @@ struct ContentView: View {
             // texture(from:) capture can render stale shader uniforms, so
             // gate materials go through simctl instead.)
             if !ProcessInfo.processInfo.arguments.contains("-meok-clean") {
-                SkyOverlay(conditions: sky.conditions)
+                SkyOverlay(conditions: sky.conditions, zoneName: host.zoneName)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 DevControls(host: host, devSheet: $devSheet)
             }
@@ -95,8 +95,10 @@ struct ContentView: View {
 
     /// Harness overrides, available in every configuration so device A/B
     /// tests work from a Release scheme: `-meok-ink 0.9` seeds wash density,
-    /// `-meok-bleed 0.7` forces the bleed override. Capture (`-meok-capture`,
-    /// DEBUG-only) saves a scene PNG after the reveal settles.
+    /// `-meok-bleed 0.7` forces the bleed override, `-meok-cam 0.5` parks
+    /// the camera at an altitude fraction (0 = pond, 1 = peak). Capture
+    /// (`-meok-capture`, DEBUG-only) saves a scene PNG after the reveal
+    /// settles.
     private func harnessSeed() {
         let defaults = UserDefaults.standard
         if defaults.object(forKey: "meok-ink") != nil {
@@ -104,6 +106,9 @@ struct ContentView: View {
         }
         if defaults.object(forKey: "meok-bleed") != nil {
             host.bleedOverride = defaults.float(forKey: "meok-bleed")
+        }
+        if defaults.object(forKey: "meok-cam") != nil {
+            host.scene?.parkCamera(atFraction: CGFloat(defaults.float(forKey: "meok-cam")))
         }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-meok-capture") {
@@ -119,12 +124,14 @@ struct ContentView: View {
 #if DEBUG
 struct SkyOverlay: View {
     let conditions: WorldConditions
+    var zoneName = ""
 
     var body: some View {
         Text(verbatim: """
         \(conditions.weather.rawValue) · \(conditions.precipitation, format: "%.1f")mm/h
         wind \(conditions.windSpeed, format: "%.1f")m/s
         \(conditions.timeOfDay.rawValue) · \(conditions.season.rawValue)
+        \(zoneName)
         """)
         .font(.caption.monospaced())
         .foregroundStyle(.secondary)
@@ -145,11 +152,17 @@ final class WorldHost: ObservableObject {
     var scene: WorldScene?
     /// DEBUG-only: forces rain-bleed intensity; nil follows the real sky.
     @Published var bleedOverride: Float?
+    /// Zone under the camera, for the debug overlay.
+    @Published var zoneName = ""
 }
 
 struct WorldView: UIViewRepresentable {
     let host: WorldHost
     var sheet = DevSheet.world
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
 
     func makeUIView(context: Context) -> SKView {
         let view = SKView()
@@ -161,10 +174,39 @@ struct WorldView: UIViewRepresentable {
         }
         #endif
         let scene = WorldScene()
+        scene.onZoneChange = { [weak host] zone in
+            host?.zoneName = zone.name
+        }
         view.presentScene(scene)
         host.skView = view
         host.scene = scene
+
+        context.coordinator.scene = scene
+        let pan = UIPanGestureRecognizer(
+            target: context.coordinator, action: #selector(Coordinator.pan(_:)))
+        pan.maximumNumberOfTouches = 1
+        view.addGestureRecognizer(pan)
         return view
+    }
+
+    /// Bridges the thumb-drag to the scene: drag down pulls the scroll down
+    /// (camera climbs toward the peak), like unrolling a hanging scroll.
+    final class Coordinator: NSObject {
+        weak var scene: WorldScene?
+
+        @objc func pan(_ gesture: UIPanGestureRecognizer) {
+            guard let scene, let view = gesture.view else { return }
+            switch gesture.state {
+            case .changed:
+                let deltaY = gesture.translation(in: view).y
+                gesture.setTranslation(.zero, in: view)
+                scene.scrollBy(deltaY)
+            case .ended, .cancelled:
+                scene.endScroll(velocity: gesture.velocity(in: view).y)
+            default:
+                break
+            }
+        }
     }
 
     func updateUIView(_ uiView: SKView, context: Context) {

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A00000000000000000000010 /* SkyState in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000011 /* SkyState */; };
 		A00000000000000000000013 /* StrokeEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000014 /* StrokeEngine */; };
+		A00000000000000000000015 /* GameKernel in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000016 /* GameKernel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			files = (
 				A00000000000000000000010 /* SkyState in Frameworks */,
 				A00000000000000000000013 /* StrokeEngine in Frameworks */,
+				A00000000000000000000015 /* GameKernel in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +76,7 @@
 			packageProductDependencies = (
 				A00000000000000000000011 /* SkyState */,
 				A00000000000000000000014 /* StrokeEngine */,
+				A00000000000000000000016 /* GameKernel */,
 			);
 			productName = Meok;
 			productReference = A00000000000000000000004 /* Meok.app */;
@@ -274,6 +277,10 @@
 		A00000000000000000000014 /* StrokeEngine */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = StrokeEngine;
+		};
+		A00000000000000000000016 /* GameKernel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GameKernel;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .library(name: "SkyState", targets: ["SkyState"]),
         .library(name: "StrokeEngine", targets: ["StrokeEngine"]),
+        .library(name: "GameKernel", targets: ["GameKernel"]),
     ],
     targets: [
         .target(name: "SkyState"),
@@ -17,5 +18,7 @@ let package = Package(
         ),
         .target(name: "StrokeEngine"),
         .testTarget(name: "StrokeEngineTests", dependencies: ["StrokeEngine"]),
+        .target(name: "GameKernel"),
+        .testTarget(name: "GameKernelTests", dependencies: ["GameKernel"]),
     ]
 )

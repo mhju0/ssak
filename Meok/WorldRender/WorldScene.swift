@@ -1,25 +1,37 @@
+import GameKernel
 import SpriteKit
 import StrokeEngine
 
-/// The scroll: composited ink layers over living hanji paper —
-/// L0 paper, L1 mountain wash, and the M0 cast (carp, keeper).
+/// The scroll: a vertical world five zones tall (pond at the bottom, peak
+/// at the top), thumb-scrolled through an SKCameraNode. The paper (L0) is a
+/// camera child — it is the sheet itself and never moves; the ink world
+/// scrolls over it.
 ///
-/// The paper and mountain are procedural shaders, but evaluating their
-/// noise per pixel per frame is GPU-bound on real phones (iPhone 13 mini:
-/// ~35 fps at 0% CPU). Neither changes between weather updates, so both
-/// are baked into one background texture and re-baked only when a uniform
-/// actually changes.
+/// Procedural layers are baked to textures and re-baked only when a uniform
+/// changes — per-pixel-per-frame shader noise was GPU-bound on device (#12).
 final class WorldScene: SKScene {
-    private let background = SKSpriteNode(texture: .flatWhite)
+    private let cam = SKCameraNode()
+    private let paper = SKSpriteNode(texture: .flatWhite)
+    private let mountain = SKSpriteNode(texture: .flatWhite)
     private var carp: RecipeNode?
     private var keeper: RecipeNode?
     private var carpWetness: CGFloat = 0
     private var bakePending = false
     private var needsBake = false
+    private var lastZone: Zone?
     /// When the launch reveal finishes; wetness rebuilds before then must
     /// restart the reveal, not skip it (the paint-in is the signature moment,
     /// and real weather arrives ~1s after launch).
     private var revealUntil = Date.distantPast
+
+    /// Camera altitude as a 0…1 fraction of the world (0 = pond, 1 = peak).
+    /// Applied at layout; the harness seeds it for fixed-altitude captures.
+    var cameraFraction: CGFloat = 1
+
+    /// Debug overlay hook: fires when the camera crosses into another zone.
+    var onZoneChange: ((Zone) -> Void)?
+
+    var worldHeight: CGFloat { size.height * CGFloat(Zone.allCases.count) }
 
     /// Overall wash strength of the mountain layer (0 = bare paper).
     var inkDensity: Float = 0.55 {
@@ -43,7 +55,12 @@ final class WorldScene: SKScene {
     override init() {
         super.init(size: .zero)
         scaleMode = .resizeFill
-        addChild(background)
+        camera = cam
+        addChild(cam)
+        paper.zPosition = -100
+        cam.addChild(paper)
+        mountain.zPosition = 1
+        addChild(mountain)
     }
 
     @available(*, unavailable)
@@ -57,11 +74,62 @@ final class WorldScene: SKScene {
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         guard size.width > 0, size.height > 0 else { return }
-        background.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        background.size = size
+
+        paper.size = size
+        paper.position = .zero
+
+        // The mountain composition fills the top screen — the peak zone.
+        mountain.size = size
+        mountain.position = CGPoint(x: size.width / 2, y: worldHeight - size.height / 2)
+
+        setCameraY(size.height / 2 + cameraFraction * (worldHeight - size.height))
         bakeBackground()
         layoutFigures(reveal: true)
     }
+
+    // MARK: Scrolling
+
+    /// Jumps the camera to an altitude fraction (harness + future wayfinding).
+    func parkCamera(atFraction fraction: CGFloat) {
+        cameraFraction = fraction
+        guard size.height > 0 else { return }
+        cam.removeAction(forKey: "flick")
+        setCameraY(size.height / 2 + fraction * (worldHeight - size.height))
+    }
+
+    /// Drag: positive delta pulls the scroll down (camera climbs).
+    func scrollBy(_ deltaY: CGFloat) {
+        cam.removeAction(forKey: "flick")
+        setCameraY(cam.position.y + deltaY)
+    }
+
+    /// Release: decelerate toward where the flick carries (tested kernel math).
+    func endScroll(velocity velocityY: CGFloat) {
+        let target = ScrollGeometry.flickTarget(
+            from: cam.position.y, velocity: velocityY,
+            screenHeight: size.height, worldHeight: worldHeight)
+        guard abs(target - cam.position.y) > 1 else { return }
+        let glide = SKAction.moveTo(y: target, duration: 0.6)
+        glide.timingMode = .easeOut
+        cam.run(glide, withKey: "flick")
+    }
+
+    private func setCameraY(_ y: CGFloat) {
+        let clamped = ScrollGeometry.clampedCameraY(
+            y, screenHeight: size.height, worldHeight: worldHeight)
+        cam.position = CGPoint(x: size.width / 2, y: clamped)
+    }
+
+    override func update(_ currentTime: TimeInterval) {
+        guard size.height > 0 else { return }
+        let zone = Zone.at(cameraY: cam.position.y, screenHeight: size.height)
+        if zone != lastZone {
+            lastZone = zone
+            onZoneChange?(zone)
+        }
+    }
+
+    // MARK: Baking
 
     /// Coalesces bursts of uniform changes (slider drags) into one re-bake.
     private func scheduleBake() {
@@ -73,7 +141,7 @@ final class WorldScene: SKScene {
         }
     }
 
-    /// Renders paper + mountain offscreen into the background texture.
+    /// Renders the paper and mountain offscreen into their textures.
     /// Shader nodes are created fresh per bake so every uniform is set
     /// before first render (SKView.texture(from:) can render stale values
     /// for uniforms updated after presentation — issue #9).
@@ -85,37 +153,40 @@ final class WorldScene: SKScene {
         needsBake = false
 
         let sizeUniform = vector_float2(Float(size.width), Float(size.height))
-        let paper = SKSpriteNode(texture: .flatWhite)
-        paper.size = size
-        paper.shader = PaperShader.make()
-        paper.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
 
-        let mountain = MountainWash.makeNode()
-        mountain.size = size
-        mountain.zPosition = 1
-        mountain.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
-        mountain.shader?.uniformNamed("u_density")?.floatValue = inkDensity
-        mountain.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
+        let paperSource = SKSpriteNode(texture: .flatWhite)
+        paperSource.size = size
+        paperSource.shader = PaperShader.make()
+        paperSource.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+        paper.texture = view.texture(from: paperSource)
 
-        let container = SKNode()
-        container.addChild(paper)
-        container.addChild(mountain)
-        background.texture = view.texture(from: container)
+        let mountainSource = MountainWash.makeNode()
+        mountainSource.size = size
+        mountainSource.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
+        mountainSource.shader?.uniformNamed("u_density")?.floatValue = inkDensity
+        mountainSource.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
+        mountain.texture = view.texture(from: mountainSource)
     }
 
-    /// The M0 composite cast: carp in the valley pond, keeper on the path
-    /// at staffage scale.
+    // MARK: Figures
+
+    /// The M1 cast in world space: carp in the valley pond, keeper on the
+    /// hermitage path at staffage scale.
     private func layoutFigures(reveal: Bool) {
         carp?.removeFromParent()
         keeper?.removeFromParent()
         carpWetness = CGFloat(rainBleed) * 0.7
+
+        let zoneHeight = size.height
 
         let carpNode = RecipeNode(
             recipe: Recipes.carp,
             style: RenderStyle(wetness: carpWetness),
             scale: size.width * 0.42
         )
-        carpNode.position = CGPoint(x: size.width * 0.07, y: size.height * 0.03)
+        carpNode.position = CGPoint(
+            x: size.width * 0.07,
+            y: zoneHeight * CGFloat(Zone.valleyPond.rawValue) + zoneHeight * 0.06)
         carpNode.zPosition = 2
         addChild(carpNode)
         carp = carpNode
@@ -124,7 +195,9 @@ final class WorldScene: SKScene {
             recipe: Recipes.keeperStanding,
             scale: size.height * 0.055
         )
-        keeperNode.position = CGPoint(x: size.width * 0.66, y: size.height * 0.385)
+        keeperNode.position = CGPoint(
+            x: size.width * 0.62,
+            y: zoneHeight * CGFloat(Zone.hermitage.rawValue) + zoneHeight * 0.42)
         keeperNode.zPosition = 2
         addChild(keeperNode)
         keeper = keeperNode
@@ -138,63 +211,4 @@ final class WorldScene: SKScene {
             keeperNode.showInstantly()
         }
     }
-}
-
-extension SKTexture {
-    /// Placeholder quad texture so color-only shader sprites get valid v_tex_coord.
-    static let flatWhite: SKTexture = {
-        let size = CGSize(width: 4, height: 4)
-        let image = UIGraphicsImageRenderer(size: size).image { context in
-            UIColor.white.setFill()
-            context.fill(CGRect(origin: .zero, size: size))
-        }
-        return SKTexture(image: image)
-    }()
-}
-
-/// L0: procedural hanji — fiber grain, flecks, soft vignette. No image assets.
-enum PaperShader {
-    static func make() -> SKShader {
-        let shader = SKShader(source: source)
-        shader.uniforms = [SKUniform(name: "u_size", vectorFloat2: .zero)]
-        return shader
-    }
-
-    private static let source = ShaderLib.noise2D + """
-    void main() {
-        vec2 px = v_tex_coord * u_size;
-
-        // Pulp clouds: large soft density variation, the "handmade" tell.
-        float mottle = vnoise(px * 0.008) * 0.65 + vnoise(px * 0.021) * 0.35;
-
-        // Long thin fibers: low frequency along the fiber, high across it.
-        // Unequal weights so it reads as laid pulp, not woven cloth.
-        float fiberH = vnoise(vec2(px.x * 0.012, px.y * 0.45));
-        float fiberV = vnoise(vec2(px.x * 0.45, px.y * 0.012));
-        float tooth = vnoise(px * 0.18);
-
-        vec3 base = vec3(0.937, 0.912, 0.852);
-        float grain = (mottle - 0.5) * 0.05
-                    + (fiberH - 0.5) * 0.034
-                    + (fiberV - 0.5) * 0.016
-                    + (tooth - 0.5) * 0.024;
-        vec3 col = base + grain;
-
-        // Sparse darker strands, where a long fiber and local noise coincide.
-        float strandH = smoothstep(0.7, 0.95, fiberH * vnoise(px * 0.9));
-        float strandV = smoothstep(0.72, 0.95, fiberV * vnoise(px * 0.9 + 41.7));
-        col -= (strandH + strandV) * 0.04;
-
-        // Rare tiny fiber flecks.
-        float fleck = smoothstep(0.9965, 1.0, hash(floor(px * 0.8)));
-        col -= fleck * 0.07;
-
-        // Soft vignette, aspect-corrected.
-        vec2 c = v_tex_coord - 0.5;
-        c.x *= u_size.x / u_size.y;
-        col *= 1.0 - smoothstep(0.32, 0.85, length(c)) * 0.14;
-
-        gl_FragColor = vec4(col, 1.0);
-    }
-    """
 }
