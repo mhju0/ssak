@@ -1,4 +1,5 @@
 import XCTest
+import GameKernel
 @testable import SkyState
 
 final class OpenMeteoTests: XCTestCase {

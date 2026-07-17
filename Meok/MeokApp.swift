@@ -79,18 +79,18 @@ struct ContentView: View {
             WorldView(host: host, sheet: devSheet)
                 .ignoresSafeArea()
             // The pond invites fishing when the scroll rests there.
-            if host.zone == .valleyPond, gameStore != nil, devSheet == .world {
+            if host.zone == .valleyPond, gameStore != nil, devSheet == .world, !cleanChrome {
                 Button {
                     showFishing = true
                 } label: {
                     Text("Fish")
                         .font(.callout)
-                        .foregroundStyle(Color(red: 0.10, green: 0.095, blue: 0.09).opacity(0.8))
+                        .foregroundStyle(Color(uiColor: .meokInk).opacity(0.8))
                         .padding(.horizontal, 22)
                         .padding(.vertical, 8)
                         .overlay(
                             Capsule()
-                                .stroke(Color(red: 0.10, green: 0.095, blue: 0.09).opacity(0.5), lineWidth: 1))
+                                .stroke(Color(uiColor: .meokInk).opacity(0.5), lineWidth: 1))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .padding(.bottom, 30)

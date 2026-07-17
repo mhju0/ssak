@@ -1,5 +1,4 @@
 import XCTest
-import SkyState
 @testable import GameKernel
 
 final class ConditionEngineTests: XCTestCase {
@@ -56,6 +55,24 @@ final class ConditionEngineTests: XCTestCase {
                     XCTAssertFalse(
                         eligible.isEmpty,
                         "no level-1 catch under \(season)/\(time)/\(weather)")
+                }
+            }
+        }
+    }
+
+    func testGrindingProgressesAtEveryLevelUnderEverySky() {
+        // The rule's other half: "no XP requirement may demand specific
+        // weather" — at every level, every sky still offers something to
+        // catch, so hours (never weather) gate levels.
+        for level in 1...99 {
+            for season in WorldConditions.Season.allCases {
+                for time in WorldConditions.TimeOfDay.allCases {
+                    for weather in WorldConditions.Weather.allCases {
+                        XCTAssertFalse(
+                            ConditionEngine.eligibleSpecies(
+                                sky(season, time, weather), level: level).isEmpty,
+                            "level \(level) stalls under \(season)/\(time)/\(weather)")
+                    }
                 }
             }
         }

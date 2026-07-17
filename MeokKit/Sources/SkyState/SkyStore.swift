@@ -1,4 +1,5 @@
 import Foundation
+import GameKernel
 
 /// Last-fetched conditions, persisted across launches.
 public struct SkyCache {

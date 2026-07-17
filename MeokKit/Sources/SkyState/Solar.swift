@@ -1,4 +1,5 @@
 import Foundation
+import GameKernel
 
 /// Local solar computation — no network (spec §4). Standard low-precision
 /// almanac (declination + hour angle via sidereal time), good to ~0.2°,

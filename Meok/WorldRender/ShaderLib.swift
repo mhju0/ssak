@@ -1,5 +1,11 @@
 import SpriteKit
 
+extension UIColor {
+    /// The one ink. Every stroke, chrome glyph, and text surface mixes
+    /// from this (art direction: hierarchy by weight, never color).
+    static let meokInk = UIColor(red: 0.10, green: 0.095, blue: 0.09, alpha: 1)
+}
+
 extension SKTexture {
     /// Placeholder quad texture so color-only shader sprites get valid v_tex_coord.
     static let flatWhite: SKTexture = {

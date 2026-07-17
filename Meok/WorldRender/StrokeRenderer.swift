@@ -6,7 +6,7 @@ import StrokeEngine
 struct RenderStyle {
     /// 0 dry … 1 soaked: spreads dabs, lightens them, adds a drooping halo.
     var wetness: CGFloat = 0
-    var ink = UIColor(red: 0.10, green: 0.095, blue: 0.09, alpha: 1)
+    var ink = UIColor.meokInk
 }
 
 enum StrokeTextures {

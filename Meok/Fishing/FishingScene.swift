@@ -14,7 +14,7 @@ final class FishingScene: SKScene {
     /// Rain soaks the water washes (set from live conditions before cast).
     var wetness: CGFloat = 0
 
-    private let ink = UIColor(red: 0.10, green: 0.095, blue: 0.09, alpha: 1)
+    private let ink = UIColor.meokInk
     private var bobberRest: CGPoint { CGPoint(x: size.width * 0.44, y: size.height * 0.40) }
 
     /// Three light washes and two reeds — the pond in six strokes.

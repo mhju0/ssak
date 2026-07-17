@@ -1,5 +1,4 @@
 import Foundation
-import SkyState
 
 /// Climate honesty (spec §2): completion is defined against what the
 /// player's sky can produce. Köppen-derived per-city rows from
@@ -8,7 +7,9 @@ import SkyState
 public enum Climate {
     /// Weather values the city's sky can actually produce. Cities not in
     /// the table default to everything: missing data must never lock
-    /// content.
+    /// content. Keyed by preset-city name — when M7's live location adds
+    /// arbitrary coordinates, unknown places fall to this generous default
+    /// until a coordinate-keyed Köppen band lookup replaces the name key.
     public static func capability(of city: City) -> Set<WorldConditions.Weather> {
         snowless.contains(city.name)
             ? Set(WorldConditions.Weather.allCases).subtracting([.snow])

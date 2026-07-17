@@ -55,10 +55,16 @@ final class FishingSession: ObservableObject {
         let defaults = UserDefaults.standard
         let resolvedSeed = seed
             ?? (defaults.object(forKey: "meok-seed") != nil
-                ? UInt64(defaults.integer(forKey: "meok-seed"))
+                ? UInt64(bitPattern: Int64(defaults.integer(forKey: "meok-seed")))
                 : UInt64(Date().timeIntervalSince1970))
         rng = SeededRandom(seed: resolvedSeed)
         level = XPCurve.level(forXP: store.progress(for: .fishing).xp)
+    }
+
+    deinit {
+        // Tasks capture self weakly, so dismissal mid-phase reaches here;
+        // cancel so no timer outlives the view.
+        phaseTask?.cancel()
     }
 
     // MARK: Input (from the view's press gesture)
@@ -107,7 +113,7 @@ final class FishingSession: ObservableObject {
         scene?.showCast()
 
         let delay = autopilot ? min(bite.delay, 1.6) : bite.delay
-        transition(after: delay) { self.beginSignature() }
+        transition(after: delay) { $0.beginSignature() }
     }
 
     private func beginSignature() {
@@ -116,16 +122,16 @@ final class FishingSession: ObservableObject {
         scene?.playTremble(taps)
         feedback.playSignature(taps)
         let length = (taps.last?.offset ?? 0) + (taps.last?.duration ?? 0)
-        transition(after: length + 0.05) { self.openStrikeWindow() }
+        transition(after: length + 0.05) { $0.openStrikeWindow() }
     }
 
     private func openStrikeWindow() {
         phase = .strikeWindow
         if autopilot {
-            transition(after: 0.3) { self.hook() }
+            transition(after: 0.3) { $0.hook() }
         } else {
             // The window closes and the fish drifts off with the moment.
-            transition(after: FishingRules.strikeWindow) { self.slip() }
+            transition(after: FishingRules.strikeWindow) { $0.slip() }
         }
     }
 
@@ -146,39 +152,43 @@ final class FishingSession: ObservableObject {
         strain = 0
         holding = autopilot
         phaseTask?.cancel()
+        // Weak per-iteration so dismissing the view mid-fight deallocates
+        // the session (deinit cancels) instead of spinning this loop forever.
         phaseTask = Task { [weak self] in
-            guard let self else { return }
             var elapsed = 0.0
             var reeled = 0.0
             var singRemaining = 0.0
-            var nextSing = 1.5 + 2.0 * Double(rng.next() % 1000) / 1000
+            var nextSing = 1.5
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 50_000_000)
-                if Task.isCancelled { return }
+                guard let self, !Task.isCancelled else { return }
                 elapsed += 0.05
+
+                // A fish never played simply tires of the game.
+                if elapsed >= FishingRules.fightDuration * 3 { self.slip(); return }
 
                 if singRemaining > 0 {
                     singRemaining -= 0.05
                     if singRemaining <= 0 {
-                        lineSinging = false
-                        if autopilot { holding = true }
-                        if holding {
+                        self.lineSinging = false
+                        if self.holding {
                             // Held through the song — the line strains.
-                            strain += 1
-                            if strain >= 3 { slip(); return }
+                            self.strain += 1
+                            if self.strain >= 3 { self.slip(); return }
                         }
+                        if self.autopilot { self.holding = true }
                     }
                 } else if elapsed >= nextSing, reeled < FishingRules.fightDuration - 1 {
                     lineSinging = true
                     singRemaining = 0.8
-                    nextSing = elapsed + 2.2 + 1.2 * Double(rng.next() % 1000) / 1000
-                    feedback.sing()
-                    scene?.singShiver()
-                    if autopilot { holding = false }
-                } else if holding {
+                    nextSing = elapsed + 2.2 + 1.2 * Double(self.rng.next() % 1000) / 1000
+                    self.feedback.sing()
+                    self.scene?.singShiver()
+                    if self.autopilot { self.holding = false }
+                } else if self.holding {
                     reeled += 0.05
-                    fightProgress = min(1, reeled / FishingRules.fightDuration)
-                    if reeled >= FishingRules.fightDuration { land(); return }
+                    self.fightProgress = min(1, reeled / FishingRules.fightDuration)
+                    if reeled >= FishingRules.fightDuration { self.land(); return }
                 }
             }
         }
@@ -227,12 +237,16 @@ final class FishingSession: ObservableObject {
         if autopilot { cast() }
     }
 
-    private func transition(after seconds: Double, _ body: @escaping @MainActor () -> Void) {
+    /// Weak so a pending transition never keeps a dismissed session alive
+    /// (or fires feedback after the view is gone).
+    private func transition(
+        after seconds: Double, _ body: @escaping @MainActor (FishingSession) -> Void
+    ) {
         phaseTask?.cancel()
-        phaseTask = Task {
+        phaseTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(seconds * 1e9))
-            guard !Task.isCancelled else { return }
-            body()
+            guard let self, !Task.isCancelled else { return }
+            body(self)
         }
     }
 }

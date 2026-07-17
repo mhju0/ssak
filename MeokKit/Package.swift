@@ -11,15 +11,15 @@ let package = Package(
         .library(name: "Persistence", targets: ["Persistence"]),
     ],
     targets: [
-        .target(name: "SkyState"),
+        .target(name: "SkyState", dependencies: ["GameKernel"]),
         .testTarget(
             name: "SkyStateTests",
-            dependencies: ["SkyState"],
+            dependencies: ["SkyState", "GameKernel"],
             resources: [.copy("Fixtures")]
         ),
         .target(name: "StrokeEngine"),
         .testTarget(name: "StrokeEngineTests", dependencies: ["StrokeEngine", "GameKernel"]),
-        .target(name: "GameKernel", dependencies: ["SkyState"]),
+        .target(name: "GameKernel"),
         .testTarget(name: "GameKernelTests", dependencies: ["GameKernel"]),
         .target(name: "Persistence", dependencies: ["GameKernel"]),
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),

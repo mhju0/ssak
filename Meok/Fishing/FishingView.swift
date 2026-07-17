@@ -135,7 +135,7 @@ struct FishingView: View {
     }
 
     private var inkColor: Color {
-        Color(red: 0.10, green: 0.095, blue: 0.09)
+        Color(uiColor: .meokInk)
     }
 
     private func prompt(_ key: LocalizedStringKey) -> some View {

@@ -1,4 +1,5 @@
 import Foundation
+import GameKernel
 
 /// Open-Meteo current-weather provider (free, keyless; WeatherKit swaps in
 /// behind WorldConditions at ~M7).

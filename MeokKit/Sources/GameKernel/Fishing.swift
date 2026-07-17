@@ -1,5 +1,4 @@
 import Foundation
-import SkyState
 
 /// One event in a species' haptic bite signature. The CoreHaptics pattern,
 /// the bobber's visual tremble, and the audio tick all render this same

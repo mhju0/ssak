@@ -1,10 +1,12 @@
 import Foundation
 import SwiftData
-import SkyState
 import GameKernel
 
 /// Lifetime XP for one skill. XP is monotonic — rows only ever grow
 /// (the invariant the v1.1 iCloud merge design leans on).
+/// Note: `.unique` is incompatible with SwiftData's CloudKit mirroring —
+/// fine at v1 (local-only by spec §4); the v1.1 sync design replaces this
+/// model shape anyway (append-only events or per-device rows).
 @Model
 public final class SkillProgress {
     @Attribute(.unique) public var skillID: String
@@ -109,7 +111,7 @@ public final class GameStore {
         let newVariant = !record.caughtWeathers.contains(weather.rawValue)
         if newVariant { record.caughtWeathers.append(weather.rawValue) }
 
-        try? context.save()
+        save()
         return CatchOutcome(
             xpAwarded: species.xp,
             totalXP: progress.xp,
@@ -122,6 +124,18 @@ public final class GameStore {
     /// A lost fish costs only the moment — and logs the silhouette.
     public func recordEscape(of species: FishSpecies) {
         recordCreatingIfNeeded(for: species.id).gotAway = true
-        try? context.save()
+        save()
+    }
+
+    /// A local-only save failing (disk full) is exceptional; the in-memory
+    /// context stays authoritative for the session either way, but never
+    /// swallow it silently — XP is supposed to be monotonic on disk too.
+    private func save() {
+        do {
+            try context.save()
+        } catch {
+            assertionFailure("GameStore save failed: \(error)")
+            print("GameStore save failed: \(error)")
+        }
     }
 }
