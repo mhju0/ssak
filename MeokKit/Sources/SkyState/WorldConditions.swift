@@ -22,6 +22,9 @@ public struct WorldConditions: Codable, Equatable, Sendable {
     public var windSpeed: Double
     public var timeOfDay: TimeOfDay
     public var season: Season
+    /// Continuous 0…1 from the real sun: 0 = full day, 1 = full night,
+    /// twilight between (Solar.darkness). Drives the ink-density curve.
+    public var darkness: Double
 
     /// How hard the ink should run, 0…1. Perceptual sqrt curve where
     /// 8 mm/h ≈ downpour. Driven by measured precipitation regardless of
@@ -37,12 +40,14 @@ public struct WorldConditions: Codable, Equatable, Sendable {
         precipitation: Double,
         windSpeed: Double,
         timeOfDay: TimeOfDay,
-        season: Season
+        season: Season,
+        darkness: Double = 0
     ) {
         self.weather = weather
         self.precipitation = precipitation
         self.windSpeed = windSpeed
         self.timeOfDay = timeOfDay
         self.season = season
+        self.darkness = darkness
     }
 }

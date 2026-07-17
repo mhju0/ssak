@@ -54,6 +54,13 @@ final class WorldScene: SKScene {
         didSet { scheduleBake() }
     }
 
+    /// Real night deepens the world to charcoal: 0…1 from the sun
+    /// (WorldConditions.darkness). Densifies the wash bakes; the paper
+    /// itself stays warm.
+    var darkness: Float = 0 {
+        didSet { scheduleBake() }
+    }
+
     /// How hard the rain runs the ink, 0…1 (WorldConditions.rainIntensity).
     var rainBleed: Float = 0 {
         didSet {
@@ -288,10 +295,14 @@ final class WorldScene: SKScene {
         paperSource.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
         paper.texture = view.texture(from: paperSource)
 
+        // The continuous ink-density curve: night thickens the washes
+        // toward charcoal.
+        let nightDensity = inkDensity * (1 + 0.8 * darkness)
+
         let mountainSource = MountainWash.makeNode()
         mountainSource.size = size
         mountainSource.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
-        mountainSource.shader?.uniformNamed("u_density")?.floatValue = inkDensity
+        mountainSource.shader?.uniformNamed("u_density")?.floatValue = nightDensity
         mountainSource.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed
         mountain.texture = view.texture(from: mountainSource)
 
@@ -301,7 +312,7 @@ final class WorldScene: SKScene {
         let ridgeSource = MountainWash.makeNode()
         ridgeSource.size = size
         ridgeSource.shader?.uniformNamed("u_size")?.vectorFloat2Value = sizeUniform
-        ridgeSource.shader?.uniformNamed("u_density")?.floatValue = inkDensity * 0.4
+        ridgeSource.shader?.uniformNamed("u_density")?.floatValue = nightDensity * 0.4
         ridgeSource.shader?.uniformNamed("u_bleed")?.floatValue = rainBleed * 0.5
         midRidge.texture = view.texture(from: ridgeSource)
     }

@@ -30,10 +30,11 @@ final class OpenMeteoTests: XCTestCase {
         XCTAssertEqual(conditions.season, .summer)
     }
 
-    func testTimeOfDayFollowsResponseUTCOffsetNotDeviceZone() throws {
-        // Same instant, but interpreted through the response's +9 offset:
-        // 2026-01-15T20:00Z is 05:00 on Jan 16 in Seoul → dawn, winter —
-        // regardless of the machine's local time zone.
+    func testTimeOfDayFollowsResponseCoordinatesNotDeviceZone() throws {
+        // 2026-01-15T20:00Z is 05:00 on Jan 16 in Seoul. Seoul's winter
+        // sunrise is ~07:47, so the real sun says deep pre-dawn NIGHT —
+        // where the old fixed-hour buckets would have said dawn. Season
+        // still derives from the response's own UTC offset (winter).
         var components = DateComponents()
         (components.year, components.month, components.day, components.hour) = (2026, 1, 15, 20)
         components.timeZone = TimeZone(identifier: "UTC")
@@ -42,7 +43,8 @@ final class OpenMeteoTests: XCTestCase {
         let conditions = try OpenMeteo.conditions(
             fromJSON: fixture("open-meteo-seoul-clear"), now: instant)
 
-        XCTAssertEqual(conditions.timeOfDay, .dawn)
+        XCTAssertEqual(conditions.timeOfDay, .night)
+        XCTAssertGreaterThan(conditions.darkness, 0.95)
         XCTAssertEqual(conditions.season, .winter)
     }
 

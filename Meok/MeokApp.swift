@@ -76,21 +76,24 @@ struct ContentView: View {
         .task {
             harnessSeed()
             await sky.refresh()
-            // Seed the initial bleed even when refresh didn't change anything
+            // Seed the initial sky even when refresh didn't change anything
             // (onChange only fires on actual changes).
-            applyBleed()
+            applySky()
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task { await sky.refresh() }
         }
-        .onChange(of: sky.conditions) { applyBleed() }
-        .onChange(of: host.bleedOverride) { applyBleed() }
+        .onChange(of: sky.conditions) { applySky() }
+        .onChange(of: host.bleedOverride) { applySky() }
+        .onChange(of: host.darkOverride) { applySky() }
     }
 
-    /// The world bleeds with the real rain unless the debug override forces it.
-    private func applyBleed() {
+    /// The world follows the real rain and the real sun unless the debug
+    /// overrides force them.
+    private func applySky() {
         host.scene?.rainBleed = host.bleedOverride ?? Float(sky.conditions.rainIntensity)
+        host.scene?.darkness = host.darkOverride ?? Float(sky.conditions.darkness)
     }
 
     /// Harness overrides, available in every configuration so device A/B
@@ -106,6 +109,9 @@ struct ContentView: View {
         }
         if defaults.object(forKey: "meok-bleed") != nil {
             host.bleedOverride = defaults.float(forKey: "meok-bleed")
+        }
+        if defaults.object(forKey: "meok-dark") != nil {
+            host.darkOverride = defaults.float(forKey: "meok-dark")
         }
         if defaults.object(forKey: "meok-cam") != nil {
             host.scene?.parkCamera(atFraction: CGFloat(defaults.float(forKey: "meok-cam")))
@@ -130,7 +136,7 @@ struct SkyOverlay: View {
         Text(verbatim: """
         \(conditions.weather.rawValue) · \(conditions.precipitation, format: "%.1f")mm/h
         wind \(conditions.windSpeed, format: "%.1f")m/s
-        \(conditions.timeOfDay.rawValue) · \(conditions.season.rawValue)
+        \(conditions.timeOfDay.rawValue) · \(conditions.season.rawValue) · dark \(conditions.darkness, format: "%.2f")
         \(zoneName)
         """)
         .font(.caption.monospaced())
@@ -152,6 +158,8 @@ final class WorldHost: ObservableObject {
     var scene: WorldScene?
     /// DEBUG-only: forces rain-bleed intensity; nil follows the real sky.
     @Published var bleedOverride: Float?
+    /// DEBUG-only: forces darkness; nil follows the real sun.
+    @Published var darkOverride: Float?
     /// Zone under the camera, for the debug overlay.
     @Published var zoneName = ""
 }
@@ -233,6 +241,8 @@ struct DevControls: View {
     @State private var inkDensity: Float = 0.55
     @State private var overrideBleed = false
     @State private var bleedValue: Float = 0
+    @State private var overrideDark = false
+    @State private var darkValue: Float = 0
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
@@ -263,6 +273,18 @@ struct DevControls: View {
             .onChange(of: overrideBleed) { syncBleedOverride() }
             .onChange(of: bleedValue) { syncBleedOverride() }
             HStack {
+                Toggle(isOn: $overrideDark) {
+                    Text(verbatim: String(format: "Dark %.2f", darkValue))
+                        .font(.caption.monospaced())
+                }
+                .fixedSize()
+                Slider(value: $darkValue, in: 0...1)
+                    .frame(width: 160)
+                    .disabled(!overrideDark)
+            }
+            .onChange(of: overrideDark) { syncDarkOverride() }
+            .onChange(of: darkValue) { syncDarkOverride() }
+            HStack {
                 Picker("Scene", selection: $devSheet) {
                     ForEach(DevSheet.allCases, id: \.self) {
                         Text($0.rawValue.capitalized)
@@ -283,6 +305,10 @@ struct DevControls: View {
 
     private func syncBleedOverride() {
         host.bleedOverride = overrideBleed ? bleedValue : nil
+    }
+
+    private func syncDarkOverride() {
+        host.darkOverride = overrideDark ? darkValue : nil
     }
 }
 

@@ -9,14 +9,15 @@ public enum OpenMeteo {
             var weather_code: Int
             var wind_speed_10m: Double
         }
+        var latitude: Double
+        var longitude: Double
         var utc_offset_seconds: Int
         var current: Current
     }
 
     /// Maps a raw Open-Meteo response to WorldConditions. Time-of-day and
-    /// season derive from `now` interpreted in the response's own UTC offset
-    /// (the "current" fetch is by definition about right now — no fragile
-    /// timestamp parsing).
+    /// darkness come from the real sun at the response's own coordinates;
+    /// season from the month in the response's UTC offset.
     public static func conditions(fromJSON data: Data, now: Date = .now) throws -> WorldConditions {
         let response = try JSONDecoder().decode(Response.self, from: data)
         let current = response.current
@@ -28,8 +29,11 @@ public enum OpenMeteo {
             weather: weather(fromWMOCode: current.weather_code),
             precipitation: current.precipitation,
             windSpeed: current.wind_speed_10m,
-            timeOfDay: timeOfDay(hour: calendar.component(.hour, from: now)),
-            season: season(month: calendar.component(.month, from: now))
+            timeOfDay: Solar.timeOfDay(
+                date: now, latitude: response.latitude, longitude: response.longitude),
+            season: season(month: calendar.component(.month, from: now)),
+            darkness: Solar.darkness(
+                date: now, latitude: response.latitude, longitude: response.longitude)
         )
     }
 

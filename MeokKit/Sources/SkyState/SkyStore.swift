@@ -23,7 +23,9 @@ public struct SkyCache {
 /// Fetches the real sky for the default city and always resolves to a value:
 /// live fetch → cached → clear-sky default. Never blank, never an error.
 public final class SkyStore: @unchecked Sendable {
-    /// Seoul, the M0 default city (no location permission yet).
+    /// Seoul, the default city until the picker (#18) / location (M7) land.
+    public static let seoulLatitude = 37.5665
+    public static let seoulLongitude = 126.978
     public static let seoulURL = URL(string:
         "https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978"
         + "&current=precipitation,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto")!
@@ -37,9 +39,9 @@ public final class SkyStore: @unchecked Sendable {
     }
 
     /// The fallback ladder. Pure; the reason a sky always exists.
-    /// Cached entries keep their weather but re-derive time-of-day and
-    /// season from the clock — a cache saved at night must not render
-    /// night at noon.
+    /// Cached entries keep their weather but re-derive the sun (time-of-day,
+    /// darkness) and season from the clock — a cache saved at night must not
+    /// render night at noon.
     public static func resolve(
         fetched: WorldConditions?,
         cached: WorldConditions?,
@@ -52,12 +54,15 @@ public final class SkyStore: @unchecked Sendable {
         }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
-        conditions.timeOfDay = OpenMeteo.timeOfDay(hour: calendar.component(.hour, from: now))
+        conditions.timeOfDay = Solar.timeOfDay(
+            date: now, latitude: seoulLatitude, longitude: seoulLongitude)
+        conditions.darkness = Solar.darkness(
+            date: now, latitude: seoulLatitude, longitude: seoulLongitude)
         conditions.season = OpenMeteo.season(month: calendar.component(.month, from: now))
         return conditions
     }
 
-    /// Cold-start default: clear sky at the local hour and season.
+    /// Cold-start default: clear sky under the real sun.
     public static func clearDefault(now: Date, timeZone: TimeZone) -> WorldConditions {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
@@ -65,8 +70,11 @@ public final class SkyStore: @unchecked Sendable {
             weather: .clear,
             precipitation: 0,
             windSpeed: 0,
-            timeOfDay: OpenMeteo.timeOfDay(hour: calendar.component(.hour, from: now)),
-            season: OpenMeteo.season(month: calendar.component(.month, from: now))
+            timeOfDay: Solar.timeOfDay(
+                date: now, latitude: seoulLatitude, longitude: seoulLongitude),
+            season: OpenMeteo.season(month: calendar.component(.month, from: now)),
+            darkness: Solar.darkness(
+                date: now, latitude: seoulLatitude, longitude: seoulLongitude)
         )
     }
 
