@@ -3,15 +3,15 @@ import Foundation
 /// The one value the world runs on: the player's real sky, reduced to what
 /// the renderer and condition engine consume.
 public struct WorldConditions: Codable, Equatable, Sendable {
-    public enum Weather: String, Codable, Sendable {
+    public enum Weather: String, Codable, Sendable, CaseIterable {
         case clear, cloudy, fog, rain, snow, storm
     }
 
-    public enum TimeOfDay: String, Codable, Sendable {
+    public enum TimeOfDay: String, Codable, Sendable, CaseIterable {
         case night, dawn, day, dusk
     }
 
-    public enum Season: String, Codable, Sendable {
+    public enum Season: String, Codable, Sendable, CaseIterable {
         case spring, summer, autumn, winter
     }
 

@@ -18,7 +18,7 @@ let package = Package(
         ),
         .target(name: "StrokeEngine"),
         .testTarget(name: "StrokeEngineTests", dependencies: ["StrokeEngine"]),
-        .target(name: "GameKernel"),
+        .target(name: "GameKernel", dependencies: ["SkyState"]),
         .testTarget(name: "GameKernelTests", dependencies: ["GameKernel"]),
     ]
 )
