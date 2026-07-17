@@ -1,6 +1,46 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "— the line sings —" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "— 줄이 웁니다 —"
+          }
+        }
+      }
+    },
+    "+%lld XP · Fishing Lv %lld" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld XP · 낚시 Lv %lld"
+          }
+        }
+      }
+    },
+    "A new sky for this one." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 물고기의 새로운 하늘."
+          }
+        }
+      }
+    },
+    "A shadow joins the ledger." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도감에 그림자가 남았습니다."
+          }
+        }
+      }
+    },
     "City" : {
       "localizations" : {
         "ko" : {
@@ -21,6 +61,76 @@
         }
       }
     },
+    "First catch!" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "첫 조과!"
+          }
+        }
+      }
+    },
+    "Fish" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "낚시"
+          }
+        }
+      }
+    },
+    "Fishing Lv %lld" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "낚시 Lv %lld"
+          }
+        }
+      }
+    },
+    "Hold to reel — ease off when the line sings" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "눌러서 릴을 감고 — 줄이 울면 살짝 놓아주세요"
+          }
+        }
+      }
+    },
+    "It slipped away…" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "놓쳐버렸습니다…"
+          }
+        }
+      }
+    },
+    "Level up!" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "레벨 업!"
+          }
+        }
+      }
+    },
+    "Now!" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금!"
+          }
+        }
+      }
+    },
     "Settings" : {
       "localizations" : {
         "ko" : {
@@ -31,12 +141,42 @@
         }
       }
     },
+    "Tap to cast" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭하여 찌 던지기"
+          }
+        }
+      }
+    },
+    "Tap to continue" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭하여 계속"
+          }
+        }
+      }
+    },
     "The scroll lives under this city's real sky." : {
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "족자는 이 도시의 실제 하늘 아래 살아갑니다."
+          }
+        }
+      }
+    },
+    "Watch the bobber…" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찌를 지켜보세요…"
           }
         }
       }

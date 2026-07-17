@@ -1,3 +1,5 @@
+import GameKernel
+import Persistence
 import SkyState
 import SpriteKit
 import SwiftUI
@@ -67,12 +69,31 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var devSheet = DevSheet.launchDefault
     @State private var showSettings = false
+    @State private var gameStore: GameStore?
+    @State private var showFishing = ProcessInfo.processInfo.arguments.contains("-meok-fish-demo")
     private let cleanChrome = ProcessInfo.processInfo.arguments.contains("-meok-clean")
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             WorldView(host: host, sheet: devSheet)
                 .ignoresSafeArea()
+            // The pond invites fishing when the scroll rests there.
+            if host.zone == .valleyPond, gameStore != nil, devSheet == .world {
+                Button {
+                    showFishing = true
+                } label: {
+                    Text("Fish")
+                        .font(.callout)
+                        .foregroundStyle(Color(red: 0.10, green: 0.095, blue: 0.09).opacity(0.8))
+                        .padding(.horizontal, 22)
+                        .padding(.vertical, 8)
+                        .overlay(
+                            Capsule()
+                                .stroke(Color(red: 0.10, green: 0.095, blue: 0.09).opacity(0.5), lineWidth: 1))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 30)
+            }
             if !cleanChrome {
                 Button {
                     showSettings = true
@@ -100,7 +121,15 @@ struct ContentView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView(sky: sky)
         }
+        .fullScreenCover(isPresented: $showFishing) {
+            if let gameStore {
+                FishingView(conditions: sky.conditions, store: gameStore) {
+                    showFishing = false
+                }
+            }
+        }
         .task {
+            gameStore = try? GameStore.live()
             harnessSeed()
             await sky.refresh()
             // Seed the initial sky even when refresh didn't change anything
@@ -202,6 +231,8 @@ final class WorldHost: ObservableObject {
     @Published var darkOverride: Float?
     /// Zone + altitude under the camera, for the debug overlay.
     @Published var zoneName = ""
+    /// Zone under the camera — gates zone activities (fishing at the pond).
+    @Published var zone: Zone?
 }
 
 struct WorldView: UIViewRepresentable {
@@ -224,6 +255,7 @@ struct WorldView: UIViewRepresentable {
         let scene = WorldScene()
         scene.onAltitudeChange = { [weak host] zone, fraction in
             host?.zoneName = String(format: "%@ · alt %.2f", zone.name, fraction)
+            host?.zone = zone
         }
         view.presentScene(scene)
         host.skView = view
