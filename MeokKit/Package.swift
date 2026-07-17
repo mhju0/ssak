@@ -8,6 +8,7 @@ let package = Package(
         .library(name: "SkyState", targets: ["SkyState"]),
         .library(name: "StrokeEngine", targets: ["StrokeEngine"]),
         .library(name: "GameKernel", targets: ["GameKernel"]),
+        .library(name: "Persistence", targets: ["Persistence"]),
     ],
     targets: [
         .target(name: "SkyState"),
@@ -20,5 +21,7 @@ let package = Package(
         .testTarget(name: "StrokeEngineTests", dependencies: ["StrokeEngine"]),
         .target(name: "GameKernel", dependencies: ["SkyState"]),
         .testTarget(name: "GameKernelTests", dependencies: ["GameKernel"]),
+        .target(name: "Persistence", dependencies: ["GameKernel"]),
+        .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),
     ]
 )
