@@ -83,6 +83,12 @@ public struct GrowthReward: Equatable, Sendable {
     public let xpAwarded: Int
     public let level: Int
     public let leveledUp: Bool
+
+    public init(xpAwarded: Int, level: Int, leveledUp: Bool) {
+        self.xpAwarded = xpAwarded
+        self.level = level
+        self.leveledUp = leveledUp
+    }
 }
 
 /// The one door to the save file. All game writes go through here so the

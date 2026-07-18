@@ -76,6 +76,7 @@ struct ContentView: View {
     @State private var gameStore: GameStore?
     @State private var showFishing = ProcessInfo.processInfo.arguments.contains("-meok-fish-demo")
     @State private var showForaging = ProcessInfo.processInfo.arguments.contains("-meok-forage-demo")
+    @State private var showGarden = ProcessInfo.processInfo.arguments.contains("-meok-garden-demo")
     @State private var showLedger = ProcessInfo.processInfo.arguments.contains("-meok-ledger")
     private let cleanChrome = ProcessInfo.processInfo.arguments.contains("-meok-clean")
 
@@ -85,6 +86,7 @@ struct ContentView: View {
         switch host.zone {
         case .valleyPond: activityButton("Fish") { showFishing = true }
         case .forest: activityButton("Forage") { showForaging = true }
+        case .gardenTerrace: activityButton("Garden") { showGarden = true }
         default: EmptyView()
         }
     }
@@ -165,6 +167,13 @@ struct ContentView: View {
             if let gameStore {
                 ForagingView(conditions: sky.conditions, store: gameStore) {
                     showForaging = false
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showGarden) {
+            if let gameStore {
+                GardenView(conditions: sky.conditions, store: gameStore) {
+                    showGarden = false
                 }
             }
         }

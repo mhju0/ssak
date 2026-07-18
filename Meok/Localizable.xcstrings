@@ -31,6 +31,16 @@
         }
       }
     },
+    "+%lld XP · Gardening Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld XP · 원예 Lv %lld"
+          }
+        }
+      }
+    },
     "A new sky for this one.": {
       "localizations": {
         "ko": {
@@ -41,12 +51,32 @@
         }
       }
     },
+    "A seed goes in.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "씨앗을 심었어요."
+          }
+        }
+      }
+    },
     "A shadow joins the ledger.": {
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
             "value": "도감에 그림자가 남았습니다."
+          }
+        }
+      }
+    },
+    "Already watered today.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘은 이미 물을 주었어요."
           }
         }
       }
@@ -151,6 +181,46 @@
         }
       }
     },
+    "Garden": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "정원"
+          }
+        }
+      }
+    },
+    "Gardening Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "원예 Lv %lld"
+          }
+        }
+      }
+    },
+    "Harvest": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "수확"
+          }
+        }
+      }
+    },
+    "Harvested.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "수확했어요."
+          }
+        }
+      }
+    },
     "Hold to reel — ease off when the line sings": {
       "localizations": {
         "ko": {
@@ -231,12 +301,42 @@
         }
       }
     },
+    "Plant a bed": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "밭에 심기"
+          }
+        }
+      }
+    },
+    "Planted — it will stand for years.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "심었어요 — 오래도록 설 나무."
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
             "value": "설정"
+          }
+        }
+      }
+    },
+    "Tap a bed": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "밭을 누르세요"
           }
         }
       }
@@ -307,6 +407,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "찌를 지켜보세요…"
+          }
+        }
+      }
+    },
+    "Water": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "물 주기"
+          }
+        }
+      }
+    },
+    "Watered — the dew beads.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "물을 주니 이슬이 맺혀요."
           }
         }
       }
