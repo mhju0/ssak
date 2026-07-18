@@ -67,6 +67,21 @@ public final class Planting {
     }
 }
 
+/// On-hand stock of one collectible or material — the consumable inventory
+/// (spec §4). Catches and gathers add to it; cooking, crafting, and
+/// restoration consume from it. Distinct from `SpeciesRecord` (the lifetime
+/// ledger), which never depletes.
+@Model
+public final class InventoryItem {
+    @Attribute(.unique) public var itemID: String
+    public var count: Int
+
+    public init(itemID: String, count: Int = 0) {
+        self.itemID = itemID
+        self.count = count
+    }
+}
+
 /// What one haul did to the ledgers — an activity view's payoff line. Shared
 /// by fishing catches and foraging finds (spec §2: "haul feeds crafting").
 public struct HaulOutcome: Equatable, Sendable {
@@ -98,13 +113,13 @@ public final class GameStore {
     /// The app's on-disk store.
     public static func live() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self))
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self))
     }
 
     /// Throwaway store for tests and previews.
     public static func inMemory() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self,
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
 
@@ -163,6 +178,7 @@ public final class GameStore {
         let newVariant = !record.caughtWeathers.contains(weather.rawValue)
         if newVariant { record.caughtWeathers.append(weather.rawValue) }
 
+        stock(collectibleID, 1)   // the haul also becomes a cooking/crafting ingredient
         save()
         return HaulOutcome(
             xpAwarded: xp,
@@ -229,6 +245,56 @@ public final class GameStore {
         progress.xp += xp
         let after = XPCurve.level(forXP: progress.xp)
         return GrowthReward(xpAwarded: xp, level: after, leveledUp: after > before)
+    }
+
+    // MARK: Inventory — the consumable stock (spec §4)
+
+    public func count(of itemID: String) -> Int {
+        item(itemID)?.count ?? 0
+    }
+
+    /// True only if every ingredient is on hand in the required amount.
+    public func has(_ ingredients: [(item: String, count: Int)]) -> Bool {
+        ingredients.allSatisfy { count(of: $0.item) >= $0.count }
+    }
+
+    public func add(_ itemID: String, count: Int = 1) {
+        stock(itemID, count)
+        save()
+    }
+
+    /// Consume a stack if enough is on hand; a shortfall changes nothing.
+    @discardableResult
+    public func consume(_ itemID: String, count: Int) -> Bool {
+        guard let existing = item(itemID), existing.count >= count else { return false }
+        existing.count -= count
+        save()
+        return true
+    }
+
+    /// Consume a whole ingredient list atomically — all or nothing.
+    @discardableResult
+    public func consume(_ ingredients: [(item: String, count: Int)]) -> Bool {
+        guard has(ingredients) else { return false }
+        for ingredient in ingredients { item(ingredient.item)?.count -= ingredient.count }
+        save()
+        return true
+    }
+
+    private func item(_ itemID: String) -> InventoryItem? {
+        var descriptor = FetchDescriptor<InventoryItem>(
+            predicate: #Predicate { $0.itemID == itemID })
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
+    }
+
+    /// Add stock without saving — callers that already save (award) use this.
+    private func stock(_ itemID: String, _ count: Int) {
+        if let existing = item(itemID) {
+            existing.count += count
+        } else {
+            context.insert(InventoryItem(itemID: itemID, count: count))
+        }
     }
 
     /// A local-only save failing (disk full) is exceptional; the in-memory

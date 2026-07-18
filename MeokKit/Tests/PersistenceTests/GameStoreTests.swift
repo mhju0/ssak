@@ -145,6 +145,38 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(store.progress(for: .foraging).xp, 0)
     }
 
+    func testCatchAndGatherStockTheInventory() {
+        _ = store.record(catch: crucian, weather: .clear)
+        _ = store.record(catch: crucian, weather: .clear)
+        _ = store.record(gather: mugwort, weather: .clear)
+        XCTAssertEqual(store.count(of: "crucian-carp"), 2)
+        XCTAssertEqual(store.count(of: "mugwort"), 1)
+    }
+
+    func testAddAndConsumeStock() {
+        store.add("bamboo", count: 3)
+        XCTAssertEqual(store.count(of: "bamboo"), 3)
+        XCTAssertTrue(store.consume("bamboo", count: 2))
+        XCTAssertEqual(store.count(of: "bamboo"), 1)
+        XCTAssertFalse(store.consume("bamboo", count: 2), "a shortfall changes nothing")
+        XCTAssertEqual(store.count(of: "bamboo"), 1)
+    }
+
+    func testConsumeIngredientListIsAtomic() {
+        store.add("catfish", count: 1)
+        store.add("mugwort", count: 2)
+        XCTAssertTrue(store.has([("catfish", 1), ("mugwort", 2)]))
+
+        // A list that can't be fully satisfied consumes nothing.
+        XCTAssertFalse(store.consume([("catfish", 1), ("mugwort", 3)]))
+        XCTAssertEqual(store.count(of: "catfish"), 1, "atomic: catfish untouched on failure")
+        XCTAssertEqual(store.count(of: "mugwort"), 2)
+
+        XCTAssertTrue(store.consume([("catfish", 1), ("mugwort", 2)]))
+        XCTAssertEqual(store.count(of: "catfish"), 0)
+        XCTAssertEqual(store.count(of: "mugwort"), 0)
+    }
+
     func testProgressRowIsCreatedOnce() throws {
         _ = store.progress(for: .fishing)
         _ = store.progress(for: .fishing)
