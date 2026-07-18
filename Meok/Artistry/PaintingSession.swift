@@ -30,6 +30,7 @@ final class PaintingSession: ObservableObject {
     let autopilot: Bool
 
     private let store: GameStore
+    private var demoTask: Task<Void, Never>?
 
     init(conditions: WorldConditions, store: GameStore, autopilot: Bool = false) {
         self.conditions = conditions
@@ -37,6 +38,8 @@ final class PaintingSession: ObservableObject {
         self.autopilot = autopilot
         level = XPCurve.level(forXP: store.progress(for: .artistry).xp)
     }
+
+    deinit { demoTask?.cancel() }
 
     private var castLevel: Int {
         let override = UserDefaults.standard.integer(forKey: "meok-art-level")
@@ -47,10 +50,12 @@ final class PaintingSession: ObservableObject {
     var sealAvailable: Bool { Artistry.sealEarned(level: castLevel) }
 
     func choose(_ composition: Composition) {
+        // A frame with no scene never enters tracing (unreachable — every
+        // composition has a recipe — but no silent stuck state either).
+        guard let recipe = Recipes.composition[composition.id] else { return }
         chosen = composition
         traced = 0
         phase = .tracing
-        guard let recipe = Recipes.composition[composition.id] else { return }
         scene?.onProgress = { [weak self] done, total in
             self?.traced = done
             self?.total = total
@@ -92,7 +97,7 @@ final class PaintingSession: ObservableObject {
     func runDemo() {
         guard autopilot, let first = available.first else { return }
         choose(first)
-        Task { [weak self] in
+        demoTask = Task { [weak self] in
             while let self, self.phase == .tracing {
                 try? await Task.sleep(for: .seconds(0.5))
                 self.scene?.autoTrace()

@@ -38,7 +38,9 @@ final class PaintingScene: SKScene {
         paper.size = size
         paper.shader?.uniformNamed("u_size")?.vectorFloat2Value =
             vector_float2(Float(size.width), Float(size.height))
-        if let pending { setComposition(pending.recipe, wetness: pending.wetness) }
+        // Lay the ghosts out once the size is known — but never re-lay after
+        // tracing has begun (would revert inked strokes to ghost).
+        if ghosts.isEmpty, let pending { setComposition(pending.recipe, wetness: pending.wetness) }
     }
 
     private var pending: (recipe: StrokeRecipe, wetness: CGFloat)?

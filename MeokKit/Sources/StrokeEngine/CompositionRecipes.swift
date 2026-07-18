@@ -2,8 +2,11 @@ import Foundation
 
 /// The Artistry composition scenes (spec §2), one framed landscape per zone,
 /// keyed by the kernel's composition id. These strokes double as the ghost
-/// paths the player traces; the live sky bakes in at render time via
-/// RenderStyle (wetness/darkness), so rain vs. snow is a different work.
+/// paths the player traces. The `Painting` stores the full sky (weather /
+/// season / time) and each is tracked as its own work; at v1 the *render*
+/// bakes only the rain-wetness axis via RenderStyle — fuller weather-ink
+/// (snow-reserve, fog, night charcoal — spec §3) is a tracked upgrade that
+/// needs no data migration.
 extension Recipes {
     public static let composition: [String: StrokeRecipe] = [
         "pond-vista": pondVista,
