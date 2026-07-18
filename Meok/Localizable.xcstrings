@@ -491,12 +491,12 @@
         }
       }
     },
-    "No coin changes hands — only what you've caught, grown, cooked, or made.": {
+    "No coin changes hands — barter with what you've caught or grown.": {
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "돈은 오가지 않습니다 — 낚고, 기르고, 요리하고, 만든 것만."
+            "value": "돈은 오가지 않습니다 — 낚거나 기른 것으로 교환하세요."
           }
         }
       }

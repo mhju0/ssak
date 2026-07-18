@@ -43,7 +43,7 @@ struct EncounterView: View {
                     } header: {
                         Text("Barter")
                     } footer: {
-                        Text("No coin changes hands — only what you've caught, grown, cooked, or made.")
+                        Text("No coin changes hands — barter with what you've caught or grown.")
                     }
                 }
             }

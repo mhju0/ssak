@@ -84,7 +84,10 @@ struct ContentView: View {
     @State private var showCooking = ProcessInfo.processInfo.arguments.contains("-meok-cook-demo")
     @State private var showCrafting = ProcessInfo.processInfo.arguments.contains("-meok-craft-demo")
     @State private var showPainting = ProcessInfo.processInfo.arguments.contains("-meok-paint-demo")
-    @State private var showEncounter = ProcessInfo.processInfo.arguments.contains("-meok-visitor-demo")
+    /// Snapshotted when the player taps the prompt, so a foreground sky-refresh
+    /// mid-encounter can't swap the visitor out from under them or blank the cover.
+    @State private var encounterVisitor: Visitor? =
+        ProcessInfo.processInfo.arguments.contains("-meok-visitor-demo") ? Visitors.visitor(.oldFisherman) : nil
     @State private var showLedger = ProcessInfo.processInfo.arguments.contains("-meok-ledger")
 
     /// The peddler arrives on a seasonal roll — deterministic per real day.
@@ -140,7 +143,7 @@ struct ContentView: View {
             // A visitor waits when the sky (or the season) brings one.
             if let visitor = presentVisitor, gameStore != nil, devSheet == .world, !cleanChrome {
                 Button {
-                    showEncounter = true
+                    encounterVisitor = visitor
                 } label: {
                     Label(VisitorDialogue.displayName(for: visitor), systemImage: "figure.walk")
                         .font(.caption)
@@ -245,10 +248,10 @@ struct ContentView: View {
                 PaintingView(conditions: sky.conditions, store: gameStore) { showPainting = false }
             }
         }
-        .fullScreenCover(isPresented: $showEncounter) {
-            if let visitor = presentVisitor, let gameStore {
+        .fullScreenCover(item: $encounterVisitor) { visitor in
+            if let gameStore {
                 EncounterView(visitor: visitor, city: sky.city, store: gameStore) {
-                    showEncounter = false
+                    encounterVisitor = nil
                 }
             }
         }

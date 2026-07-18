@@ -64,6 +64,11 @@ public enum Visitors {
         case .dokkaebi:
             return [TradeOffer(id: "dokkaebi-ink-carp", give: Ingredient("persimmon", 3), get: .species("ink-carp"))]
         case .peddler:
+            // v1: the peddler asks a material for a climate-locked species.
+            // Spec §2 wants it to request *dishes and paintings* specifically —
+            // deferred: neither is an inventory item yet (cooking grants a buff,
+            // paintings are their own rows), so a give type beyond Ingredient is
+            // a later enrichment. The no-currency barter contract holds today.
             let collectibles = FishingTable.all.map { ($0.id, $0.weathers) }
                 + ForagingTable.all.map { ($0.id, $0.weathers) }
             return collectibles
