@@ -84,7 +84,24 @@ struct ContentView: View {
     @State private var showCooking = ProcessInfo.processInfo.arguments.contains("-meok-cook-demo")
     @State private var showCrafting = ProcessInfo.processInfo.arguments.contains("-meok-craft-demo")
     @State private var showPainting = ProcessInfo.processInfo.arguments.contains("-meok-paint-demo")
+    @State private var showEncounter = ProcessInfo.processInfo.arguments.contains("-meok-visitor-demo")
     @State private var showLedger = ProcessInfo.processInfo.arguments.contains("-meok-ledger")
+
+    /// The peddler arrives on a seasonal roll — deterministic per real day.
+    /// The old fisherman / dokkaebi come with the sky.
+    private var peddlerToday: Bool {
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        var rng = SeededRandom(seed: UInt64(day))
+        return rng.next() % 100 < 12
+    }
+
+    private var presentVisitor: Visitor? {
+        // The harness shows the old fisherman (climate-independent trades).
+        if ProcessInfo.processInfo.arguments.contains("-meok-visitor-demo") {
+            return Visitors.visitor(.oldFisherman)
+        }
+        return Visitors.present(sky.conditions, peddlerToday: peddlerToday)
+    }
     private let cleanChrome = ProcessInfo.processInfo.arguments.contains("-meok-clean")
 
     /// The activity offered by the zone under the camera (spec §3).
@@ -119,6 +136,22 @@ struct ContentView: View {
             // The scroll's current zone offers its activity.
             if gameStore != nil, devSheet == .world, !cleanChrome {
                 zoneActivityButton
+            }
+            // A visitor waits when the sky (or the season) brings one.
+            if let visitor = presentVisitor, gameStore != nil, devSheet == .world, !cleanChrome {
+                Button {
+                    showEncounter = true
+                } label: {
+                    Label(VisitorDialogue.displayName(for: visitor), systemImage: "figure.walk")
+                        .font(.caption)
+                        .foregroundStyle(Color(uiColor: .meokInk).opacity(0.85))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(Color(white: 1, opacity: 0.4)))
+                        .overlay(Capsule().stroke(Color(uiColor: .meokInk).opacity(0.4), lineWidth: 1))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(.top, 64)
             }
             if !cleanChrome {
                 HStack(spacing: 0) {
@@ -210,6 +243,13 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showPainting) {
             if let gameStore {
                 PaintingView(conditions: sky.conditions, store: gameStore) { showPainting = false }
+            }
+        }
+        .fullScreenCover(isPresented: $showEncounter) {
+            if let visitor = presentVisitor, let gameStore {
+                EncounterView(visitor: visitor, city: sky.city, store: gameStore) {
+                    showEncounter = false
+                }
             }
         }
         .task {

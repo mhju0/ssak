@@ -131,6 +131,16 @@
         }
       }
     },
+    "Barter": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "물물교환"
+          }
+        }
+      }
+    },
     "Choose a frame": {
       "localizations": {
         "ko": {
@@ -227,6 +237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "완료"
+          }
+        }
+      }
+    },
+    "Farewell": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "안녕히"
           }
         }
       }
@@ -471,12 +491,32 @@
         }
       }
     },
+    "No coin changes hands — only what you've caught, grown, cooked, or made.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "돈은 오가지 않습니다 — 낚고, 기르고, 요리하고, 만든 것만."
+          }
+        }
+      }
+    },
     "Not native to your sky.": {
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
             "value": "이 하늘의 물고기가 아닙니다."
+          }
+        }
+      }
+    },
+    "Nothing to trade under this sky today.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 이 하늘 아래엔 거래할 게 없군요."
           }
         }
       }
@@ -807,6 +847,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "필선을 따라 그리세요"
+          }
+        }
+      }
+    },
+    "Trade": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "교환"
           }
         }
       }
