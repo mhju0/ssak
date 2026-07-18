@@ -146,6 +146,29 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(store.progress(for: .foraging).xp, 0)
     }
 
+    private var kitchen: Room { Hermitage.room(id: "kitchen")! }  // cost: repair-kit 1
+
+    func testRestoringARoomSpendsGoodsAndUnlocksIt() {
+        store.add("repair-kit", count: 1)
+        XCTAssertFalse(store.isRestored("kitchen"))
+        XCTAssertTrue(store.restore(kitchen))
+        XCTAssertTrue(store.isRestored("kitchen"))
+        XCTAssertEqual(store.count(of: "repair-kit"), 0, "restoration spent the kit")
+        XCTAssertTrue(store.restoredRooms().contains("kitchen"))
+    }
+
+    func testRestoringFailsWithoutTheGoods() {
+        XCTAssertFalse(store.restore(kitchen))  // no repair kit on hand
+        XCTAssertFalse(store.isRestored("kitchen"))
+    }
+
+    func testARoomIsNotRestoredTwice() {
+        store.add("repair-kit", count: 2)
+        XCTAssertTrue(store.restore(kitchen))
+        XCTAssertFalse(store.restore(kitchen), "already restored — no second spend")
+        XCTAssertEqual(store.count(of: "repair-kit"), 1)
+    }
+
     func testCraftingARodConsumesMaterialsAndSetsTheTier() {
         let bamboo = CraftingTable.all.first { $0.id == "bamboo-rod" }!  // shepherds-purse 3 → rodTier 2
         store.add("shepherds-purse", count: 3)

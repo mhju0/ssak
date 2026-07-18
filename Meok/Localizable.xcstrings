@@ -161,6 +161,16 @@
         }
       }
     },
+    "Craft repair kits at the workbench, then restore the hermitage room by room.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "작업대에서 수리 도구를 만들어 은자의 집을 하나씩 복원하세요."
+          }
+        }
+      }
+    },
     "Crafted %@": {
       "localizations": {
         "ko": {
@@ -321,6 +331,16 @@
         }
       }
     },
+    "Hermitage": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "은자의 집"
+          }
+        }
+      }
+    },
     "Hold to reel — ease off when the line sings": {
       "localizations": {
         "ko": {
@@ -337,6 +357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "놓쳐버렸습니다…"
+          }
+        }
+      }
+    },
+    "Kitchen": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "부엌"
           }
         }
       }
@@ -431,6 +461,66 @@
         }
       }
     },
+    "Restore": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복원"
+          }
+        }
+      }
+    },
+    "Restore the rooms": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "방 복원"
+          }
+        }
+      }
+    },
+    "Restored — cooking unlocked.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복원됨 — 요리 개방."
+          }
+        }
+      }
+    },
+    "Restored — larger paintings come with the gallery (M5).": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복원됨 — 더 큰 그림은 전시관과 함께 (M5)."
+          }
+        }
+      }
+    },
+    "Restored — the display walls come with the gallery (M5).": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복원됨 — 전시 벽은 전시관과 함께 (M5)."
+          }
+        }
+      }
+    },
+    "Restored — tools stored.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복원됨 — 연장 보관."
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "ko": {
@@ -467,6 +557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "낙엽을 쓸어보세요"
+          }
+        }
+      }
+    },
+    "Sweep the path": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "길 쓸기"
           }
         }
       }
@@ -527,6 +627,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "빈터가 고요합니다."
+          }
+        }
+      }
+    },
+    "The grounds": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "뜰"
           }
         }
       }
@@ -607,6 +717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "날씨 데이터 제공: Open-Meteo.com (CC BY 4.0)"
+          }
+        }
+      }
+    },
+    "Workbench": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "작업대"
           }
         }
       }

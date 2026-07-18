@@ -95,6 +95,19 @@ public final class ActiveBuff {
     }
 }
 
+/// A hermitage room's restoration state (spec §4). Ruined until restored with
+/// crafted goods; a restored room unlocks its function (kitchen → cooking).
+@Model
+public final class HermitageRoom {
+    @Attribute(.unique) public var roomID: String
+    public var restored: Bool
+
+    public init(roomID: String, restored: Bool = false) {
+        self.roomID = roomID
+        self.restored = restored
+    }
+}
+
 /// What one haul did to the ledgers — an activity view's payoff line. Shared
 /// by fishing catches and foraging finds (spec §2: "haul feeds crafting").
 public struct HaulOutcome: Equatable, Sendable {
@@ -127,13 +140,13 @@ public final class GameStore {
     /// The app's on-disk store.
     public static func live() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self))
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self))
     }
 
     /// Throwaway store for tests and previews.
     public static func inMemory() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self,
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
 
@@ -330,6 +343,38 @@ public final class GameStore {
         } else {
             context.insert(InventoryItem(itemID: key, count: tier))
         }
+    }
+
+    // MARK: Restoration — the hermitage, room by room (spec §2)
+
+    public func restoredRooms() -> Set<String> {
+        let rows = (try? context.fetch(FetchDescriptor<HermitageRoom>(
+            predicate: #Predicate { $0.restored }))) ?? []
+        return Set(rows.map(\.roomID))
+    }
+
+    public func isRestored(_ roomID: String) -> Bool {
+        roomRow(roomID)?.restored ?? false
+    }
+
+    /// Restore a room by spending its crafted-goods cost. false if already
+    /// restored or the goods aren't on hand (then nothing is consumed).
+    @discardableResult
+    public func restore(_ room: Room) -> Bool {
+        guard !isRestored(room.id), take(room.cost) else { return false }
+        if let existing = roomRow(room.id) {
+            existing.restored = true
+        } else {
+            context.insert(HermitageRoom(roomID: room.id, restored: true))
+        }
+        save()
+        return true
+    }
+
+    private func roomRow(_ roomID: String) -> HermitageRoom? {
+        var descriptor = FetchDescriptor<HermitageRoom>(predicate: #Predicate { $0.roomID == roomID })
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
     }
 
     // MARK: Inventory — the consumable stock (spec §4)

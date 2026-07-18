@@ -78,6 +78,7 @@ struct ContentView: View {
     @State private var showForaging = ProcessInfo.processInfo.arguments.contains("-meok-forage-demo")
     @State private var showGarden = ProcessInfo.processInfo.arguments.contains("-meok-garden-demo")
     @State private var showSweep = ProcessInfo.processInfo.arguments.contains("-meok-sweep-demo")
+    @State private var showHermitage = ProcessInfo.processInfo.arguments.contains("-meok-hermitage-demo")
     @State private var showCooking = ProcessInfo.processInfo.arguments.contains("-meok-cook-demo")
     @State private var showCrafting = ProcessInfo.processInfo.arguments.contains("-meok-craft-demo")
     @State private var showLedger = ProcessInfo.processInfo.arguments.contains("-meok-ledger")
@@ -90,7 +91,7 @@ struct ContentView: View {
         case .valleyPond: activityButton("Fish") { showFishing = true }
         case .forest: activityButton("Forage") { showForaging = true }
         case .gardenTerrace: activityButton("Garden") { showGarden = true }
-        case .hermitage: activityButton("Sweep") { showSweep = true }
+        case .hermitage: activityButton("Hermitage") { showHermitage = true }
         default: EmptyView()
         }
     }
@@ -184,6 +185,13 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showSweep) {
             SweepView(conditions: sky.conditions) {
                 showSweep = false
+            }
+        }
+        .fullScreenCover(isPresented: $showHermitage) {
+            if let gameStore {
+                HermitageView(conditions: sky.conditions, store: gameStore) {
+                    showHermitage = false
+                }
             }
         }
         .fullScreenCover(isPresented: $showCooking) {
