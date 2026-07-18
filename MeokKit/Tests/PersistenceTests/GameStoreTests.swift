@@ -270,6 +270,16 @@ final class GameStoreTests: XCTestCase {
             "the buff lapses with real time")
     }
 
+    func testDuplicateIngredientIdsAggregate() {
+        store.add("mugwort", count: 3)
+        // Two entries for the same id sum to a real need of 4 — not affordable
+        // with 3 on hand. Without aggregation, has() would pass each 3>=2 and
+        // take() would deduct twice into negative stock.
+        XCTAssertFalse(store.has([Ingredient("mugwort", 2), Ingredient("mugwort", 2)]))
+        XCTAssertFalse(store.consume([Ingredient("mugwort", 2), Ingredient("mugwort", 2)]))
+        XCTAssertEqual(store.count(of: "mugwort"), 3, "a failed consume never goes negative")
+    }
+
     func testProgressRowIsCreatedOnce() throws {
         _ = store.progress(for: .fishing)
         _ = store.progress(for: .fishing)

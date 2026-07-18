@@ -138,10 +138,12 @@ final class MakerSession: ObservableObject {
     }
 
     func runDemo() {
-        guard autopilot,
-              let item = rows.first(where: { $0.item.id == kind.demoItemID && $0.affordable })?.item
-        else { return }
-        make(item)
+        guard autopilot else { return }
+        // The showcase item if it's reachable, else just the first affordable
+        // row — so the demo paints something even without a level override.
+        let item = rows.first { $0.item.id == kind.demoItemID && $0.affordable }?.item
+            ?? rows.first { $0.affordable }?.item
+        if let item { make(item) }
     }
 
     private static func name(for id: String) -> String {

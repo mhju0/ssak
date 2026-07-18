@@ -231,6 +231,7 @@ App (SwiftUI shell, navigation, settings)
 
 - `SkillProgress` — xp per skill
 - `InventoryItem`
+- `ActiveBuff` — a meal buff's wall-clock expiry (added M4; "meals give gentle buffs" needs persistent expiry)
 - `SpeciesRecord` — caught/painted status per weather-variant (weather dimension only); shadow "got away" flag
 - `Painting` — WorldConditions snapshot + composition seed + rendered PNG (gallery display + share sheet) + seal state
 - `HermitageRoom` — restoration state

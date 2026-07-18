@@ -383,9 +383,10 @@ public final class GameStore {
         item(itemID)?.count ?? 0
     }
 
-    /// True only if every ingredient is on hand in the required amount.
+    /// True only if every ingredient is on hand in the required amount. A
+    /// recipe may list the same id twice, so needs are summed first.
     public func has(_ ingredients: [Ingredient]) -> Bool {
-        ingredients.allSatisfy { count(of: $0.item) >= $0.count }
+        aggregate(ingredients).allSatisfy { count(of: $0.key) >= $0.value }
     }
 
     public func add(_ itemID: String, count: Int = 1) {
@@ -411,11 +412,18 @@ public final class GameStore {
     }
 
     /// Deduct an ingredient list without saving — for actions (cook/craft/
-    /// restore) that then tick XP and save once. Atomic: all or nothing.
+    /// restore) that then tick XP and save once. Atomic: all or nothing, and
+    /// duplicate ids are summed so stock can never over-consume into negatives.
     private func take(_ ingredients: [Ingredient]) -> Bool {
-        guard has(ingredients) else { return false }
-        for ingredient in ingredients { item(ingredient.item)?.count -= ingredient.count }
+        let needed = aggregate(ingredients)
+        guard needed.allSatisfy({ count(of: $0.key) >= $0.value }) else { return false }
+        for (id, amount) in needed { item(id)?.count -= amount }
         return true
+    }
+
+    /// Sum an ingredient list by id.
+    private func aggregate(_ ingredients: [Ingredient]) -> [String: Int] {
+        ingredients.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }
     }
 
     private func item(_ itemID: String) -> InventoryItem? {
