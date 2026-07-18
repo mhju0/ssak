@@ -83,12 +83,6 @@ public struct GrowthReward: Equatable, Sendable {
     public let xpAwarded: Int
     public let level: Int
     public let leveledUp: Bool
-
-    public init(xpAwarded: Int, level: Int, leveledUp: Bool) {
-        self.xpAwarded = xpAwarded
-        self.level = level
-        self.leveledUp = leveledUp
-    }
 }
 
 /// The one door to the save file. All game writes go through here so the
@@ -193,14 +187,14 @@ public final class GameStore {
     }
 
     /// Plant a crop or tree in a bed. A tree's yield is the planting itself
-    /// (it stands forever); a crop yields later, at harvest.
+    /// (it stands forever); a crop yields later, at harvest. Returns the XP
+    /// reward, like water/harvest (the row is reachable via `plantings()`).
     @discardableResult
-    public func plant(_ plantable: Plantable, at bedIndex: Int, now: Date) -> Planting {
-        let planting = Planting(plantableID: plantable.id, plantedAt: now, bedIndex: bedIndex)
-        context.insert(planting)
-        _ = addGardenXP(plantable.isTree ? plantable.xp : Self.plantXP)
+    public func plant(_ plantable: Plantable, at bedIndex: Int, now: Date) -> GrowthReward {
+        context.insert(Planting(plantableID: plantable.id, plantedAt: now, bedIndex: bedIndex))
+        let reward = addGardenXP(plantable.isTree ? plantable.xp : Self.plantXP)
         save()
-        return planting
+        return reward
     }
 
     /// Harvest a ripe crop: its yield in XP, and the bed clears. Trees and

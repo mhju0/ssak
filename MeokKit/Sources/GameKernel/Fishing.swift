@@ -35,7 +35,8 @@ public struct FishSpecies: Identifiable, Equatable, Sendable, ConditionGated {
     /// Relative spawn weight among currently eligible species.
     public let weight: Int
     public let bitePattern: [BiteTap]
-    /// Stroke-recipe archetype (StrokeEngine recipe key).
+    /// Shape-family archetype (the §3 art-budget grouping) — recipes are
+    /// keyed by `id`, not this; it's design metadata.
     public let archetype: String
 
     /// Rare and apex tiers add the ~10 s tension dance.

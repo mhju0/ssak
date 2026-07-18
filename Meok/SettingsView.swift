@@ -38,7 +38,7 @@ struct SettingsView: View {
                         Text("Sound")
                     }
                 } footer: {
-                    Text("Gentle procedural sounds for bites and finds. Everything is synthesized — no audio files.")
+                    Text("Gentle procedural sounds for the fishing bite and fight. Everything is synthesized — no audio files.")
                 }
 
                 Section {

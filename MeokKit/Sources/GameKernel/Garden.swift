@@ -14,13 +14,15 @@ public struct Plantable: Identifiable, Equatable, Sendable {
     public let daysToMature: Double
     /// XP granted at the yield — a crop's harvest, or a tree's planting.
     public let xp: Int
-    /// Stroke-recipe archetype (StrokeEngine recipe key).
+    /// Shape-family archetype (the §3 art-budget grouping) — recipes are
+    /// keyed by `id`, not this; it's design metadata.
     public let archetype: String
 
     public init(
         id: String, nameEN: String, nameKO: String, unlockLevel: Int,
         isTree: Bool, daysToMature: Double, xp: Int, archetype: String
     ) {
+        precondition(daysToMature > 0, "daysToMature must be positive to derive growth")
         self.id = id
         self.nameEN = nameEN
         self.nameKO = nameKO

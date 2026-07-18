@@ -15,7 +15,8 @@ public struct Forageable: Identifiable, Equatable, Sendable, ConditionGated {
     public let xp: Int
     /// Relative spawn weight among currently eligible forageables.
     public let weight: Int
-    /// Stroke-recipe archetype (StrokeEngine recipe key).
+    /// Shape-family archetype (the §3 art-budget grouping) — recipes are
+    /// keyed by `id`, not this; it's design metadata.
     public let archetype: String
 
     public init(

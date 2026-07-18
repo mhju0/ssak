@@ -108,8 +108,9 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(store.plantings().count, 1)
     }
 
-    func testCropGivesSmallPlantXPThenHarvestYield() {
-        let planting = store.plant(radishP, at: 0, now: noon)
+    func testCropGivesSmallPlantXPThenHarvestYield() throws {
+        store.plant(radishP, at: 0, now: noon)
+        let planting = try XCTUnwrap(store.plantings().first)
         XCTAssertEqual(store.progress(for: .gardening).xp, 15, "crop planting is a small tick, not the yield")
 
         XCTAssertNil(store.harvest(planting, now: noon), "an unripe crop yields nothing")
@@ -122,8 +123,9 @@ final class GameStoreTests: XCTestCase {
         XCTAssertTrue(store.plantings().isEmpty, "harvest clears the bed")
     }
 
-    func testWateringGivesXPAtMostOncePerDay() {
-        let planting = store.plant(radishP, at: 0, now: noon)
+    func testWateringGivesXPAtMostOncePerDay() throws {
+        store.plant(radishP, at: 0, now: noon)
+        let planting = try XCTUnwrap(store.plantings().first)
         let base = store.progress(for: .gardening).xp
 
         XCTAssertNotNil(store.water(planting, now: noon))

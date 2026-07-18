@@ -132,40 +132,32 @@ final class GardenSession: ObservableObject {
 
     func plant(_ plantable: Plantable) {
         guard let index = selectedPlot, bedPlantings[index] == nil else { return }
-        let before = store.progress(for: .gardening).xp
-        _ = store.plant(plantable, at: index, now: now)
-        finish(before: before, event: .planted(tree: plantable.isTree))
+        apply(store.plant(plantable, at: index, now: now), event: .planted(tree: plantable.isTree))
         refresh()
     }
 
     func waterSelected() {
         guard let planting = selectedPlanting else { return }
-        let before = store.progress(for: .gardening).xp
-        guard store.water(planting, now: now) != nil else {
+        guard let reward = store.water(planting, now: now) else {
             lastEvent = .alreadyWatered
             lastReward = nil
             return
         }
-        finish(before: before, event: .watered)
+        apply(reward, event: .watered)
         scene?.flourish(at: planting.bedIndex)
     }
 
     func harvestSelected() {
         guard let planting = selectedPlanting else { return }
-        let before = store.progress(for: .gardening).xp
-        guard store.harvest(planting, now: now) != nil else { return }
-        finish(before: before, event: .harvested)
+        guard let reward = store.harvest(planting, now: now) else { return }
+        apply(reward, event: .harvested)
         refresh()
     }
 
-    private func finish(before: Int, event: Event) {
-        let xp = store.progress(for: .gardening).xp
-        lastReward = GrowthReward(
-            xpAwarded: xp - before,
-            level: XPCurve.level(forXP: xp),
-            leveledUp: XPCurve.level(forXP: xp) > XPCurve.level(forXP: before))
+    private func apply(_ reward: GrowthReward, event: Event) {
+        lastReward = reward
         lastEvent = event
-        level = XPCurve.level(forXP: xp)
+        level = reward.level
     }
 
     /// The harness plays itself: a spread of ages so the beds show growth.

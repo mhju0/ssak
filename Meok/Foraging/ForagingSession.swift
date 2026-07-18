@@ -33,6 +33,9 @@ final class ForagingSession: ObservableObject {
 
     private let store: GameStore
     private var rng: SeededRandom
+    private var demoTask: Task<Void, Never>?
+
+    deinit { demoTask?.cancel() }
 
     /// Where finds can appear in the clearing (spread across the lower field).
     private static let plots: [CGPoint] = [
@@ -94,10 +97,11 @@ final class ForagingSession: ObservableObject {
 
     /// The harness plays itself: gather each find in turn for a screenshot.
     private func runDemo() {
-        Task { [weak self] in
+        demoTask?.cancel()
+        demoTask = Task { [weak self] in
             for spot in self?.spots ?? [] {
                 try? await Task.sleep(for: .seconds(1.1))
-                guard let self else { return }
+                guard let self, !Task.isCancelled else { return }
                 self.gather(spot.id)
             }
         }
