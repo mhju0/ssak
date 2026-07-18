@@ -1,14 +1,17 @@
 import SpriteKit
 import StrokeEngine
 
-/// The kitchen canvas: paper, and the dish you just cooked painting itself in
-/// (bowl or skewer) above the menu.
-final class CookScene: SKScene {
+/// The kitchen / workbench canvas: paper, and the thing you just made (a dish
+/// or a tool) painting itself in above the menu. `art` is the archetype recipe
+/// table — Recipes.dishArt for cooking, Recipes.craftArt for crafting.
+final class MakerScene: SKScene {
     private let paper = SKSpriteNode(texture: .flatWhite)
-    private var dishNode: RecipeNode?
+    private let art: [String: StrokeRecipe]
+    private var madeNode: RecipeNode?
     private var pendingArchetype: String?
 
-    override init() {
+    init(art: [String: StrokeRecipe]) {
+        self.art = art
         super.init(size: .zero)
         scaleMode = .resizeFill
         backgroundColor = .white
@@ -26,21 +29,20 @@ final class CookScene: SKScene {
         paper.size = size
         paper.shader?.uniformNamed("u_size")?.vectorFloat2Value =
             vector_float2(Float(size.width), Float(size.height))
-        if let archetype = pendingArchetype { showDish(archetype: archetype) }
+        if let archetype = pendingArchetype { showItem(archetype: archetype) }
     }
 
-    func showDish(archetype: String) {
+    func showItem(archetype: String) {
         pendingArchetype = archetype
         guard size.width > 0, size.height > 0 else { return }
-        dishNode?.run(.sequence([.fadeOut(withDuration: 0.15), .removeFromParent()]))
-        guard let recipe = Recipes.dishArt[archetype] else { return }
+        madeNode?.run(.sequence([.fadeOut(withDuration: 0.15), .removeFromParent()]))
+        guard let recipe = art[archetype] else { return }
         let scale = size.width * 0.5
         let node = RecipeNode(recipe: recipe, scale: scale)
-        // Upper area — the menu sits below.
         node.position = CGPoint(x: size.width / 2 - scale / 2, y: size.height * 0.66 - scale / 2)
         node.zPosition = 3
         addChild(node)
         node.reveal()
-        dishNode = node
+        madeNode = node
     }
 }

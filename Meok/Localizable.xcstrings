@@ -11,6 +11,26 @@
         }
       }
     },
+    "+%lld XP · Cooking Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld XP · 요리 Lv %lld"
+          }
+        }
+      }
+    },
+    "+%lld XP · Crafting Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld XP · 공예 Lv %lld"
+          }
+        }
+      }
+    },
     "+%lld XP · Fishing Lv %lld": {
       "localizations": {
         "ko": {
@@ -37,6 +57,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "+%lld XP · 원예 Lv %lld"
+          }
+        }
+      }
+    },
+    "A finer brush, ready for painting.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "그림을 위한 고운 붓."
           }
         }
       }
@@ -117,6 +147,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "요리 Lv %lld"
+          }
+        }
+      }
+    },
+    "Craft": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "만들기"
+          }
+        }
+      }
+    },
+    "Crafted %@": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 제작"
+          }
+        }
+      }
+    },
+    "Crafting Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "공예 Lv %lld"
           }
         }
       }
@@ -307,6 +367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lv %lld"
+          }
+        }
+      }
+    },
+    "More rare fish will bite now.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이제 희귀한 물고기가 더 뭅니다."
           }
         }
       }
@@ -541,12 +611,32 @@
         }
       }
     },
+    "a better rod": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "더 좋은 낚싯대"
+          }
+        }
+      }
+    },
     "a faster bite · %lld min": {
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
             "value": "빠른 입질 · %lld분"
+          }
+        }
+      }
+    },
+    "a finer brush": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "더 고운 붓"
           }
         }
       }
