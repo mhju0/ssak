@@ -97,6 +97,52 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(Set(store.record(for: "mugwort")!.caughtWeathers), ["clear", "fog"])
     }
 
+    private var radishP: Plantable { GardenTable.all.first { $0.id == "radish" }! }
+    private var plumTree: Plantable { GardenTable.all.first { $0.id == "plum-tree" }! }
+    private let noon = Date(timeIntervalSince1970: 1_000_000)
+
+    func testPlantingATreeYieldsAtPlantingAndPersists() {
+        store.plant(plumTree, at: 0, now: noon)
+        // A tree's yield is the planting itself — it stands forever.
+        XCTAssertEqual(store.progress(for: .gardening).xp, plumTree.xp)
+        XCTAssertEqual(store.plantings().count, 1)
+    }
+
+    func testCropGivesSmallPlantXPThenHarvestYield() {
+        let planting = store.plant(radishP, at: 0, now: noon)
+        XCTAssertEqual(store.progress(for: .gardening).xp, 15, "crop planting is a small tick, not the yield")
+
+        XCTAssertNil(store.harvest(planting, now: noon), "an unripe crop yields nothing")
+        XCTAssertEqual(store.progress(for: .gardening).xp, 15)
+
+        let ripe = noon.addingTimeInterval(radishP.daysToMature * 86_400)
+        let reward = store.harvest(planting, now: ripe)
+        XCTAssertEqual(reward?.xpAwarded, radishP.xp)
+        XCTAssertEqual(store.progress(for: .gardening).xp, 15 + radishP.xp)
+        XCTAssertTrue(store.plantings().isEmpty, "harvest clears the bed")
+    }
+
+    func testWateringGivesXPAtMostOncePerDay() {
+        let planting = store.plant(radishP, at: 0, now: noon)
+        let base = store.progress(for: .gardening).xp
+
+        XCTAssertNotNil(store.water(planting, now: noon))
+        XCTAssertEqual(store.progress(for: .gardening).xp, base + 10)
+
+        XCTAssertNil(store.water(planting, now: noon), "already watered today")
+        XCTAssertEqual(store.progress(for: .gardening).xp, base + 10)
+
+        let tomorrow = noon.addingTimeInterval(24 * 3_600)
+        XCTAssertNotNil(store.water(planting, now: tomorrow))
+        XCTAssertEqual(store.progress(for: .gardening).xp, base + 20)
+    }
+
+    func testGardeningXPIsIndependentOfFishingAndForaging() {
+        store.plant(plumTree, at: 0, now: noon)
+        XCTAssertEqual(store.progress(for: .fishing).xp, 0)
+        XCTAssertEqual(store.progress(for: .foraging).xp, 0)
+    }
+
     func testProgressRowIsCreatedOnce() throws {
         _ = store.progress(for: .fishing)
         _ = store.progress(for: .fishing)

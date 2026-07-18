@@ -38,6 +38,35 @@ public final class SpeciesRecord {
     }
 }
 
+/// One thing growing in a garden bed. Growth is derived from `plantedAt` vs
+/// now — never stored, so it can't drift or regress (spec §2, pillar 2).
+/// Trees are planted forever; crops are removed when harvested.
+@Model
+public final class Planting {
+    public var plantableID: String
+    public var plantedAt: Date
+    public var bedIndex: Int
+    /// Last hand/rain watering — bounds the bonus tick to once per real day.
+    public var lastWatered: Date?
+
+    public init(plantableID: String, plantedAt: Date, bedIndex: Int) {
+        self.plantableID = plantableID
+        self.plantedAt = plantedAt
+        self.bedIndex = bedIndex
+        lastWatered = nil
+    }
+
+    public func daysGrown(now: Date) -> Double {
+        max(0, now.timeIntervalSince(plantedAt)) / 86_400
+    }
+
+    /// Watered at most once per real day — a delight, never an obligation.
+    public func canWater(now: Date) -> Bool {
+        guard let lastWatered else { return true }
+        return now.timeIntervalSince(lastWatered) >= 20 * 3_600
+    }
+}
+
 /// What one haul did to the ledgers — an activity view's payoff line. Shared
 /// by fishing catches and foraging finds (spec §2: "haul feeds crafting").
 public struct HaulOutcome: Equatable, Sendable {
@@ -47,6 +76,13 @@ public struct HaulOutcome: Equatable, Sendable {
     public let leveledUp: Bool
     public let firstOfSpecies: Bool
     public let newWeatherVariant: Bool
+}
+
+/// What a gardening act (plant / water / harvest) gave — the garden's payoff.
+public struct GrowthReward: Equatable, Sendable {
+    public let xpAwarded: Int
+    public let level: Int
+    public let leveledUp: Bool
 }
 
 /// The one door to the save file. All game writes go through here so the
@@ -62,13 +98,13 @@ public final class GameStore {
     /// The app's on-disk store.
     public static func live() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self))
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self))
     }
 
     /// Throwaway store for tests and previews.
     public static func inMemory() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self,
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
 
@@ -141,6 +177,58 @@ public final class GameStore {
     public func recordEscape(of species: FishSpecies) {
         recordCreatingIfNeeded(for: species.id).gotAway = true
         save()
+    }
+
+    // MARK: Gardening — growth is real days; watering is a bonus (spec §2)
+
+    public func plantings() -> [Planting] {
+        (try? context.fetch(FetchDescriptor<Planting>(
+            sortBy: [SortDescriptor(\.bedIndex)]))) ?? []
+    }
+
+    /// Plant a crop or tree in a bed. A tree's yield is the planting itself
+    /// (it stands forever); a crop yields later, at harvest.
+    @discardableResult
+    public func plant(_ plantable: Plantable, at bedIndex: Int, now: Date) -> Planting {
+        let planting = Planting(plantableID: plantable.id, plantedAt: now, bedIndex: bedIndex)
+        context.insert(planting)
+        _ = addGardenXP(plantable.isTree ? plantable.xp : Self.plantXP)
+        save()
+        return planting
+    }
+
+    /// Harvest a ripe crop: its yield in XP, and the bed clears. Trees and
+    /// unripe crops harvest nothing.
+    public func harvest(_ planting: Planting, now: Date) -> GrowthReward? {
+        guard let plantable = Gardening.plantable(id: planting.plantableID),
+              Garden.isReady(plantedDays: planting.daysGrown(now: now), plantable)
+        else { return nil }
+        let reward = addGardenXP(plantable.xp)
+        context.delete(planting)
+        save()
+        return reward
+    }
+
+    /// Water a plant by hand — a small XP tick, at most once per real day
+    /// (real rain waters for free). Returns nil if already watered today.
+    @discardableResult
+    public func water(_ planting: Planting, now: Date) -> GrowthReward? {
+        guard planting.canWater(now: now) else { return nil }
+        planting.lastWatered = now
+        let reward = addGardenXP(Self.waterXP)
+        save()
+        return reward
+    }
+
+    private static let plantXP = 15
+    private static let waterXP = 10
+
+    private func addGardenXP(_ xp: Int) -> GrowthReward {
+        let progress = progress(for: .gardening)
+        let before = XPCurve.level(forXP: progress.xp)
+        progress.xp += xp
+        let after = XPCurve.level(forXP: progress.xp)
+        return GrowthReward(xpAwarded: xp, level: after, leveledUp: after > before)
     }
 
     /// A local-only save failing (disk full) is exceptional; the in-memory
