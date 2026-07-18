@@ -103,10 +103,12 @@ final class FishingSession: ObservableObject {
         // Dev override for reaching high-level species on a fresh install.
         let levelOverride = UserDefaults.standard.integer(forKey: "meok-fish-level")
         let castLevel = levelOverride > 0 ? levelOverride : level
-        // A meal's bite-rate buff speeds the wait (spec §2: meals give buffs).
+        // A meal's bite-rate buff speeds the wait (spec §2); a better crafted
+        // rod raises rare bites (spec §4).
         let scale = store.isActive(.biteRate, now: Date()) ? FishingRules.buffedBiteScale : 1
+        let rodBoost = FishingRules.rareBoost(forRodTier: store.rodTier())
         guard let bite = ConditionEngine.nextBite(
-            conditions, level: castLevel, biteDelayScale: scale, using: &rng)
+            conditions, level: castLevel, biteDelayScale: scale, rareWeightBoost: rodBoost, using: &rng)
         else { return }  // unreachable: the coverage invariant is kernel-tested
 
         self.bite = bite
@@ -155,6 +157,8 @@ final class FishingSession: ObservableObject {
         strain = 0
         holding = autopilot
         phaseTask?.cancel()
+        // A better crafted rod tolerates more strain (spec §4: keeper's rod).
+        let strainLimit = FishingRules.strainLimit(forRodTier: store.rodTier())
         // Weak per-iteration so dismissing the view mid-fight deallocates
         // the session (deinit cancels) instead of spinning this loop forever.
         phaseTask = Task { [weak self] in
@@ -177,7 +181,7 @@ final class FishingSession: ObservableObject {
                         if self.holding {
                             // Held through the song — the line strains.
                             self.strain += 1
-                            if self.strain >= 3 { self.slip(); return }
+                            if self.strain >= strainLimit { self.slip(); return }
                         }
                         if self.autopilot { self.holding = true }
                     }

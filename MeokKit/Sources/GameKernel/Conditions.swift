@@ -43,12 +43,21 @@ public enum ConditionDraw {
     public static func weightedPick<T: ConditionGated, R: RandomNumberGenerator>(
         from pool: [T], using rng: inout R
     ) -> T? {
-        let total = pool.reduce(0) { $0 + $1.weight }
+        weightedPick(from: pool, weight: { $0.weight }, using: &rng)
+    }
+
+    /// Weighted pick with a per-element weight override — e.g. a better rod
+    /// boosting rare species. Consumes exactly one draw, like the default.
+    public static func weightedPick<T: ConditionGated, R: RandomNumberGenerator>(
+        from pool: [T], weight: (T) -> Int, using rng: inout R
+    ) -> T? {
+        let total = pool.reduce(0) { $0 + weight($1) }
         guard total > 0 else { return pool.first }
         var pick = Int.random(in: 0..<total, using: &rng)
         for candidate in pool {
-            if pick < candidate.weight { return candidate }
-            pick -= candidate.weight
+            let candidateWeight = weight(candidate)
+            if pick < candidateWeight { return candidate }
+            pick -= candidateWeight
         }
         return pool.last
     }

@@ -55,6 +55,23 @@ public enum FishingRules {
     public static let biteDelay = 5.0...20.0
     /// A meal's bite-rate buff scales the bite delay (0.6 = 40 % faster).
     public static let buffedBiteScale = 0.6
+
+    /// A crafted rod's tier raises rare/apex bite weight (spec §4: bamboo rod
+    /// up, master's rod most). Tier 0–1 is the mended starter — no boost.
+    public static func rareBoost(forRodTier tier: Int) -> Double {
+        switch tier {
+        case ..<2: return 1
+        case 2: return 1.5
+        case 3: return 1.8
+        default: return 2.2
+        }
+    }
+
+    /// A better rod also tolerates more strain in the fight (spec §4: the
+    /// keeper's rod eases it). Tier 0–2 keeps the base three-strain limit.
+    public static func strainLimit(forRodTier tier: Int) -> Int {
+        3 + max(0, tier - 2)
+    }
 }
 
 public struct Bite: Equatable, Sendable {
@@ -78,10 +95,17 @@ public enum ConditionEngine {
     /// come easier without touching the weights. `biteDelayScale` < 1 is a
     /// meal buff (a faster bite); the caller supplies it from active buffs.
     public static func nextBite<R: RandomNumberGenerator>(
-        _ conditions: WorldConditions, level: Int, biteDelayScale: Double = 1, using rng: inout R
+        _ conditions: WorldConditions, level: Int,
+        biteDelayScale: Double = 1, rareWeightBoost: Double = 1, using rng: inout R
     ) -> Bite? {
         let pool = eligibleSpecies(conditions, level: level)
-        guard let species = ConditionDraw.weightedPick(from: pool, using: &rng) else { return nil }
+        // A better rod raises rare/apex bite weight (spec §4). boost 1 leaves
+        // every weight unchanged, so the default draw is byte-identical.
+        guard let species = ConditionDraw.weightedPick(from: pool, weight: { fish in
+            fish.triggersFight
+                ? max(1, Int((Double(fish.weight) * rareWeightBoost).rounded()))
+                : fish.weight
+        }, using: &rng) else { return nil }
 
         var delay = Double.random(in: FishingRules.biteDelay, using: &rng)
         if species.tier == .baseline {

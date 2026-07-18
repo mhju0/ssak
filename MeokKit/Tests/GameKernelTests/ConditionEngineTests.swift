@@ -147,6 +147,30 @@ final class ConditionEngineTests: XCTestCase {
             "the buff scales the bite delay")
     }
 
+    func testABetterRodBoostsRareBites() {
+        // Snakehead (rare) is eligible on a summer night; a boosted rod lands
+        // more rares over many seeded draws than the mended starter (boost 1).
+        let conditions = sky(.summer, .night, .clear)
+        func rares(boost: Double) -> Int {
+            var rng = SeededRandom(seed: 5)
+            var count = 0
+            for _ in 0..<800 {
+                let bite = ConditionEngine.nextBite(
+                    conditions, level: 40, rareWeightBoost: boost, using: &rng)!
+                if bite.species.triggersFight { count += 1 }
+            }
+            return count
+        }
+        XCTAssertGreaterThan(rares(boost: 3), rares(boost: 1), "the better rod lands more rares")
+    }
+
+    func testRodTierRaisesTheStrainLimit() {
+        XCTAssertEqual(FishingRules.strainLimit(forRodTier: 0), 3)
+        XCTAssertEqual(FishingRules.strainLimit(forRodTier: 2), 3)
+        XCTAssertEqual(FishingRules.strainLimit(forRodTier: 3), 4, "keeper's rod eases the fight")
+        XCTAssertEqual(FishingRules.strainLimit(forRodTier: 4), 5)
+    }
+
     func testDrawFollowsTheWeights() {
         // Under clear summer day at level 1: crucian (w100), carp (w45),
         // pale chub (w80). Over many seeded draws the heaviest weight wins
