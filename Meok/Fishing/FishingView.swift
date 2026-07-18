@@ -117,7 +117,7 @@ struct FishingView: View {
                     .font(.callout)
                     .foregroundStyle(inkColor.opacity(0.8))
                 if outcome.leveledUp { detail("Level up!") }
-                if outcome.firstCatchOfSpecies { detail("First catch!") }
+                if outcome.firstOfSpecies { detail("First catch!") }
                 if outcome.newWeatherVariant { detail("A new sky for this one.") }
                 prompt("Tap to continue")
                     .padding(.top, 8)

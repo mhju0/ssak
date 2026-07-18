@@ -21,7 +21,7 @@ final class FishingSession: ObservableObject {
         case signature
         case strikeWindow
         case fighting
-        case landed(CatchOutcome)
+        case landed(HaulOutcome)
         case slipped(wasNew: Bool)
     }
 

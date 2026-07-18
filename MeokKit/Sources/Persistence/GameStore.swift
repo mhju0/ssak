@@ -38,13 +38,14 @@ public final class SpeciesRecord {
     }
 }
 
-/// What one catch did to the ledgers — the fishing view's payoff line.
-public struct CatchOutcome: Equatable, Sendable {
+/// What one haul did to the ledgers — an activity view's payoff line. Shared
+/// by fishing catches and foraging finds (spec §2: "haul feeds crafting").
+public struct HaulOutcome: Equatable, Sendable {
     public let xpAwarded: Int
     public let totalXP: Int
     public let level: Int
     public let leveledUp: Bool
-    public let firstCatchOfSpecies: Bool
+    public let firstOfSpecies: Bool
     public let newWeatherVariant: Bool
 }
 
@@ -99,25 +100,40 @@ public final class GameStore {
     /// A landed fish: XP ticks, the ledger fills, variants accrue.
     public func record(
         catch species: FishSpecies, weather: WorldConditions.Weather
-    ) -> CatchOutcome {
-        let progress = progress(for: .fishing)
+    ) -> HaulOutcome {
+        award(.fishing, collectibleID: species.id, xp: species.xp, weather: weather)
+    }
+
+    /// A gathered forageable: the same ledger machinery, foraging XP.
+    public func record(
+        gather forageable: Forageable, weather: WorldConditions.Weather
+    ) -> HaulOutcome {
+        award(.foraging, collectibleID: forageable.id, xp: forageable.xp, weather: weather)
+    }
+
+    /// The one place XP ticks and a SpeciesRecord fills — shared by every
+    /// gathering skill so the monotonic-XP and variant-set rules live once.
+    private func award(
+        _ skill: Skill, collectibleID: String, xp: Int, weather: WorldConditions.Weather
+    ) -> HaulOutcome {
+        let progress = progress(for: skill)
         let levelBefore = XPCurve.level(forXP: progress.xp)
-        progress.xp += species.xp
+        progress.xp += xp
         let levelAfter = XPCurve.level(forXP: progress.xp)
 
-        let record = recordCreatingIfNeeded(for: species.id)
-        let firstCatch = record.timesCaught == 0
+        let record = recordCreatingIfNeeded(for: collectibleID)
+        let firstEver = record.timesCaught == 0
         record.timesCaught += 1
         let newVariant = !record.caughtWeathers.contains(weather.rawValue)
         if newVariant { record.caughtWeathers.append(weather.rawValue) }
 
         save()
-        return CatchOutcome(
-            xpAwarded: species.xp,
+        return HaulOutcome(
+            xpAwarded: xp,
             totalXP: progress.xp,
             level: levelAfter,
             leveledUp: levelAfter > levelBefore,
-            firstCatchOfSpecies: firstCatch,
+            firstOfSpecies: firstEver,
             newWeatherVariant: newVariant)
     }
 
