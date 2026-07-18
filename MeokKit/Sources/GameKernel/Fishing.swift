@@ -1,8 +1,9 @@
 import Foundation
 
-/// One event in a species' haptic bite signature. The CoreHaptics pattern,
-/// the bobber's visual tremble, and the audio tick all render this same
-/// envelope — one source, three mirrors (spec §2 accessibility).
+/// One event in a species' bite signature. The bobber's on-screen tremble
+/// and the audio tick both render this same envelope — one source, two
+/// mirrors (spec §2 accessibility). `sharpness` shapes the audio's pitch and
+/// the tremble's snap.
 public struct BiteTap: Equatable, Sendable {
     /// Seconds from the start of the signature.
     public let offset: Double

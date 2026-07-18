@@ -1,24 +1,18 @@
 import AVFoundation
-import CoreHaptics
 import GameKernel
 
-/// Renders a species' bite envelope as haptics and audio. The scene renders
-/// the same envelope as bobber motion — one source, three mirrors (spec §2
-/// accessibility). Haptics need a physical device; the Simulator plays the
-/// audio and visual mirrors only.
+/// Voices a species' bite envelope as procedural audio. The scene renders the
+/// same envelope as bobber motion — one source, two mirrors (spec §2
+/// accessibility). No haptics and no audio assets: every sound is synthesized
+/// on the fly (pillar 3), and the bobber's tremble carries the bite by sight.
 @MainActor
 final class BiteFeedback {
-    private var haptics: CHHapticEngine?
     private let audio = AVAudioEngine()
     private let player = AVAudioPlayerNode()
     private let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)
 
     init() {
         try? AVAudioSession.sharedInstance().setCategory(.ambient, options: .mixWithOthers)
-        if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
-            haptics = try? CHHapticEngine()
-            try? haptics?.start()
-        }
         guard let format else { return }
         audio.attach(player)
         audio.connect(player, to: audio.mainMixerNode, format: format)
@@ -27,7 +21,6 @@ final class BiteFeedback {
     }
 
     func playSignature(_ taps: [BiteTap]) {
-        playHaptics(taps)
         for tap in taps {
             Task { [weak self] in
                 try? await Task.sleep(nanoseconds: UInt64(tap.offset * 1e9))
@@ -38,36 +31,15 @@ final class BiteFeedback {
 
     /// The sharp "singing line" cue during a fight.
     func sing() {
-        playHaptics([BiteTap(offset: 0, intensity: 1, sharpness: 1, duration: 0.15)])
         tick(intensity: 1, sharpness: 1, duration: 0.2)
     }
 
     /// The landing splash.
     func splash() {
-        playHaptics([BiteTap(offset: 0, intensity: 0.8, sharpness: 0.15, duration: 0.3)])
         tick(intensity: 0.8, sharpness: 0.1, duration: 0.3)
     }
 
-    private func playHaptics(_ taps: [BiteTap]) {
-        guard let haptics else { return }
-        let events = taps.map { tap in
-            CHHapticEvent(
-                eventType: tap.duration > 0.15 ? .hapticContinuous : .hapticTransient,
-                parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(tap.intensity)),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: Float(tap.sharpness)),
-                ],
-                relativeTime: tap.offset,
-                duration: tap.duration)
-        }
-        guard let pattern = try? CHHapticPattern(events: events, parameters: []),
-              let patternPlayer = try? haptics.makePlayer(with: pattern) else { return }
-        try? patternPlayer.start(atTime: 0)
-    }
-
-    /// A short decaying sine "plop" — procedural, no audio assets (pillar 3
-    /// extends to sound: if it can't be synthesized, it waits for M3's
-    /// curated stems).
+    /// A short decaying sine "plop" — procedural, no audio assets.
     private func tick(intensity: Double, sharpness: Double, duration: Double) {
         guard audio.isRunning, let format else { return }
         let sampleRate = format.sampleRate

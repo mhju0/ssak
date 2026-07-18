@@ -136,15 +136,16 @@ final class FishingScene: SKScene {
 
     // MARK: The visual mirror
 
-    /// The bobber trembles in the species' bite pattern — same envelope as
-    /// the haptics and audio.
+    /// The bobber trembles in the species' bite pattern — the on-screen
+    /// signature (same envelope the audio voices). With haptics gone, this is
+    /// how the player reads which fish is nibbling, so each tap dips the float.
     func playTremble(_ taps: [BiteTap]) {
         guard let bobber else { return }
         for tap in taps {
             bobber.run(.sequence([.wait(forDuration: tap.offset), shake(tap)]))
-            if tap.intensity >= 0.6 {
+            if tap.intensity >= 0.45 {
                 run(.sequence([.wait(forDuration: tap.offset), .run { [weak self] in
-                    self?.ripple(strength: CGFloat(tap.intensity) * 0.6)
+                    self?.ripple(strength: CGFloat(tap.intensity) * 0.7)
                 }]))
             }
         }
@@ -152,10 +153,13 @@ final class FishingScene: SKScene {
 
     private func shake(_ tap: BiteTap) -> SKAction {
         let steps = max(2, Int(tap.duration / 0.05))
+        // A bite tugs the float down and lets it spring back; sharper bites
+        // snap harder. Amplitude scales with intensity so species read apart.
+        let dip = (5 + 5 * tap.sharpness) * tap.intensity
         var actions: [SKAction] = []
         for _ in 0..<steps {
-            let dx = CGFloat.random(in: -1...1) * 3 * tap.intensity
-            let dy = CGFloat.random(in: -1...0.3) * 5 * tap.intensity
+            let dx = CGFloat.random(in: -1...1) * 3.5 * tap.intensity
+            let dy = -CGFloat.random(in: 0.5...1) * dip
             actions.append(.moveBy(x: dx, y: dy, duration: 0.045))
             actions.append(.moveBy(x: -dx, y: -dy, duration: 0.045))
         }
@@ -170,7 +174,7 @@ final class FishingScene: SKScene {
         ripple(strength: 1)
     }
 
-    /// The line "sings" — visual mirror of the sharp fight haptic.
+    /// The line "sings" — the on-screen mirror of the fight's sharp cue.
     func singShiver() {
         line?.run(.repeat(.sequence([
             .moveBy(x: 2, y: 0, duration: 0.04),
