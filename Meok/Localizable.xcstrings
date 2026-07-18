@@ -111,6 +111,26 @@
         }
       }
     },
+    "Artistry Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "서화 Lv %lld"
+          }
+        }
+      }
+    },
+    "Choose a frame": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "화폭을 고르세요"
+          }
+        }
+      }
+    },
     "City": {
       "localizations": {
         "ko": {
@@ -311,6 +331,16 @@
         }
       }
     },
+    "Hang it in the gallery": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "전시관에 걸기"
+          }
+        }
+      }
+    },
     "Harvest": {
       "localizations": {
         "ko": {
@@ -367,6 +397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "부엌"
+          }
+        }
+      }
+    },
+    "Leave it": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "그대로 두기"
           }
         }
       }
@@ -521,6 +561,16 @@
         }
       }
     },
+    "Sealed in red.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "붉게 낙관했습니다."
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "ko": {
@@ -537,6 +587,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "소리"
+          }
+        }
+      }
+    },
+    "Stamp your seal?": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "낙관을 찍을까요?"
+          }
+        }
+      }
+    },
+    "Studio": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "화실"
           }
         }
       }
@@ -661,12 +731,32 @@
         }
       }
     },
+    "The red seal": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "붉은 낙관"
+          }
+        }
+      }
+    },
     "The scroll lives under this city's real sky.": {
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
             "value": "족자는 이 도시의 실제 하늘 아래 살아갑니다."
+          }
+        }
+      }
+    },
+    "Trace the strokes": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "필선을 따라 그리세요"
           }
         }
       }

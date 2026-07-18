@@ -22,6 +22,7 @@ struct HermitageView: View {
     @State private var showSweep = false
     @State private var showCraft = false
     @State private var showCook = false
+    @State private var showPaint = false
 
     var body: some View {
         NavigationStack {
@@ -31,6 +32,9 @@ struct HermitageView: View {
                     hubRow("Workbench", "hammer") { showCraft = true }
                     if restored.contains("kitchen") {
                         hubRow("Kitchen", "flame") { showCook = true }
+                    }
+                    if restored.contains("studio") {
+                        hubRow("Studio", "paintbrush") { showPaint = true }
                     }
                 } header: {
                     Text("The grounds")
@@ -69,6 +73,9 @@ struct HermitageView: View {
         }
         .fullScreenCover(isPresented: $showCook) {
             MakerView(store: store, kind: .cooking) { showCook = false }
+        }
+        .fullScreenCover(isPresented: $showPaint) {
+            PaintingView(conditions: conditions, store: store) { showPaint = false }
         }
     }
 

@@ -83,6 +83,7 @@ struct ContentView: View {
     @State private var showHermitage = ProcessInfo.processInfo.arguments.contains("-meok-hermitage-demo")
     @State private var showCooking = ProcessInfo.processInfo.arguments.contains("-meok-cook-demo")
     @State private var showCrafting = ProcessInfo.processInfo.arguments.contains("-meok-craft-demo")
+    @State private var showPainting = ProcessInfo.processInfo.arguments.contains("-meok-paint-demo")
     @State private var showLedger = ProcessInfo.processInfo.arguments.contains("-meok-ledger")
     private let cleanChrome = ProcessInfo.processInfo.arguments.contains("-meok-clean")
 
@@ -204,6 +205,11 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showCrafting) {
             if let gameStore {
                 MakerView(store: gameStore, kind: .crafting) { showCrafting = false }
+            }
+        }
+        .fullScreenCover(isPresented: $showPainting) {
+            if let gameStore {
+                PaintingView(conditions: sky.conditions, store: gameStore) { showPainting = false }
             }
         }
         .task {
