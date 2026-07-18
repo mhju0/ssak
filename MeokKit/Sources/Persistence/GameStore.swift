@@ -108,6 +108,31 @@ public final class HermitageRoom {
     }
 }
 
+/// A finished painting (spec §4): its composition, a snapshot of the sky it
+/// baked in, and whether the red seal was stamped. The scene re-renders from
+/// this deterministically — no stored PNG at v1 (share-sheet export is M7/M8).
+@Model
+public final class Painting {
+    public var compositionID: String
+    public var weather: String
+    public var season: String
+    public var timeOfDay: String
+    public var sealed: Bool
+    public var createdAt: Date
+
+    public init(
+        compositionID: String, weather: String, season: String,
+        timeOfDay: String, sealed: Bool, createdAt: Date
+    ) {
+        self.compositionID = compositionID
+        self.weather = weather
+        self.season = season
+        self.timeOfDay = timeOfDay
+        self.sealed = sealed
+        self.createdAt = createdAt
+    }
+}
+
 /// What one haul did to the ledgers — an activity view's payoff line. Shared
 /// by fishing catches and foraging finds (spec §2: "haul feeds crafting").
 public struct HaulOutcome: Equatable, Sendable {
@@ -140,13 +165,13 @@ public final class GameStore {
     /// The app's on-disk store.
     public static func live() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self))
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self, Painting.self))
     }
 
     /// Throwaway store for tests and previews.
     public static func inMemory() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self,
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self, Painting.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
 
@@ -375,6 +400,38 @@ public final class GameStore {
         var descriptor = FetchDescriptor<HermitageRoom>(predicate: #Predicate { $0.roomID == roomID })
         descriptor.fetchLimit = 1
         return try? context.fetch(descriptor).first
+    }
+
+    // MARK: Artistry — paint the live scene (spec §2)
+
+    /// Every painting, newest first — the gallery walls.
+    public func paintings() -> [Painting] {
+        (try? context.fetch(FetchDescriptor<Painting>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]))) ?? []
+    }
+
+    /// The weather variants painted for a composition — gallery completion.
+    public func paintedVariants(of compositionID: String) -> Set<String> {
+        Set(paintings().filter { $0.compositionID == compositionID }.map(\.weather))
+    }
+
+    /// Finish a painting: hang the work (composition + the sky it baked in +
+    /// seal state) and tick artistry XP.
+    @discardableResult
+    public func record(
+        painting composition: Composition, conditions: WorldConditions,
+        sealed: Bool, now: Date
+    ) -> XPReward {
+        context.insert(Painting(
+            compositionID: composition.id,
+            weather: conditions.weather.rawValue,
+            season: conditions.season.rawValue,
+            timeOfDay: conditions.timeOfDay.rawValue,
+            sealed: sealed,
+            createdAt: now))
+        let reward = addXP(.artistry, composition.xp)
+        save()
+        return reward
     }
 
     // MARK: Inventory — the consumable stock (spec §4)

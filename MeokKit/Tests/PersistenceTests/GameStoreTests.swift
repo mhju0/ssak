@@ -280,6 +280,32 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(store.count(of: "mugwort"), 3, "a failed consume never goes negative")
     }
 
+    private var pondVista: Composition { Artistry.composition(id: "pond-vista")! }  // xp 80
+    private func paintSky(_ weather: WorldConditions.Weather) -> WorldConditions {
+        WorldConditions(weather: weather, precipitation: 0, windSpeed: 0, timeOfDay: .day, season: .summer)
+    }
+
+    func testRecordingAPaintingHangsItAndAwardsArtistryXP() {
+        let reward = store.record(painting: pondVista, conditions: paintSky(.rain), sealed: false, now: noon)
+        XCTAssertEqual(reward.xpAwarded, pondVista.xp)
+        XCTAssertEqual(store.progress(for: .artistry).xp, pondVista.xp)
+        XCTAssertEqual(store.paintings().count, 1)
+        XCTAssertEqual(store.paintings().first?.weather, "rain")
+        XCTAssertTrue(store.paintedVariants(of: "pond-vista").contains("rain"))
+    }
+
+    func testEachWeatherIsADistinctPaintedVariant() {
+        _ = store.record(painting: pondVista, conditions: paintSky(.clear), sealed: false, now: noon)
+        _ = store.record(painting: pondVista, conditions: paintSky(.snow), sealed: false, now: noon)
+        XCTAssertEqual(store.paintedVariants(of: "pond-vista"), ["clear", "snow"])
+        XCTAssertEqual(store.paintings().count, 2, "each sky is its own collectible work")
+    }
+
+    func testTheSealIsRemembered() {
+        _ = store.record(painting: pondVista, conditions: paintSky(.clear), sealed: true, now: noon)
+        XCTAssertEqual(store.paintings().first?.sealed, true)
+    }
+
     func testProgressRowIsCreatedOnce() throws {
         _ = store.progress(for: .fishing)
         _ = store.progress(for: .fishing)
