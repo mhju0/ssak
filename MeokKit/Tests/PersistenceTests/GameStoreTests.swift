@@ -121,6 +121,7 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(reward?.xpAwarded, radishP.xp)
         XCTAssertEqual(store.progress(for: .gardening).xp, 15 + radishP.xp)
         XCTAssertTrue(store.plantings().isEmpty, "harvest clears the bed")
+        XCTAssertEqual(store.count(of: "radish"), 1, "the harvest becomes an ingredient")
     }
 
     func testWateringGivesXPAtMostOncePerDay() throws {
@@ -165,16 +166,36 @@ final class GameStoreTests: XCTestCase {
     func testConsumeIngredientListIsAtomic() {
         store.add("catfish", count: 1)
         store.add("mugwort", count: 2)
-        XCTAssertTrue(store.has([("catfish", 1), ("mugwort", 2)]))
+        XCTAssertTrue(store.has([Ingredient("catfish", 1), Ingredient("mugwort", 2)]))
 
         // A list that can't be fully satisfied consumes nothing.
-        XCTAssertFalse(store.consume([("catfish", 1), ("mugwort", 3)]))
+        XCTAssertFalse(store.consume([Ingredient("catfish", 1), Ingredient("mugwort", 3)]))
         XCTAssertEqual(store.count(of: "catfish"), 1, "atomic: catfish untouched on failure")
         XCTAssertEqual(store.count(of: "mugwort"), 2)
 
-        XCTAssertTrue(store.consume([("catfish", 1), ("mugwort", 2)]))
+        XCTAssertTrue(store.consume([Ingredient("catfish", 1), Ingredient("mugwort", 2)]))
         XCTAssertEqual(store.count(of: "catfish"), 0)
         XCTAssertEqual(store.count(of: "mugwort"), 0)
+    }
+
+    func testCookConsumesIngredientsAndAwardsCookingXP() {
+        let stew = CookingTable.all.first { $0.id == "spicy-fish-stew" }!  // catfish + mugwort
+        store.add("catfish", count: 1)
+        store.add("mugwort", count: 1)
+
+        let reward = store.cook(stew)
+        XCTAssertEqual(reward?.xpAwarded, stew.xp)
+        XCTAssertEqual(store.progress(for: .cooking).xp, stew.xp)
+        XCTAssertEqual(store.count(of: "catfish"), 0, "cooking ate the ingredients")
+        XCTAssertEqual(store.count(of: "mugwort"), 0)
+    }
+
+    func testCookFailsWhenThePantryIsShort() {
+        let stew = CookingTable.all.first { $0.id == "spicy-fish-stew" }!
+        store.add("catfish", count: 1)   // missing the mugwort
+        XCTAssertNil(store.cook(stew))
+        XCTAssertEqual(store.progress(for: .cooking).xp, 0)
+        XCTAssertEqual(store.count(of: "catfish"), 1, "a failed cook consumes nothing")
     }
 
     func testProgressRowIsCreatedOnce() throws {

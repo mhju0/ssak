@@ -35,7 +35,7 @@ final class GardenSession: ObservableObject {
     @Published private(set) var plots: [PlotRender] = []
     @Published private(set) var level: Int
     @Published var selectedPlot: Int?
-    @Published private(set) var lastReward: GrowthReward?
+    @Published private(set) var lastReward: XPReward?
     @Published private(set) var lastEvent: Event?
 
     var conditions: WorldConditions
@@ -154,7 +154,7 @@ final class GardenSession: ObservableObject {
         refresh()
     }
 
-    private func apply(_ reward: GrowthReward, event: Event) {
+    private func apply(_ reward: XPReward, event: Event) {
         lastReward = reward
         lastEvent = event
         level = reward.level

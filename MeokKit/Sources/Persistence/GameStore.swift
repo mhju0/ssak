@@ -93,8 +93,9 @@ public struct HaulOutcome: Equatable, Sendable {
     public let newWeatherVariant: Bool
 }
 
-/// What a gardening act (plant / water / harvest) gave — the garden's payoff.
-public struct GrowthReward: Equatable, Sendable {
+/// What a skill act (plant, water, harvest, cook, craft…) awarded — the XP,
+/// the resulting level, and whether it leveled up.
+public struct XPReward: Equatable, Sendable {
     public let xpAwarded: Int
     public let level: Int
     public let leveledUp: Bool
@@ -206,20 +207,21 @@ public final class GameStore {
     /// (it stands forever); a crop yields later, at harvest. Returns the XP
     /// reward, like water/harvest (the row is reachable via `plantings()`).
     @discardableResult
-    public func plant(_ plantable: Plantable, at bedIndex: Int, now: Date) -> GrowthReward {
+    public func plant(_ plantable: Plantable, at bedIndex: Int, now: Date) -> XPReward {
         context.insert(Planting(plantableID: plantable.id, plantedAt: now, bedIndex: bedIndex))
-        let reward = addGardenXP(plantable.isTree ? plantable.xp : Self.plantXP)
+        let reward = addXP(.gardening, plantable.isTree ? plantable.xp : Self.plantXP)
         save()
         return reward
     }
 
     /// Harvest a ripe crop: its yield in XP, and the bed clears. Trees and
     /// unripe crops harvest nothing.
-    public func harvest(_ planting: Planting, now: Date) -> GrowthReward? {
+    public func harvest(_ planting: Planting, now: Date) -> XPReward? {
         guard let plantable = Gardening.plantable(id: planting.plantableID),
               Garden.isReady(plantedDays: planting.daysGrown(now: now), plantable)
         else { return nil }
-        let reward = addGardenXP(plantable.xp)
+        let reward = addXP(.gardening, plantable.xp)
+        stock(plantable.id, 1)   // the harvest goes to the pantry (an ingredient)
         context.delete(planting)
         save()
         return reward
@@ -228,10 +230,10 @@ public final class GameStore {
     /// Water a plant by hand — a small XP tick, at most once per real day
     /// (real rain waters for free). Returns nil if already watered today.
     @discardableResult
-    public func water(_ planting: Planting, now: Date) -> GrowthReward? {
+    public func water(_ planting: Planting, now: Date) -> XPReward? {
         guard planting.canWater(now: now) else { return nil }
         planting.lastWatered = now
-        let reward = addGardenXP(Self.waterXP)
+        let reward = addXP(.gardening, Self.waterXP)
         save()
         return reward
     }
@@ -239,12 +241,25 @@ public final class GameStore {
     private static let plantXP = 15
     private static let waterXP = 10
 
-    private func addGardenXP(_ xp: Int) -> GrowthReward {
-        let progress = progress(for: .gardening)
+    /// Tick a skill's XP and report the reward — shared by gardening, cooking,
+    /// and crafting. Does not save; callers batch their save.
+    private func addXP(_ skill: Skill, _ xp: Int) -> XPReward {
+        let progress = progress(for: skill)
         let before = XPCurve.level(forXP: progress.xp)
         progress.xp += xp
         let after = XPCurve.level(forXP: progress.xp)
-        return GrowthReward(xpAwarded: xp, level: after, leveledUp: after > before)
+        return XPReward(xpAwarded: xp, level: after, leveledUp: after > before)
+    }
+
+    // MARK: Cooking — a meal from the haul (spec §2)
+
+    /// Cook a dish if its ingredients are on hand: consume them, tick cooking
+    /// XP. nil when the pantry is short. (Buff activation lands in M4 #39.)
+    public func cook(_ dish: Dish) -> XPReward? {
+        guard take(dish.ingredients) else { return nil }
+        let reward = addXP(.cooking, dish.xp)
+        save()
+        return reward
     }
 
     // MARK: Inventory — the consumable stock (spec §4)
@@ -254,7 +269,7 @@ public final class GameStore {
     }
 
     /// True only if every ingredient is on hand in the required amount.
-    public func has(_ ingredients: [(item: String, count: Int)]) -> Bool {
+    public func has(_ ingredients: [Ingredient]) -> Bool {
         ingredients.allSatisfy { count(of: $0.item) >= $0.count }
     }
 
@@ -274,10 +289,17 @@ public final class GameStore {
 
     /// Consume a whole ingredient list atomically — all or nothing.
     @discardableResult
-    public func consume(_ ingredients: [(item: String, count: Int)]) -> Bool {
+    public func consume(_ ingredients: [Ingredient]) -> Bool {
+        guard take(ingredients) else { return false }
+        save()
+        return true
+    }
+
+    /// Deduct an ingredient list without saving — for actions (cook/craft/
+    /// restore) that then tick XP and save once. Atomic: all or nothing.
+    private func take(_ ingredients: [Ingredient]) -> Bool {
         guard has(ingredients) else { return false }
         for ingredient in ingredients { item(ingredient.item)?.count -= ingredient.count }
-        save()
         return true
     }
 
