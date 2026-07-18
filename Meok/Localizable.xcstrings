@@ -101,6 +101,16 @@
         }
       }
     },
+    "Ah — you fish these waters too.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아, 자네도 이 물을 낚는가."
+          }
+        }
+      }
+    },
     "Already watered today.": {
       "localizations": {
         "ko": {
@@ -361,6 +371,16 @@
         }
       }
     },
+    "Heh. A mortal, out in my storm?": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "허. 인간이, 내 폭풍 속에?"
+          }
+        }
+      }
+    },
     "Hermitage": {
       "localizations": {
         "ko": {
@@ -467,6 +487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "지금!"
+          }
+        }
+      }
+    },
+    "Odd goods for odd prices. Blink, and I'm gone with the thunder.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "괴상한 물건엔 괴상한 값. 눈 깜짝할 새 천둥과 함께 사라지지."
           }
         }
       }
@@ -731,6 +761,16 @@
         }
       }
     },
+    "The rain wakes the eels. Patience is the only bait that never runs out.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "비가 뱀장어를 깨우지. 인내야말로 마르지 않는 유일한 미끼라네."
+          }
+        }
+      }
+    },
     "The red seal": {
       "localizations": {
         "ko": {
@@ -751,6 +791,16 @@
         }
       }
     },
+    "Things your weather never grows — I carry them all. I pass this way but seldom.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "그대 날씨가 못 기르는 것들 — 내가 다 지녔소. 이 길은 좀처럼 안 지나오."
+          }
+        }
+      }
+    },
     "Trace the strokes": {
       "localizations": {
         "ko": {
@@ -767,6 +817,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "더 둘러보기"
+          }
+        }
+      }
+    },
+    "Wares from far skies, traveler.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "먼 하늘의 물건이오, 나그네."
           }
         }
       }
