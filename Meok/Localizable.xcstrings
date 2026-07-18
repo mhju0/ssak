@@ -91,6 +91,36 @@
         }
       }
     },
+    "Cook": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "요리하기"
+          }
+        }
+      }
+    },
+    "Cooked %@": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 완성"
+          }
+        }
+      }
+    },
+    "Cooking Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "요리 Lv %lld"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "ko": {
@@ -431,6 +461,16 @@
         }
       }
     },
+    "The line will bite sooner for a while.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한동안 입질이 빨라집니다."
+          }
+        }
+      }
+    },
     "The path is clear.": {
       "localizations": {
         "ko": {
@@ -497,6 +537,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "날씨 데이터 제공: Open-Meteo.com (CC BY 4.0)"
+          }
+        }
+      }
+    },
+    "a faster bite · %lld min": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "빠른 입질 · %lld분"
           }
         }
       }
