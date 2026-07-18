@@ -1,256 +1,336 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "— the line sings —" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "— 줄이 웁니다 —"
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld of %lld under your sky · %lld/%lld variants": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하늘 아래 %lld / %lld · 변이 %lld/%lld"
           }
         }
       }
     },
-    "+%lld XP · Fishing Lv %lld" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+%lld XP · 낚시 Lv %lld"
+    "+%lld XP · Fishing Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld XP · 낚시 Lv %lld"
           }
         }
       }
     },
-    "%lld of %lld species under your sky" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 하늘의 어종 %lld / %lld"
+    "+%lld XP · Foraging Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld XP · 채집 Lv %lld"
           }
         }
       }
     },
-    "%lld of %lld weather variants" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "날씨 변이 %lld / %lld"
+    "A new sky for this one.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 물고기의 새로운 하늘."
           }
         }
       }
     },
-    "A new sky for this one." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 물고기의 새로운 하늘."
+    "A shadow joins the ledger.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "도감에 그림자가 남았습니다."
           }
         }
       }
     },
-    "A shadow joins the ledger." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도감에 그림자가 남았습니다."
+    "City": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "도시"
           }
         }
       }
     },
-    "City" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도시"
+    "Done": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완료"
           }
         }
       }
     },
-    "Done" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "완료"
+    "First catch!": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "첫 조과!"
           }
         }
       }
     },
-    "First catch!" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "첫 조과!"
+    "First find!": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "첫 채집!"
           }
         }
       }
     },
-    "Fish" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "낚시"
+    "Fish": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "낚시"
           }
         }
       }
     },
-    "Fishing Lv %lld" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "낚시 Lv %lld"
+    "Fishing": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "낚시"
           }
         }
       }
     },
-    "Hold to reel — ease off when the line sings" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "눌러서 릴을 감고 — 줄이 울면 살짝 놓아주세요"
+    "Fishing Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "낚시 Lv %lld"
           }
         }
       }
     },
-    "It slipped away…" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "놓쳐버렸습니다…"
+    "Forage": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "채집"
           }
         }
       }
     },
-    "Ledger" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도감"
+    "Foraging": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "채집"
           }
         }
       }
     },
-    "Level up!" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "레벨 업!"
+    "Foraging Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "채집 Lv %lld"
           }
         }
       }
     },
-    "Lv %lld" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lv %lld"
+    "Hold to reel — ease off when the line sings": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "눌러서 릴을 감고 — 줄이 울면 살짝 놓아주세요"
           }
         }
       }
     },
-    "Not native to your sky." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 하늘의 물고기가 아닙니다."
+    "It slipped away…": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "놓쳐버렸습니다…"
           }
         }
       }
     },
-    "Now!" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "지금!"
+    "Ledger": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "도감"
           }
         }
       }
     },
-    "One that got away…" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "놓친 그 물고기…"
+    "Level up!": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "레벨 업!"
           }
         }
       }
     },
-    "Settings" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "설정"
+    "Lv %lld": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lv %lld"
           }
         }
       }
     },
-    "Tap to cast" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "탭하여 찌 던지기"
+    "Not native to your sky.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 하늘의 물고기가 아닙니다."
           }
         }
       }
     },
-    "Tap to continue" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "탭하여 계속"
+    "Now!": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지금!"
           }
         }
       }
     },
-    "The scroll lives under this city's real sky." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "족자는 이 도시의 실제 하늘 아래 살아갑니다."
+    "One that got away…": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "놓친 그 물고기…"
           }
         }
       }
     },
-    "Watch the bobber…" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "찌를 지켜보세요…"
+    "Settings": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정"
           }
         }
       }
     },
-    "Weather data by Open-Meteo.com (CC BY 4.0)" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "날씨 데이터 제공: Open-Meteo.com (CC BY 4.0)"
+    "Tap a spot to gather": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "빈 곳을 눌러 채집"
+          }
+        }
+      }
+    },
+    "Tap to cast": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "탭하여 찌 던지기"
+          }
+        }
+      }
+    },
+    "Tap to continue": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "탭하여 계속"
+          }
+        }
+      }
+    },
+    "The clearing is quiet now.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "빈터가 고요합니다."
+          }
+        }
+      }
+    },
+    "The scroll lives under this city's real sky.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "족자는 이 도시의 실제 하늘 아래 살아갑니다."
+          }
+        }
+      }
+    },
+    "Wander on": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "더 둘러보기"
+          }
+        }
+      }
+    },
+    "Watch the bobber…": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "찌를 지켜보세요…"
+          }
+        }
+      }
+    },
+    "Weather data by Open-Meteo.com (CC BY 4.0)": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "날씨 데이터 제공: Open-Meteo.com (CC BY 4.0)"
+          }
+        }
+      }
+    },
+    "— the line sings —": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— 줄이 웁니다 —"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

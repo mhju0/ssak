@@ -3,33 +3,52 @@ import GameKernel
 import Persistence
 import SkyState
 
-/// The species ledger v0 — a list over SpeciesRecord (spec §2). Caught
-/// species show their variant marks; escapes leave shadows; species the
-/// player's sky can't produce carry the honest label and stay out of the
-/// completion denominator (per-climate 100%).
+/// A collectible with a ledger row — fish and forageables both qualify. The
+/// members already exist on each; conformance just names the shared shape.
+protocol LedgerItem: Identifiable {
+    var id: String { get }
+    var displayName: String { get }
+    var weathers: Set<WorldConditions.Weather> { get }
+    var unlockLevel: Int { get }
+}
+
+extension FishSpecies: LedgerItem {}
+extension Forageable: LedgerItem {}
+
+/// The species ledger v0 — lists over SpeciesRecord (spec §2), one section per
+/// gathering skill. Caught/gathered species show their variant marks; escapes
+/// leave shadows; species the sky can't produce carry the honest label and
+/// stay out of the completion denominator (per-climate 100%).
 struct LedgerView: View {
     let store: GameStore
     let city: City
     @Environment(\.dismiss) private var dismiss
 
     private struct Row: Identifiable {
-        let species: FishSpecies
+        let item: any LedgerItem
         let record: SpeciesRecord?
         let native: Bool
-        var id: String { species.id }
+        var id: String { item.id }
     }
 
-    @State private var rows: [Row] = []
+    private struct Group: Identifiable {
+        let title: LocalizedStringKey
+        let key: String
+        let rows: [Row]
+        var id: String { key }
+    }
+
+    @State private var groups: [Group] = []
 
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    ForEach(rows) { row in
-                        rowView(row)
+                ForEach(groups) { group in
+                    Section {
+                        ForEach(group.rows) { rowView($0) }
+                    } header: {
+                        completionHeader(group)
                     }
-                } header: {
-                    completionHeader
                 }
             }
             .listStyle(.plain)
@@ -46,28 +65,35 @@ struct LedgerView: View {
 
     private func load() {
         let capability = Climate.capability(of: city)
-        rows = FishingTable.all
-            .sorted { ($0.unlockLevel, $0.id) < ($1.unlockLevel, $1.id) }
-            .map { species in
-                Row(
-                    species: species,
-                    record: store.record(for: species.id),
-                    native: !species.weathers.isDisjoint(with: capability))
-            }
+        func rows(_ items: [any LedgerItem]) -> [Row] {
+            items
+                .sorted { ($0.unlockLevel, $0.id) < ($1.unlockLevel, $1.id) }
+                .map { item in
+                    Row(
+                        item: item,
+                        record: store.record(for: item.id),
+                        native: !item.weathers.isDisjoint(with: capability))
+                }
+        }
+        groups = [
+            Group(title: "Fishing", key: "fishing", rows: rows(FishingTable.all)),
+            Group(title: "Foraging", key: "foraging", rows: rows(ForagingTable.all)),
+        ]
     }
 
-    private var completionHeader: some View {
+    private func completionHeader(_ group: Group) -> some View {
         let capability = Climate.capability(of: city)
-        let native = rows.filter(\.native)
+        let native = group.rows.filter(\.native)
         let caught = native.filter { ($0.record?.timesCaught ?? 0) > 0 }
-        let variantTotal = native.reduce(0) { $0 + $1.species.weathers.intersection(capability).count }
+        let variantTotal = native.reduce(0) { $0 + $1.item.weathers.intersection(capability).count }
         let variantCaught = native.reduce(0) { total, row in
             let caughtSet = Set((row.record?.caughtWeathers ?? []).compactMap(WorldConditions.Weather.init))
             return total + caughtSet.intersection(capability).count
         }
         return VStack(alignment: .leading, spacing: 2) {
-            Text("\(caught.count) of \(native.count) species under your sky")
-            Text("\(variantCaught) of \(variantTotal) weather variants")
+            Text(group.title)
+                .font(.caption.weight(.semibold))
+            Text("\(caught.count) of \(native.count) under your sky · \(variantCaught)/\(variantTotal) variants")
         }
         .font(.caption)
         .textCase(nil)
@@ -79,7 +105,7 @@ struct LedgerView: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 if caught {
-                    Text(row.species.displayName)
+                    Text(row.item.displayName)
                 } else {
                     Text(verbatim: "???")
                         .foregroundStyle(.secondary)
@@ -101,7 +127,7 @@ struct LedgerView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
-                Text("Lv \(row.species.unlockLevel)")
+                Text("Lv \(row.item.unlockLevel)")
                     .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
                 if let count = row.record?.timesCaught, count > 0 {
@@ -115,10 +141,10 @@ struct LedgerView: View {
     }
 
     /// One mark per weather in the species' variant set — filled once
-    /// caught under that sky.
+    /// collected under that sky.
     private func variantMarks(_ row: Row) -> some View {
         let caughtSet = Set(row.record?.caughtWeathers ?? [])
-        let weathers = row.species.weathers.sorted { $0.rawValue < $1.rawValue }
+        let weathers = row.item.weathers.sorted { $0.rawValue < $1.rawValue }
         return HStack(spacing: 6) {
             ForEach(weathers, id: \.rawValue) { weather in
                 Image(systemName: symbol(for: weather))

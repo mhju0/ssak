@@ -73,29 +73,40 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var gameStore: GameStore?
     @State private var showFishing = ProcessInfo.processInfo.arguments.contains("-meok-fish-demo")
+    @State private var showForaging = ProcessInfo.processInfo.arguments.contains("-meok-forage-demo")
     @State private var showLedger = ProcessInfo.processInfo.arguments.contains("-meok-ledger")
     private let cleanChrome = ProcessInfo.processInfo.arguments.contains("-meok-clean")
+
+    /// The activity offered by the zone under the camera (spec §3).
+    @ViewBuilder
+    private var zoneActivityButton: some View {
+        switch host.zone {
+        case .valleyPond: activityButton("Fish") { showFishing = true }
+        case .forest: activityButton("Forage") { showForaging = true }
+        default: EmptyView()
+        }
+    }
+
+    private func activityButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.callout)
+                .foregroundStyle(Color(uiColor: .meokInk).opacity(0.8))
+                .padding(.horizontal, 22)
+                .padding(.vertical, 8)
+                .overlay(Capsule().stroke(Color(uiColor: .meokInk).opacity(0.5), lineWidth: 1))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .padding(.bottom, 30)
+    }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             WorldView(host: host, sheet: devSheet)
                 .ignoresSafeArea()
-            // The pond invites fishing when the scroll rests there.
-            if host.zone == .valleyPond, gameStore != nil, devSheet == .world, !cleanChrome {
-                Button {
-                    showFishing = true
-                } label: {
-                    Text("Fish")
-                        .font(.callout)
-                        .foregroundStyle(Color(uiColor: .meokInk).opacity(0.8))
-                        .padding(.horizontal, 22)
-                        .padding(.vertical, 8)
-                        .overlay(
-                            Capsule()
-                                .stroke(Color(uiColor: .meokInk).opacity(0.5), lineWidth: 1))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .padding(.bottom, 30)
+            // The scroll's current zone offers its activity.
+            if gameStore != nil, devSheet == .world, !cleanChrome {
+                zoneActivityButton
             }
             if !cleanChrome {
                 HStack(spacing: 0) {
@@ -145,6 +156,13 @@ struct ContentView: View {
             if let gameStore {
                 FishingView(conditions: sky.conditions, store: gameStore) {
                     showFishing = false
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showForaging) {
+            if let gameStore {
+                ForagingView(conditions: sky.conditions, store: gameStore) {
+                    showForaging = false
                 }
             }
         }
