@@ -299,6 +299,39 @@ public final class GameStore {
         return try? context.fetch(descriptor).first
     }
 
+    // MARK: Crafting — tools and goods from the haul (spec §2)
+
+    /// Craft a thing if its materials are on hand: consume them, tick crafting
+    /// XP, and apply the effect (raise a tool tier, or stock a good). nil when
+    /// materials are short.
+    public func craft(_ craftable: Craftable) -> XPReward? {
+        guard take(craftable.materials) else { return nil }
+        let reward = addXP(.crafting, craftable.xp)
+        switch craftable.effect {
+        case .rodTier(let tier): raiseTool(Self.rodKey, to: tier)
+        case .brushTier(let tier): raiseTool(Self.brushKey, to: tier)
+        case .good(let id): stock(id, 1)
+        }
+        save()
+        return reward
+    }
+
+    /// The best rod owned (0 = none); fishing reads it. Brush is for M5.
+    public func rodTier() -> Int { count(of: Self.rodKey) }
+    public func brushTier() -> Int { count(of: Self.brushKey) }
+
+    private static let rodKey = "tool.rod"
+    private static let brushKey = "tool.brush"
+
+    /// A crafted tool only ever upgrades — a lesser one never downgrades it.
+    private func raiseTool(_ key: String, to tier: Int) {
+        if let existing = item(key) {
+            existing.count = max(existing.count, tier)
+        } else {
+            context.insert(InventoryItem(itemID: key, count: tier))
+        }
+    }
+
     // MARK: Inventory — the consumable stock (spec §4)
 
     public func count(of itemID: String) -> Int {

@@ -146,6 +146,43 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(store.progress(for: .foraging).xp, 0)
     }
 
+    func testCraftingARodConsumesMaterialsAndSetsTheTier() {
+        let bamboo = CraftingTable.all.first { $0.id == "bamboo-rod" }!  // shepherds-purse 3 → rodTier 2
+        store.add("shepherds-purse", count: 3)
+        let reward = store.craft(bamboo)
+        XCTAssertEqual(reward?.xpAwarded, bamboo.xp)
+        XCTAssertEqual(store.progress(for: .crafting).xp, bamboo.xp)
+        XCTAssertEqual(store.count(of: "shepherds-purse"), 0)
+        XCTAssertEqual(store.rodTier(), 2)
+    }
+
+    func testCraftingAGoodStocksIt() {
+        let kit = CraftingTable.all.first { $0.id == "repair-kit" }!  // oyster 1 + mugwort 3
+        store.add("oyster-mushroom", count: 1)
+        store.add("mugwort", count: 3)
+        _ = store.craft(kit)
+        XCTAssertEqual(store.count(of: "repair-kit"), 1)
+    }
+
+    func testABetterRodNeverDowngrades() {
+        let keeper = CraftingTable.all.first { $0.id == "keepers-rod" }!  // rodTier 3
+        let mend = CraftingTable.all.first { $0.id == "mend-rod" }!       // rodTier 1
+        store.add("pine-nuts", count: 2)
+        _ = store.craft(keeper)
+        XCTAssertEqual(store.rodTier(), 3)
+        store.add("mugwort", count: 2)
+        _ = store.craft(mend)  // crafting a lesser rod
+        XCTAssertEqual(store.rodTier(), 3, "the best rod owned stays the best")
+    }
+
+    func testCraftFailsWhenMaterialsAreShort() {
+        let bamboo = CraftingTable.all.first { $0.id == "bamboo-rod" }!
+        store.add("shepherds-purse", count: 1)  // needs 3
+        XCTAssertNil(store.craft(bamboo))
+        XCTAssertEqual(store.progress(for: .crafting).xp, 0)
+        XCTAssertEqual(store.count(of: "shepherds-purse"), 1)
+    }
+
     func testCatchAndGatherStockTheInventory() {
         _ = store.record(catch: crucian, weather: .clear)
         _ = store.record(catch: crucian, weather: .clear)
