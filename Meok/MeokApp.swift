@@ -161,7 +161,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showLedger) {
             if let gameStore {
-                LedgerView(store: gameStore, city: sky.city)
+                GalleryView(store: gameStore, city: sky.city)
             }
         }
         .fullScreenCover(isPresented: $showFishing) {
