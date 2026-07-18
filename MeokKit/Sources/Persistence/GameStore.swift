@@ -82,6 +82,19 @@ public final class InventoryItem {
     }
 }
 
+/// A meal buff running down (spec §2). Expiry is a wall-clock date, so a buff
+/// simply lapses with real time — open app or closed, no ticking to persist.
+@Model
+public final class ActiveBuff {
+    @Attribute(.unique) public var kind: String
+    public var expiresAt: Date
+
+    public init(kind: String, expiresAt: Date) {
+        self.kind = kind
+        self.expiresAt = expiresAt
+    }
+}
+
 /// What one haul did to the ledgers — an activity view's payoff line. Shared
 /// by fishing catches and foraging finds (spec §2: "haul feeds crafting").
 public struct HaulOutcome: Equatable, Sendable {
@@ -114,13 +127,13 @@ public final class GameStore {
     /// The app's on-disk store.
     public static func live() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self))
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self))
     }
 
     /// Throwaway store for tests and previews.
     public static func inMemory() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self,
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
 
@@ -254,12 +267,36 @@ public final class GameStore {
     // MARK: Cooking — a meal from the haul (spec §2)
 
     /// Cook a dish if its ingredients are on hand: consume them, tick cooking
-    /// XP. nil when the pantry is short. (Buff activation lands in M4 #39.)
-    public func cook(_ dish: Dish) -> XPReward? {
+    /// XP, and (for a buff dish) start its buff. nil when the pantry is short.
+    public func cook(_ dish: Dish, now: Date) -> XPReward? {
         guard take(dish.ingredients) else { return nil }
         let reward = addXP(.cooking, dish.xp)
+        if let buff = dish.buff { extendBuff(buff, minutes: dish.buffMinutes, now: now) }
         save()
         return reward
+    }
+
+    /// Is a meal buff still running? (Fishing reads this to speed the bite.)
+    public func isActive(_ buff: MealBuff, now: Date) -> Bool {
+        (buffRow(buff)?.expiresAt).map { $0 > now } ?? false
+    }
+
+    /// Extend a buff to at least now + minutes — a longer meal never shortens
+    /// an active buff. No save; the caller (cook) saves.
+    private func extendBuff(_ buff: MealBuff, minutes: Double, now: Date) {
+        let expiry = now.addingTimeInterval(minutes * 60)
+        if let existing = buffRow(buff) {
+            existing.expiresAt = max(existing.expiresAt, expiry)
+        } else {
+            context.insert(ActiveBuff(kind: buff.rawValue, expiresAt: expiry))
+        }
+    }
+
+    private func buffRow(_ buff: MealBuff) -> ActiveBuff? {
+        let kind = buff.rawValue
+        var descriptor = FetchDescriptor<ActiveBuff>(predicate: #Predicate { $0.kind == kind })
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
     }
 
     // MARK: Inventory — the consumable stock (spec §4)

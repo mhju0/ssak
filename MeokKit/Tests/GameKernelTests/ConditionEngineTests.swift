@@ -133,6 +133,20 @@ final class ConditionEngineTests: XCTestCase {
         }
     }
 
+    func testMealBuffScalesTheBiteDelay() {
+        // The bite-rate buff shortens the wait — same seed, same fish, delay × scale.
+        let conditions = sky(.summer, .day, .clear)
+        var a = SeededRandom(seed: 11)
+        var b = SeededRandom(seed: 11)
+        let plain = ConditionEngine.nextBite(conditions, level: 30, using: &a)!
+        let buffed = ConditionEngine.nextBite(
+            conditions, level: 30, biteDelayScale: FishingRules.buffedBiteScale, using: &b)!
+        XCTAssertEqual(buffed.species, plain.species, "same seed → same fish")
+        XCTAssertEqual(
+            buffed.delay, plain.delay * FishingRules.buffedBiteScale, accuracy: 1e-9,
+            "the buff scales the bite delay")
+    }
+
     func testDrawFollowsTheWeights() {
         // Under clear summer day at level 1: crucian (w100), carp (w45),
         // pale chub (w80). Over many seeded draws the heaviest weight wins

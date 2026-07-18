@@ -103,7 +103,10 @@ final class FishingSession: ObservableObject {
         // Dev override for reaching high-level species on a fresh install.
         let levelOverride = UserDefaults.standard.integer(forKey: "meok-fish-level")
         let castLevel = levelOverride > 0 ? levelOverride : level
-        guard let bite = ConditionEngine.nextBite(conditions, level: castLevel, using: &rng)
+        // A meal's bite-rate buff speeds the wait (spec §2: meals give buffs).
+        let scale = store.isActive(.biteRate, now: Date()) ? FishingRules.buffedBiteScale : 1
+        guard let bite = ConditionEngine.nextBite(
+            conditions, level: castLevel, biteDelayScale: scale, using: &rng)
         else { return }  // unreachable: the coverage invariant is kernel-tested
 
         self.bite = bite

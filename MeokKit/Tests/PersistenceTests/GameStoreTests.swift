@@ -178,12 +178,13 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(store.count(of: "mugwort"), 0)
     }
 
+    private var stew: Dish { CookingTable.all.first { $0.id == "spicy-fish-stew" }! }  // catfish+mugwort, biteRate 30m
+
     func testCookConsumesIngredientsAndAwardsCookingXP() {
-        let stew = CookingTable.all.first { $0.id == "spicy-fish-stew" }!  // catfish + mugwort
         store.add("catfish", count: 1)
         store.add("mugwort", count: 1)
 
-        let reward = store.cook(stew)
+        let reward = store.cook(stew, now: noon)
         XCTAssertEqual(reward?.xpAwarded, stew.xp)
         XCTAssertEqual(store.progress(for: .cooking).xp, stew.xp)
         XCTAssertEqual(store.count(of: "catfish"), 0, "cooking ate the ingredients")
@@ -191,11 +192,22 @@ final class GameStoreTests: XCTestCase {
     }
 
     func testCookFailsWhenThePantryIsShort() {
-        let stew = CookingTable.all.first { $0.id == "spicy-fish-stew" }!
         store.add("catfish", count: 1)   // missing the mugwort
-        XCTAssertNil(store.cook(stew))
+        XCTAssertNil(store.cook(stew, now: noon))
         XCTAssertEqual(store.progress(for: .cooking).xp, 0)
         XCTAssertEqual(store.count(of: "catfish"), 1, "a failed cook consumes nothing")
+    }
+
+    func testCookingABuffDishStartsAndLapsesTheBuff() {
+        store.add("catfish", count: 1)
+        store.add("mugwort", count: 1)
+        XCTAssertFalse(store.isActive(.biteRate, now: noon))
+
+        _ = store.cook(stew, now: noon)  // biteRate for 30 minutes
+        XCTAssertTrue(store.isActive(.biteRate, now: noon.addingTimeInterval(29 * 60)))
+        XCTAssertFalse(
+            store.isActive(.biteRate, now: noon.addingTimeInterval(31 * 60)),
+            "the buff lapses with real time")
     }
 
     func testProgressRowIsCreatedOnce() throws {

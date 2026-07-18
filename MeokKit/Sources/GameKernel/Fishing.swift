@@ -53,6 +53,8 @@ public enum FishingRules {
     public static let fightDuration = 10.0
     /// Seconds from cast to bite.
     public static let biteDelay = 5.0...20.0
+    /// A meal's bite-rate buff scales the bite delay (0.6 = 40 % faster).
+    public static let buffedBiteScale = 0.6
 }
 
 public struct Bite: Equatable, Sendable {
@@ -73,9 +75,10 @@ public enum ConditionEngine {
 
     /// Weighted draw over the eligible pool plus a bite delay. Baseline
     /// tier draws the delay twice and keeps the shorter — beginners' fish
-    /// come easier without touching the weights.
+    /// come easier without touching the weights. `biteDelayScale` < 1 is a
+    /// meal buff (a faster bite); the caller supplies it from active buffs.
     public static func nextBite<R: RandomNumberGenerator>(
-        _ conditions: WorldConditions, level: Int, using rng: inout R
+        _ conditions: WorldConditions, level: Int, biteDelayScale: Double = 1, using rng: inout R
     ) -> Bite? {
         let pool = eligibleSpecies(conditions, level: level)
         guard let species = ConditionDraw.weightedPick(from: pool, using: &rng) else { return nil }
@@ -84,7 +87,7 @@ public enum ConditionEngine {
         if species.tier == .baseline {
             delay = min(delay, Double.random(in: FishingRules.biteDelay, using: &rng))
         }
-        return Bite(species: species, delay: delay)
+        return Bite(species: species, delay: delay * biteDelayScale)
     }
 }
 
