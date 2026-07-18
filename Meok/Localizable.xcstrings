@@ -331,6 +331,36 @@
         }
       }
     },
+    "Sweep": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "쓸기"
+          }
+        }
+      }
+    },
+    "Sweep the leaves away": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "낙엽을 쓸어보세요"
+          }
+        }
+      }
+    },
+    "Sweep the snow away": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "눈을 쓸어보세요"
+          }
+        }
+      }
+    },
     "Tap a bed": {
       "localizations": {
         "ko": {
@@ -377,6 +407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "빈터가 고요합니다."
+          }
+        }
+      }
+    },
+    "The path is clear.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "길이 깨끗해졌어요."
           }
         }
       }
