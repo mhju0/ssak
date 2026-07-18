@@ -3,13 +3,23 @@ import SpriteKit
 import GameKernel
 import StrokeEngine
 
-/// Dev-only: the whole species art table on one sheet, ledger order.
-/// Tap to replay the reveals.
-final class FishSheetScene: SKScene {
-    private let paper = SKSpriteNode(texture: .flatWhite)
-    private var fish: [RecipeNode] = []
+/// Dev-only: a grid of stroke recipes with KO labels in unlock order — backs
+/// the fish / forage / garden art sheets. Tap to replay the reveals. `kind`
+/// lets the host tell one table's sheet from another when switching scenes.
+final class RecipeSheetScene: SKScene {
+    struct Entry {
+        let recipe: StrokeRecipe
+        let label: String
+    }
 
-    override init() {
+    let kind: String
+    private let entries: [Entry]
+    private let paper = SKSpriteNode(texture: .flatWhite)
+    private var nodes: [RecipeNode] = []
+
+    init(kind: String, entries: [Entry]) {
+        self.kind = kind
+        self.entries = entries
         super.init(size: .zero)
         scaleMode = .resizeFill
         paper.shader = PaperShader.make()
@@ -30,37 +40,30 @@ final class FishSheetScene: SKScene {
     }
 
     private func layout() {
-        fish.forEach { $0.removeFromParent() }
+        nodes.forEach { $0.removeFromParent() }
         children.filter { $0 is SKLabelNode }.forEach { $0.removeFromParent() }
-        fish = []
+        nodes = []
 
-        // Unlock order, two columns.
-        let species = FishingTable.all.sorted {
-            ($0.unlockLevel, $0.id) < ($1.unlockLevel, $1.id)
-        }
         let columns = 2
-        let rows = (species.count + columns - 1) / columns
+        let rows = (entries.count + columns - 1) / columns
         let cellW = size.width / CGFloat(columns)
         let cellH = size.height * 0.96 / CGFloat(rows)
         let inkScale = cellW * 0.92
 
-        for (index, entry) in species.enumerated() {
-            guard let recipe = Recipes.fish[entry.id] else { continue }
+        for (index, entry) in entries.enumerated() {
             let column = index % columns
             let row = index / columns
             let originX = CGFloat(column) * cellW + cellW * 0.04
-            // Recipes occupy roughly the middle half of their unit square;
-            // shift so each sits centered in its cell.
             let originY = size.height * 0.98 - CGFloat(row + 1) * cellH
 
-            let node = RecipeNode(recipe: recipe, scale: inkScale)
+            let node = RecipeNode(recipe: entry.recipe, scale: inkScale)
             node.position = CGPoint(x: originX, y: originY - inkScale * 0.5 + cellH * 0.5)
             node.zPosition = 2
             addChild(node)
-            fish.append(node)
+            nodes.append(node)
 
             let label = SKLabelNode(fontNamed: "Menlo")
-            label.text = "\(entry.nameKO) L\(entry.unlockLevel)"
+            label.text = entry.label
             label.fontSize = 10
             label.fontColor = UIColor(white: 0.35, alpha: 0.8)
             label.horizontalAlignmentMode = .left
@@ -72,13 +75,35 @@ final class FishSheetScene: SKScene {
     }
 
     func replay() {
-        for (index, node) in fish.enumerated() {
-            node.reveal(after: Double(index) * 0.25)
+        for (index, node) in nodes.enumerated() {
+            node.reveal(after: Double(index) * 0.22)
         }
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         replay()
+    }
+
+    // MARK: Tables (unlock order)
+
+    static func fish() -> RecipeSheetScene {
+        sheet(kind: "fish", FishingTable.all.map { ($0.id, $0.nameKO, $0.unlockLevel) }, Recipes.fish)
+    }
+
+    static func forage() -> RecipeSheetScene {
+        sheet(kind: "forage", ForagingTable.all.map { ($0.id, $0.nameKO, $0.unlockLevel) }, Recipes.forage)
+    }
+
+    private static func sheet(
+        kind: String, _ rows: [(id: String, nameKO: String, level: Int)],
+        _ recipes: [String: StrokeRecipe]
+    ) -> RecipeSheetScene {
+        let entries = rows
+            .sorted { ($0.level, $0.id) < ($1.level, $1.id) }
+            .compactMap { row in
+                recipes[row.id].map { Entry(recipe: $0, label: "\(row.nameKO) L\(row.level)") }
+            }
+        return RecipeSheetScene(kind: kind, entries: entries)
     }
 }
 #endif

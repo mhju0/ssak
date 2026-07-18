@@ -40,13 +40,14 @@ final class SkyMonitor: ObservableObject {
 
 /// Which scene the debug harness is showing; the world outside DEBUG.
 enum DevSheet: String, CaseIterable {
-    case world, strokes, carp, fish, keeper
+    case world, strokes, carp, fish, forage, keeper
 
     static var launchDefault: DevSheet {
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("-meok-strokes") { return .strokes }
         if arguments.contains("-meok-carp") { return .carp }
         if arguments.contains("-meok-fish") { return .fish }
+        if arguments.contains("-meok-forage") { return .forage }
         if arguments.contains("-meok-keeper") { return .keeper }
         return .world
     }
@@ -58,6 +59,7 @@ enum DevSheet: String, CaseIterable {
         case .strokes: 3.5
         case .carp: 7
         case .fish: 9
+        case .forage: 8
         case .keeper: 5
         }
     }
@@ -326,7 +328,13 @@ struct WorldView: UIViewRepresentable {
         case .carp:
             if !(uiView.scene is CarpSheetScene) { uiView.presentScene(CarpSheetScene()) }
         case .fish:
-            if !(uiView.scene is FishSheetScene) { uiView.presentScene(FishSheetScene()) }
+            if (uiView.scene as? RecipeSheetScene)?.kind != "fish" {
+                uiView.presentScene(RecipeSheetScene.fish())
+            }
+        case .forage:
+            if (uiView.scene as? RecipeSheetScene)?.kind != "forage" {
+                uiView.presentScene(RecipeSheetScene.forage())
+            }
         case .keeper:
             if !(uiView.scene is KeeperSheetScene) { uiView.presentScene(KeeperSheetScene()) }
         case .world:
