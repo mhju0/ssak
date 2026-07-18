@@ -306,6 +306,35 @@ final class GameStoreTests: XCTestCase {
         XCTAssertEqual(store.paintings().first?.sealed, true)
     }
 
+    private var allWeathers: Set<WorldConditions.Weather> { Set(WorldConditions.Weather.allCases) }
+
+    func testTradingConsumesTheGiveAndGrantsTheSpecies() {
+        store.add("crucian-carp", count: 2)
+        let offer = Visitors.offers(for: .oldFisherman, climate: allWeathers).first { $0.get == .species("eel") }!
+        XCTAssertTrue(store.trade(offer, with: .oldFisherman))
+        XCTAssertEqual(store.count(of: "crucian-carp"), 0)
+        XCTAssertEqual(store.count(of: "eel"), 1)
+        XCTAssertEqual(store.record(for: "eel")?.timesCaught, 1, "the traded species enters the ledger")
+        XCTAssertEqual(store.timesTraded(with: .oldFisherman), 1)
+    }
+
+    func testTradeFailsWithoutTheGive() {
+        let offer = Visitors.offers(for: .oldFisherman, climate: allWeathers).first!
+        XCTAssertFalse(store.trade(offer, with: .oldFisherman))
+        XCTAssertEqual(store.count(of: "eel"), 0)
+        XCTAssertEqual(store.timesTraded(with: .oldFisherman), 0)
+    }
+
+    func testThePeddlerValveDeliversAClimateLockedSpecies() {
+        store.add("pine-nuts", count: 2)
+        let snowless = allWeathers.subtracting([.snow])
+        let offer = Visitors.offers(for: .peddler, climate: snowless).first { $0.get == .species("snow-lotus") }!
+        XCTAssertTrue(store.trade(offer, with: .peddler))
+        XCTAssertEqual(
+            store.record(for: "snow-lotus")?.timesCaught, 1,
+            "a sky that can't produce it — obtained via the peddler")
+    }
+
     func testProgressRowIsCreatedOnce() throws {
         _ = store.progress(for: .fishing)
         _ = store.progress(for: .fishing)

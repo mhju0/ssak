@@ -133,6 +133,19 @@ public final class Painting {
     }
 }
 
+/// A visitor's history (spec §4): how many barters the player has made with
+/// them. Grows into fuller encounter/request logs post-launch.
+@Model
+public final class VisitorLog {
+    @Attribute(.unique) public var visitorID: String
+    public var timesTraded: Int
+
+    public init(visitorID: String, timesTraded: Int = 0) {
+        self.visitorID = visitorID
+        self.timesTraded = timesTraded
+    }
+}
+
 /// What one haul did to the ledgers — an activity view's payoff line. Shared
 /// by fishing catches and foraging finds (spec §2: "haul feeds crafting").
 public struct HaulOutcome: Equatable, Sendable {
@@ -165,13 +178,13 @@ public final class GameStore {
     /// The app's on-disk store.
     public static func live() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self, Painting.self))
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self, Painting.self, VisitorLog.self))
     }
 
     /// Throwaway store for tests and previews.
     public static func inMemory() throws -> GameStore {
         try GameStore(container: ModelContainer(
-            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self, Painting.self,
+            for: SkillProgress.self, SpeciesRecord.self, Planting.self, InventoryItem.self, ActiveBuff.self, HermitageRoom.self, Painting.self, VisitorLog.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
 
@@ -432,6 +445,44 @@ public final class GameStore {
         let reward = addXP(.artistry, composition.xp)
         save()
         return reward
+    }
+
+    // MARK: Visitors — barter, no currency (spec §2)
+
+    public func timesTraded(with visitor: VisitorID) -> Int {
+        visitorRow(visitor.rawValue)?.timesTraded ?? 0
+    }
+
+    /// Make a barter: hand over the give, receive the get. A traded species
+    /// enters the ledger as obtained (the peddler's climate valve) and the
+    /// pantry; a good stocks. false — nothing changes — if the give is short.
+    @discardableResult
+    public func trade(_ offer: TradeOffer, with visitor: VisitorID) -> Bool {
+        guard take([offer.give]) else { return false }
+        switch offer.get {
+        case .species(let id):
+            recordCreatingIfNeeded(for: id).timesCaught += 1
+            stock(id, 1)
+        case .good(let id):
+            stock(id, 1)
+        }
+        logTrade(visitor)
+        save()
+        return true
+    }
+
+    private func logTrade(_ visitor: VisitorID) {
+        if let existing = visitorRow(visitor.rawValue) {
+            existing.timesTraded += 1
+        } else {
+            context.insert(VisitorLog(visitorID: visitor.rawValue, timesTraded: 1))
+        }
+    }
+
+    private func visitorRow(_ visitorID: String) -> VisitorLog? {
+        var descriptor = FetchDescriptor<VisitorLog>(predicate: #Predicate { $0.visitorID == visitorID })
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
     }
 
     // MARK: Inventory — the consumable stock (spec §4)
