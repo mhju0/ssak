@@ -98,6 +98,10 @@ final class RecipeSheetScene: SKScene {
         sheet(kind: "garden", GardenTable.all.map { ($0.id, $0.nameKO, $0.unlockLevel) }, Recipes.garden)
     }
 
+    static func composition() -> RecipeSheetScene {
+        sheet(kind: "composition", Artistry.compositions.map { ($0.id, $0.nameKO, $0.unlockLevel) }, Recipes.composition)
+    }
+
     private static func sheet(
         kind: String, _ rows: [(id: String, nameKO: String, level: Int)],
         _ recipes: [String: StrokeRecipe]
