@@ -7,6 +7,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var sky: SkyMonitor
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("meok-audio") private var soundEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -30,6 +31,14 @@ struct SettingsView: View {
                     Text("City")
                 } footer: {
                     Text("The scroll lives under this city's real sky.")
+                }
+
+                Section {
+                    Toggle(isOn: $soundEnabled) {
+                        Text("Sound")
+                    }
+                } footer: {
+                    Text("Gentle procedural sounds for bites and finds. Everything is synthesized — no audio files.")
                 }
 
                 Section {

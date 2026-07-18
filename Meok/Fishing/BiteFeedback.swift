@@ -39,8 +39,11 @@ final class BiteFeedback {
         tick(intensity: 0.8, sharpness: 0.1, duration: 0.3)
     }
 
-    /// A short decaying sine "plop" — procedural, no audio assets.
+    /// A short decaying sine "plop" — procedural, no audio assets. Silent
+    /// when the player turns Sound off in settings (absent key defaults on).
     private func tick(intensity: Double, sharpness: Double, duration: Double) {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: "meok-audio") != nil, !defaults.bool(forKey: "meok-audio") { return }
         guard audio.isRunning, let format else { return }
         let sampleRate = format.sampleRate
         let frames = AVAudioFrameCount(sampleRate * max(0.05, min(duration, 0.35)))

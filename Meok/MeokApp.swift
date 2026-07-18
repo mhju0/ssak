@@ -72,7 +72,7 @@ struct ContentView: View {
     @StateObject private var sky = SkyMonitor()
     @Environment(\.scenePhase) private var scenePhase
     @State private var devSheet = DevSheet.launchDefault
-    @State private var showSettings = false
+    @State private var showSettings = ProcessInfo.processInfo.arguments.contains("-meok-settings")
     @State private var gameStore: GameStore?
     @State private var showFishing = ProcessInfo.processInfo.arguments.contains("-meok-fish-demo")
     @State private var showForaging = ProcessInfo.processInfo.arguments.contains("-meok-forage-demo")

@@ -201,6 +201,16 @@
         }
       }
     },
+    "Gentle procedural sounds for bites and finds. Everything is synthesized — no audio files.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "입질과 채집의 잔잔한 소리. 모두 실시간 합성 — 음원 파일 없음."
+          }
+        }
+      }
+    },
     "Harvest": {
       "localizations": {
         "ko": {
@@ -327,6 +337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "설정"
+          }
+        }
+      }
+    },
+    "Sound": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "소리"
           }
         }
       }
