@@ -22,11 +22,7 @@ public struct BiteTap: Equatable, Sendable {
 /// A fishing species row from docs/design/unlock-tables.md §5. The
 /// `weathers` set is also the species' weather-variant set (spec §2:
 /// variants are the weather dimension only).
-public struct FishSpecies: Identifiable, Equatable, Sendable {
-    public enum Tier: String, Sendable {
-        case baseline, uncommon, rare, apex
-    }
-
+public struct FishSpecies: Identifiable, Equatable, Sendable, ConditionGated {
     public let id: String
     public let nameEN: String
     public let nameKO: String
@@ -45,12 +41,7 @@ public struct FishSpecies: Identifiable, Equatable, Sendable {
     /// Rare and apex tiers add the ~10 s tension dance.
     public var triggersFight: Bool { tier == .rare || tier == .apex }
 
-    public func isEligible(_ conditions: WorldConditions, level: Int) -> Bool {
-        level >= unlockLevel
-            && seasons.contains(conditions.season)
-            && timesOfDay.contains(conditions.timeOfDay)
-            && weathers.contains(conditions.weather)
-    }
+    // Eligibility is the shared `ConditionGated` rule (see Conditions.swift).
 }
 
 /// Bite mechanics constants (docs/design/unlock-tables.md §7).
@@ -69,29 +60,14 @@ public struct Bite: Equatable, Sendable {
     public let delay: Double
 }
 
-/// Deterministic RNG for kernel draws (SplitMix64) — seedable so the same
-/// sky and seed replay the same session.
-public struct SeededRandom: RandomNumberGenerator, Sendable {
-    private var state: UInt64
-
-    public init(seed: UInt64) { state = seed }
-
-    public mutating func next() -> UInt64 {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-        return z ^ (z >> 31)
-    }
-}
-
-/// The heart of GameKernel (spec §4): pure functions from
-/// (WorldConditions, level, seed) to what the pond offers.
+/// The fishing half of the content engine (spec §4): pure functions from
+/// (WorldConditions, level, seed) to what the pond offers. The eligible +
+/// weighted-pick core is shared (`ConditionDraw`); fishing adds the bite delay.
 public enum ConditionEngine {
     public static func eligibleSpecies(
         _ conditions: WorldConditions, level: Int
     ) -> [FishSpecies] {
-        FishingTable.all.filter { $0.isEligible(conditions, level: level) }
+        ConditionDraw.eligible(FishingTable.all, conditions, level: level)
     }
 
     /// Weighted draw over the eligible pool plus a bite delay. Baseline
@@ -101,14 +77,7 @@ public enum ConditionEngine {
         _ conditions: WorldConditions, level: Int, using rng: inout R
     ) -> Bite? {
         let pool = eligibleSpecies(conditions, level: level)
-        guard !pool.isEmpty else { return nil }
-
-        var pick = Int.random(in: 0..<pool.reduce(0) { $0 + $1.weight }, using: &rng)
-        var species = pool[0]
-        for candidate in pool {
-            if pick < candidate.weight { species = candidate; break }
-            pick -= candidate.weight
-        }
+        guard let species = ConditionDraw.weightedPick(from: pool, using: &rng) else { return nil }
 
         var delay = Double.random(in: FishingRules.biteDelay, using: &rng)
         if species.tier == .baseline {
