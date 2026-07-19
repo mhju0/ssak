@@ -1,0 +1,3 @@
+rendered/*.png
+!rendered/.gitkeep
+.build/
