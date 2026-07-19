@@ -33,6 +33,11 @@ public enum GrowthEngine {
         return calendar.isDate(last, inSameDayAs: now)
     }
 
+    // Note: reconcile deliberately does NOT reset `streak` on a missed day. Spec §3.2's
+    // "resets on a missed day" is derived at the streak's consumer (glow/share, Plan 3)
+    // from `lastWateredAt` — like `hasWateredToday` — so the persisted counter can briefly
+    // overstate after neglect until the next water() re-bases it. Penalty-free by design
+    // (D12); no calendar param needed here. ponytail: derive effective streak in UI.
     public static func reconcile(_ state: PlantState, to now: Date, species: Species,
                                  tuning t: GrowthTuning = .default) -> PlantState {
         var out = state
