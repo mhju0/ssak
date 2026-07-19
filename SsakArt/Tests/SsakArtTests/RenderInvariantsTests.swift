@@ -1,6 +1,7 @@
 import XCTest
 import SwiftUI
 import ImageIO
+import SsakCore
 @testable import SsakArt
 
 final class RenderInvariantsTests: XCTestCase {
@@ -11,6 +12,15 @@ final class RenderInvariantsTests: XCTestCase {
         XCTAssertNotNil(data)
         XCTAssertGreaterThan(data?.count ?? 0, 100)          // real image, not empty
         XCTAssertEqual(pngPixelSize(data!), CGSize(width: 200, height: 240))  // size * scale
+    }
+
+    func testPaletteExistsForEveryCatalogSpecies() {
+        for s in SpeciesCatalog.all {
+            // must not trap / must return a distinct-ish bloom color per species
+            _ = SpeciesPalette.palette(for: s.id)
+        }
+        XCTAssertNotEqual(SpeciesPalette.palette(for: "marigold").bloom,
+                          SpeciesPalette.palette(for: "cosmos").bloom)
     }
 }
 
