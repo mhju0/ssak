@@ -1,6 +1,7 @@
 import SwiftUI
 import SsakApp
 import SsakArt
+import SsakCore
 
 @main
 struct Render {
@@ -38,5 +39,30 @@ struct Render {
         .padding(20)
         .background(Color(red: 0.99, green: 0.97, blue: 0.92))
         write(statusRow, CGSize(width: 420, height: 180), "status_chrome.png")
+
+        // Task 4: windowsill in a few states.
+        let d0 = Self.day0, d3 = Self.day3
+        func windowsill(_ mutate: (inout PlantState) -> Void, now: Date) -> some View {
+            var plant = GrowthEngine.plant(SpeciesCatalog.marigold, at: d0)
+            mutate(&plant)
+            let model = GardenModel(state: GameState(plant: plant, collected: []),
+                                    store: PlantStore(url: URL(fileURLWithPath: "/dev/null")), calendar: Self.cal)
+            return WindowsillView(model: model, now: now, onWater: {}, onShare: {})
+        }
+        let phone = CGSize(width: 300, height: 560)
+        write(windowsill({ $0.progress = 1.0; $0.moisture = 0.7; $0.lastWateredAt = d0 }, now: Self.day0h(12)),
+              phone, "windowsill_bloom.png")
+        write(windowsill({ $0.progress = 0.6; $0.moisture = 0.05; $0.lastWateredAt = d0 }, now: d3),
+              phone, "windowsill_dry.png")
+        write(windowsill({ $0.progress = 0.4; $0.moisture = 0.0; $0.isNursing = true; $0.lastWateredAt = d0 }, now: d3),
+              phone, "windowsill_nursing.png")
     }
+
+    // fixed dates (Date.now is unavailable / non-deterministic for renders)
+    static let cal: Calendar = {
+        var c = Calendar(identifier: .gregorian); c.timeZone = TimeZone(identifier: "UTC")!; return c
+    }()
+    static var day0: Date { cal.date(from: DateComponents(year: 2026, month: 7, day: 1, hour: 9))! }
+    static func day0h(_ h: Int) -> Date { cal.date(from: DateComponents(year: 2026, month: 7, day: 1, hour: h))! }
+    static var day3: Date { cal.date(from: DateComponents(year: 2026, month: 7, day: 4, hour: 9))! }
 }

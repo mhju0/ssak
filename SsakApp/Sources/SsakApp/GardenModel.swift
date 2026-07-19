@@ -21,8 +21,9 @@ public final class GardenModel: ObservableObject {
         if loaded == nil { try? store.save(state) }
     }
 
-    init(state: GameState, store: PlantStore,
-         tuning: GrowthTuning = .default, calendar: Calendar = .current) {
+    /// Construct from a known state — used by SwiftUI previews and render harnesses.
+    public init(state: GameState, store: PlantStore,
+                tuning: GrowthTuning = .default, calendar: Calendar = .current) {
         self.state = state; self.store = store; self.tuning = tuning; self.calendar = calendar
     }
 
