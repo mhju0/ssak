@@ -57,6 +57,10 @@ public struct PlantView: View {
         case ("nasturtium", .leaves): NasturtiumArt.leaves(palette)
         case ("nasturtium", .bud):    NasturtiumArt.bud(palette)
         case ("nasturtium", .bloom):  NasturtiumArt.bloom(palette)
+        case ("morning_glory", .sprout): MorningGloryArt.sprout(palette)
+        case ("morning_glory", .leaves): MorningGloryArt.leaves(palette)
+        case ("morning_glory", .bud):    MorningGloryArt.bud(palette)
+        case ("morning_glory", .bloom):  MorningGloryArt.bloom(palette)
         default:
             Placeholder(text: "\(species.id)/\(stage.rawValue)")   // undrawn species (follow-up plan)
         }
