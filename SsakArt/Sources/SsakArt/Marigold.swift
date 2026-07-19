@@ -28,6 +28,24 @@ func stemPath(base: CGPoint, tip: CGPoint, bow: CGFloat = 0) -> Path {
     return p
 }
 
+/// A fuller, round-tipped petal from `base` at `angleDeg`, bulging by `width`.
+func petalPath(base: CGPoint, angleDeg: Double, length: CGFloat, width: CGFloat) -> Path {
+    let a = angleDeg * .pi / 180
+    let dir = CGVector(dx: sin(a), dy: -cos(a))
+    let perp = CGVector(dx: cos(a), dy: sin(a))
+    let tip = CGPoint(x: base.x + dir.dx * length, y: base.y + dir.dy * length)
+    // control points placed near the tip and wide → a rounded, full petal
+    let lc = CGPoint(x: base.x + dir.dx * length * 0.62 - perp.dx * width * 0.62,
+                     y: base.y + dir.dy * length * 0.62 - perp.dy * width * 0.62)
+    let rc = CGPoint(x: base.x + dir.dx * length * 0.62 + perp.dx * width * 0.62,
+                     y: base.y + dir.dy * length * 0.62 + perp.dy * width * 0.62)
+    var p = Path()
+    p.move(to: base)
+    p.addQuadCurve(to: tip, control: lc)
+    p.addQuadCurve(to: base, control: rc)
+    return p
+}
+
 /// A ferny marigold frond at `base`: a central leaflet along `angleDeg` plus two
 /// side pairs, giving the pinnate look. Returns the combined Path.
 func frondPath(base: CGPoint, angleDeg: Double, length: CGFloat, width: CGFloat) -> Path {
@@ -92,7 +110,46 @@ enum MarigoldArt {
                      with: .color(p.foliage))
         }
     }
-    @ViewBuilder static func bud(_ p: SpeciesPalette)    -> some View { Placeholder(text: "bud") }
+    @ViewBuilder static func bud(_ p: SpeciesPalette) -> some View {
+        Canvas { ctx, size in
+            let w = size.width, h = size.height
+            let base = CGPoint(x: w * 0.5, y: h * 0.99)
+            let neck = CGPoint(x: w * 0.5, y: h * 0.42)   // where the bud sits
+            ctx.stroke(stemPath(base: base, tip: neck, bow: w * 0.015),
+                       with: .color(p.foliageDeep),
+                       style: StrokeStyle(lineWidth: w * 0.026, lineCap: .round))
+            // supporting foliage, lower and calmer than the leaves stage
+            for (i, f) in [(y: CGFloat(0.82), len: CGFloat(0.17)),
+                           (y: CGFloat(0.66), len: CGFloat(0.13))].enumerated() {
+                let sy = h * f.y
+                ctx.fill(frondPath(base: CGPoint(x: w * 0.5, y: sy), angleDeg: -60,
+                                   length: h * f.len, width: w * 0.10),
+                         with: .color(i == 0 ? p.foliage : p.foliageDeep))
+                ctx.fill(frondPath(base: CGPoint(x: w * 0.5, y: sy), angleDeg: 60,
+                                   length: h * f.len, width: w * 0.10),
+                         with: .color(i == 0 ? p.foliageDeep : p.foliage))
+            }
+            // --- the bud (lavish begins) ---
+            // petal tips first (drawn behind the calyx so only the tops peek)
+            for ang in [-15.0, 0.0, 15.0] {
+                ctx.fill(petalPath(base: CGPoint(x: w * 0.5, y: h * 0.40), angleDeg: ang,
+                                   length: h * 0.10, width: w * 0.075),
+                         with: .color(p.bloom))
+            }
+            ctx.fill(petalPath(base: CGPoint(x: w * 0.5, y: h * 0.40), angleDeg: 0,
+                               length: h * 0.085, width: w * 0.05),
+                     with: .color(p.bloomHighlight))
+            // calyx: a green urn of overlapping sepals enclosing the bud
+            let calyxBase = CGPoint(x: w * 0.5, y: h * 0.46)
+            ctx.fill(Path(ellipseIn: CGRect(x: w * 0.5 - w * 0.09, y: h * 0.40,
+                                            width: w * 0.18, height: h * 0.085)),
+                     with: .color(p.foliageDeep))
+            for ang in [-34.0, -12.0, 12.0, 34.0] {
+                ctx.fill(leafPath(base: calyxBase, angleDeg: ang, length: h * 0.11, width: w * 0.055),
+                         with: .color(ang < 0 ? p.foliage : p.foliageDeep))
+            }
+        }
+    }
     @ViewBuilder static func bloom(_ p: SpeciesPalette)  -> some View { Placeholder(text: "bloom") }
 }
 
