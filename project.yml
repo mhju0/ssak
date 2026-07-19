@@ -1,0 +1,34 @@
+name: Ssak
+options:
+  bundleIdPrefix: com.mhju
+  deploymentTarget:
+    iOS: "16.0"
+packages:
+  SsakCore:
+    path: SsakCore
+  SsakArt:
+    path: SsakArt
+  SsakApp:
+    path: SsakApp
+targets:
+  Ssak:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    dependencies:
+      - package: SsakApp
+        product: SsakApp
+      - package: SsakCore
+        product: SsakCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mhju.ssak
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"        # iPhone
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Ssak
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
