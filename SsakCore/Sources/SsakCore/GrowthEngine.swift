@@ -61,6 +61,17 @@ public enum GrowthEngine {
         out.progress = min(1.0, state.progress + healthyDuration / species.bloomDays)
         out.moisture = max(0, startM - drain * elapsed)
         out.lastUpdate = now
+
+        // Wilt setback: prolonged dry neglect regresses one stage (never below seed).
+        let neglectRef = state.lastWateredAt ?? state.plantedAt
+        let unwateredDays = now.timeIntervalSince(neglectRef) / 86400.0
+        if !state.isNursing, unwateredDays >= t.wiltAfterDryDays, out.moisture < t.dryThreshold {
+            let current = stage(forProgress: out.progress)
+            if let prev = current.previous {
+                out.progress = progressAtStartOf(prev)
+                out.isNursing = true
+            }
+        }
         return out
     }
 
