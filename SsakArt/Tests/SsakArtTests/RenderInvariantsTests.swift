@@ -34,7 +34,8 @@ final class RenderInvariantsTests: XCTestCase {
 
     /// Species with authored art — extended as each lands. Every one must render
     /// five mutually distinct stages.
-    static let implemented: [Species] = [SpeciesCatalog.marigold, SpeciesCatalog.cosmos, SpeciesCatalog.zinnia]
+    static let implemented: [Species] = [SpeciesCatalog.marigold, SpeciesCatalog.cosmos,
+                                         SpeciesCatalog.zinnia, SpeciesCatalog.sunflower]
 
     @MainActor
     func testEachImplementedSpeciesRendersDistinctStages() {
