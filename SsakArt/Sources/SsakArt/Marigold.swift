@@ -60,6 +60,19 @@ func frondPath(base: CGPoint, angleDeg: Double, length: CGFloat, width: CGFloat)
     return p
 }
 
+/// Fill one ring of `count` petals radiating from `center`, each based at
+/// `baseRadius` and reaching `length` outward. `phaseDeg` offsets the ring so
+/// stacked rings interleave rather than align.
+func petalRing(_ ctx: GraphicsContext, center: CGPoint, count: Int, baseRadius: CGFloat,
+               length: CGFloat, width: CGFloat, color: Color, phaseDeg: Double) {
+    for i in 0..<count {
+        let t = phaseDeg + 360.0 / Double(count) * Double(i)
+        let a = t * .pi / 180
+        let base = CGPoint(x: center.x + baseRadius * sin(a), y: center.y - baseRadius * cos(a))
+        ctx.fill(petalPath(base: base, angleDeg: t, length: length, width: width), with: .color(color))
+    }
+}
+
 // MARK: - Marigold stages
 // Each stage draws in a Canvas with the SOIL LINE at the bottom (y = height) and
 // the plant centered on x = width/2, growing upward. Detail ramps: sprout/leaves
@@ -150,7 +163,53 @@ enum MarigoldArt {
             }
         }
     }
-    @ViewBuilder static func bloom(_ p: SpeciesPalette)  -> some View { Placeholder(text: "bloom") }
+    @ViewBuilder static func bloom(_ p: SpeciesPalette) -> some View {
+        Canvas { ctx, size in
+            let w = size.width, h = size.height
+            let base = CGPoint(x: w * 0.5, y: h * 0.99)
+            let center = CGPoint(x: w * 0.5, y: h * 0.34)   // the flower head
+            ctx.stroke(stemPath(base: base, tip: CGPoint(x: w * 0.5, y: h * 0.48), bow: w * 0.012),
+                       with: .color(p.foliageDeep),
+                       style: StrokeStyle(lineWidth: w * 0.028, lineCap: .round))
+            // supporting foliage below the head
+            for (i, f) in [(y: CGFloat(0.82), len: CGFloat(0.15)),
+                           (y: CGFloat(0.68), len: CGFloat(0.11))].enumerated() {
+                let sy = h * f.y
+                ctx.fill(frondPath(base: CGPoint(x: w * 0.5, y: sy), angleDeg: -60,
+                                   length: h * f.len, width: w * 0.10),
+                         with: .color(i == 0 ? p.foliage : p.foliageDeep))
+                ctx.fill(frondPath(base: CGPoint(x: w * 0.5, y: sy), angleDeg: 60,
+                                   length: h * f.len, width: w * 0.10),
+                         with: .color(i == 0 ? p.foliageDeep : p.foliage))
+            }
+            // calyx cupping the head
+            ctx.fill(Path(ellipseIn: CGRect(x: w * 0.5 - w * 0.10, y: h * 0.44,
+                                            width: w * 0.20, height: h * 0.08)),
+                     with: .color(p.foliageDeep))
+
+            // --- the pompom: dense, rounded, dark outer → bright center ---
+            let R = w * 0.30
+            petalRing(ctx, center: center, count: 20, baseRadius: R * 0.40,
+                      length: R * 0.52, width: w * 0.066, color: p.bloomDeep, phaseDeg: 0)
+            petalRing(ctx, center: center, count: 19, baseRadius: R * 0.34,
+                      length: R * 0.48, width: w * 0.066, color: p.bloomDeep, phaseDeg: 9)
+            petalRing(ctx, center: center, count: 17, baseRadius: R * 0.27,
+                      length: R * 0.42, width: w * 0.064, color: p.bloom, phaseDeg: 15)
+            petalRing(ctx, center: center, count: 15, baseRadius: R * 0.20,
+                      length: R * 0.36, width: w * 0.060, color: p.bloom, phaseDeg: 7)
+            petalRing(ctx, center: center, count: 12, baseRadius: R * 0.13,
+                      length: R * 0.29, width: w * 0.056, color: p.bloomHighlight, phaseDeg: 21)
+            petalRing(ctx, center: center, count: 9, baseRadius: R * 0.07,
+                      length: R * 0.20, width: w * 0.050, color: p.bloomHighlight, phaseDeg: 33)
+            // center boss
+            ctx.fill(Path(ellipseIn: CGRect(x: center.x - R * 0.11, y: center.y - R * 0.11,
+                                            width: R * 0.22, height: R * 0.22)),
+                     with: .color(p.bloomDeep))
+            ctx.fill(Path(ellipseIn: CGRect(x: center.x - R * 0.05, y: center.y - R * 0.05,
+                                            width: R * 0.10, height: R * 0.10)),
+                     with: .color(p.bloomHighlight))
+        }
+    }
 }
 
 struct Placeholder: View {
