@@ -19,7 +19,7 @@ struct Render {
         let cell = CGSize(width: 180, height: 220)
 
         // Species with authored art so far (extended as each lands).
-        let implemented = [SpeciesCatalog.marigold, SpeciesCatalog.cosmos]
+        let implemented = [SpeciesCatalog.marigold, SpeciesCatalog.cosmos, SpeciesCatalog.zinnia]
 
         for species in implemented {
             let row = HStack(spacing: 0) {
