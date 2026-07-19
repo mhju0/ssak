@@ -58,6 +58,17 @@ struct Render {
               phone, "windowsill_nursing.png")
         write(windowsill({ $0.progress = 0.7; $0.moisture = 1.2; $0.lastWateredAt = Self.day0h(8) }, now: Self.day0h(14)),
               phone, "windowsill_overwater_warn.png")
+
+        // Task 6: shelf states.
+        func shelf(_ collected: [String]) -> some View {
+            let plant = GrowthEngine.plant(SpeciesCatalog.marigold, at: d0)
+            let model = GardenModel(state: GameState(plant: plant, collected: collected),
+                                    store: PlantStore(url: URL(fileURLWithPath: "/dev/null")), calendar: Self.cal)
+            return ShelfView(model: model, onReplant: { _ in })
+        }
+        write(shelf([]), phone, "shelf_empty.png")
+        write(shelf(["marigold", "cosmos", "sunflower"]), phone, "shelf_partial.png")
+        write(shelf(SpeciesCatalog.all.map(\.id)), phone, "shelf_complete.png")
     }
 
     // fixed dates (Date.now is unavailable / non-deterministic for renders)
