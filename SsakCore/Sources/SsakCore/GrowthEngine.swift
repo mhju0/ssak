@@ -32,4 +32,30 @@ public enum GrowthEngine {
         guard let last = state.lastWateredAt else { return false }
         return calendar.isDate(last, inSameDayAs: now)
     }
+
+    public static func reconcile(_ state: PlantState, to now: Date, species: Species,
+                                 tuning t: GrowthTuning = .default) -> PlantState {
+        var out = state
+        let elapsed = now.timeIntervalSince(state.lastUpdate) / 86400.0  // days
+        guard elapsed > 0 else { out.lastUpdate = now; return out }
+
+        let startM = state.moisture
+        let drain = t.drainPerDay
+
+        var healthyDuration = 0.0
+        if startM >= t.dryThreshold {
+            // paused while waterlogged at the start of the window
+            let wetPause = startM > t.tooWetThreshold ? (startM - t.tooWetThreshold) / drain : 0
+            let healthyStart = min(wetPause, elapsed)
+            let moistureAtStart = startM - drain * healthyStart
+            let timeUntilDry = max(0, (moistureAtStart - t.dryThreshold) / drain)
+            healthyDuration = max(0, min(elapsed, healthyStart + timeUntilDry) - healthyStart)
+        }
+        // startM < dryThreshold → dry the whole window → no growth
+
+        out.progress = min(1.0, state.progress + healthyDuration / species.bloomDays)
+        out.moisture = max(0, startM - drain * elapsed)
+        out.lastUpdate = now
+        return out
+    }
 }
