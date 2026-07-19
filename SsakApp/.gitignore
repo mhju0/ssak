@@ -1,3 +1,8 @@
 rendered/*.png
 !rendered/.gitkeep
+# curated reference screens
+!rendered/windowsill_bloom.png
+!rendered/shelf_partial.png
+!rendered/onboarding.png
+!rendered/share_card.png
 .build/
