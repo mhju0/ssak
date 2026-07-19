@@ -19,5 +19,16 @@ struct Render {
         } else {
             print("RENDER FAILED"); exit(1)
         }
+
+        let backdrop = ZStack {
+            Sill()
+            Pot().frame(width: 90, height: 70).offset(y: 40)
+        }
+        if let data = pngData(for: backdrop, size: CGSize(width: 160, height: 200)) {
+            try? data.write(to: out.appendingPathComponent("_backdrop.png"))
+            print("wrote \(out.appendingPathComponent("_backdrop.png").path)")
+        } else {
+            print("RENDER FAILED"); exit(1)
+        }
     }
 }
