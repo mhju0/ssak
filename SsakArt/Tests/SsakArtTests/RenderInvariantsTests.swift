@@ -32,16 +32,23 @@ final class RenderInvariantsTests: XCTestCase {
         XCTAssertNotEqual(a, b)   // the effect must visibly change the image
     }
 
+    /// Species with authored art — extended as each lands. Every one must render
+    /// five mutually distinct stages.
+    static let implemented: [Species] = [SpeciesCatalog.marigold, SpeciesCatalog.cosmos]
+
     @MainActor
-    func testMarigoldStagesRenderDistinctly() {
-        let m = SpeciesCatalog.marigold
+    func testEachImplementedSpeciesRendersDistinctStages() {
         let size = CGSize(width: 180, height: 220)
-        var seen: [Data] = []
-        for stage in GrowthStage.allCases {
-            let data = pngData(for: PlantView(species: m, stage: stage, droop: 0), size: size)
-            XCTAssertNotNil(data, "\(stage) failed to render")
-            for prior in seen { XCTAssertNotEqual(prior, data, "\(stage) is identical to an earlier stage") }
-            seen.append(data!)
+        for species in Self.implemented {
+            var seen: [Data] = []
+            for stage in GrowthStage.allCases {
+                let data = pngData(for: PlantView(species: species, stage: stage, droop: 0), size: size)
+                XCTAssertNotNil(data, "\(species.id)/\(stage) failed to render")
+                for prior in seen {
+                    XCTAssertNotEqual(prior, data, "\(species.id)/\(stage) is identical to an earlier stage")
+                }
+                seen.append(data!)
+            }
         }
     }
 }

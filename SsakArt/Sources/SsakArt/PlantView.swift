@@ -41,6 +41,10 @@ public struct PlantView: View {
         case ("marigold", .leaves): MarigoldArt.leaves(palette)
         case ("marigold", .bud):    MarigoldArt.bud(palette)
         case ("marigold", .bloom):  MarigoldArt.bloom(palette)
+        case ("cosmos", .sprout): CosmosArt.sprout(palette)
+        case ("cosmos", .leaves): CosmosArt.leaves(palette)
+        case ("cosmos", .bud):    CosmosArt.bud(palette)
+        case ("cosmos", .bloom):  CosmosArt.bloom(palette)
         default:
             Placeholder(text: "\(species.id)/\(stage.rawValue)")   // undrawn species (follow-up plan)
         }

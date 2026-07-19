@@ -18,19 +18,21 @@ struct Render {
         let marigold = SpeciesCatalog.marigold
         let cell = CGSize(width: 180, height: 220)
 
-        // Full lifecycle strip — the "five visibly distinct stages" gate.
-        let row = HStack(spacing: 0) {
-            ForEach(GrowthStage.allCases, id: \.self) { stage in
-                PlantView(species: marigold, stage: stage, droop: 0)
-                    .frame(width: cell.width, height: cell.height)
-            }
-        }
-        write(row, CGSize(width: cell.width * CGFloat(GrowthStage.allCases.count), height: cell.height),
-              "marigold_row.png")
+        // Species with authored art so far (extended as each lands).
+        let implemented = [SpeciesCatalog.marigold, SpeciesCatalog.cosmos]
 
-        // Each stage on its own, plus the droop variant of the bloom.
-        for stage in GrowthStage.allCases {
-            write(PlantView(species: marigold, stage: stage), cell, "marigold_\(stage.rawValue).png")
+        for species in implemented {
+            let row = HStack(spacing: 0) {
+                ForEach(GrowthStage.allCases, id: \.self) { stage in
+                    PlantView(species: species, stage: stage, droop: 0)
+                        .frame(width: cell.width, height: cell.height)
+                }
+            }
+            write(row, CGSize(width: cell.width * CGFloat(GrowthStage.allCases.count), height: cell.height),
+                  "\(species.id)_row.png")
+            for stage in GrowthStage.allCases {
+                write(PlantView(species: species, stage: stage), cell, "\(species.id)_\(stage.rawValue).png")
+            }
         }
         write(PlantView(species: marigold, stage: .bloom, droop: 0.8), cell, "marigold_bloom_droop.png")
 
