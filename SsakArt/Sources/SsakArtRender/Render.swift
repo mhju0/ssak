@@ -30,5 +30,19 @@ struct Render {
         } else {
             print("RENDER FAILED"); exit(1)
         }
+
+        let seedMarigold = ZStack {
+            Sill()
+            Pot().frame(width: 90, height: 70).offset(y: 40)
+            SeedSoil(tint: SpeciesPalette.palette(for: "marigold").seedTint)
+                .frame(width: 90, height: 70)
+                .offset(y: 40)
+        }
+        if let data = pngData(for: seedMarigold, size: CGSize(width: 140, height: 180)) {
+            try? data.write(to: out.appendingPathComponent("_seed_marigold.png"))
+            print("wrote \(out.appendingPathComponent("_seed_marigold.png").path)")
+        } else {
+            print("RENDER FAILED"); exit(1)
+        }
     }
 }
