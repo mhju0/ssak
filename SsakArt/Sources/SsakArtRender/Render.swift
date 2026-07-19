@@ -9,74 +9,64 @@ struct Render {
             .appendingPathComponent("rendered", isDirectory: true)
         try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
 
-        let placeholder = ZStack {
-            Color(red: 0.98, green: 0.95, blue: 0.88)
-            Circle().fill(.orange).frame(width: 80, height: 80)
-        }
-        if let data = pngData(for: placeholder, size: CGSize(width: 120, height: 140)) {
-            try? data.write(to: out.appendingPathComponent("_loop_check.png"))
-            print("wrote \(out.appendingPathComponent("_loop_check.png").path)")
-        } else {
-            print("RENDER FAILED"); exit(1)
+        func write(_ view: some View, _ size: CGSize, _ name: String) {
+            guard let data = pngData(for: view, size: size) else { print("RENDER FAILED: \(name)"); exit(1) }
+            try? data.write(to: out.appendingPathComponent(name))
+            print("wrote \(name)")
         }
 
-        let backdrop = ZStack {
-            Sill()
-            Pot().frame(width: 90, height: 70).offset(y: 40)
-        }
-        if let data = pngData(for: backdrop, size: CGSize(width: 160, height: 200)) {
-            try? data.write(to: out.appendingPathComponent("_backdrop.png"))
-            print("wrote \(out.appendingPathComponent("_backdrop.png").path)")
-        } else {
-            print("RENDER FAILED"); exit(1)
-        }
+        let marigold = SpeciesCatalog.marigold
+        let cell = CGSize(width: 180, height: 220)
 
-        let seedMarigold = ZStack {
-            Sill()
-            Pot().frame(width: 90, height: 70).offset(y: 40)
-            SeedSoil(tint: SpeciesPalette.palette(for: "marigold").seedTint)
-                .frame(width: 90, height: 70)
-                .offset(y: 40)
-        }
-        if let data = pngData(for: seedMarigold, size: CGSize(width: 140, height: 180)) {
-            try? data.write(to: out.appendingPathComponent("_seed_marigold.png"))
-            print("wrote \(out.appendingPathComponent("_seed_marigold.png").path)")
-        } else {
-            print("RENDER FAILED"); exit(1)
-        }
-
-        let cellSize = CGSize(width: 180, height: 220)
-        let marigoldRow = HStack(spacing: 0) {
+        // Full lifecycle strip — the "five visibly distinct stages" gate.
+        let row = HStack(spacing: 0) {
             ForEach(GrowthStage.allCases, id: \.self) { stage in
-                PlantView(species: SpeciesCatalog.marigold, stage: stage, droop: 0)
-                    .frame(width: cellSize.width, height: cellSize.height)
+                PlantView(species: marigold, stage: stage, droop: 0)
+                    .frame(width: cell.width, height: cell.height)
             }
         }
-        let rowSize = CGSize(width: cellSize.width * CGFloat(GrowthStage.allCases.count), height: cellSize.height)
-        if let data = pngData(for: marigoldRow, size: rowSize) {
-            try? data.write(to: out.appendingPathComponent("marigold_row.png"))
-            print("wrote \(out.appendingPathComponent("marigold_row.png").path)")
-        } else {
-            print("RENDER FAILED"); exit(1)
-        }
+        write(row, CGSize(width: cell.width * CGFloat(GrowthStage.allCases.count), height: cell.height),
+              "marigold_row.png")
 
+        // Each stage on its own, plus the droop variant of the bloom.
         for stage in GrowthStage.allCases {
-            let view = PlantView(species: SpeciesCatalog.marigold, stage: stage, droop: 0)
-            let name = "marigold_\(stage.rawValue).png"
-            if let data = pngData(for: view, size: cellSize) {
-                try? data.write(to: out.appendingPathComponent(name))
-                print("wrote \(out.appendingPathComponent(name).path)")
-            } else {
-                print("RENDER FAILED"); exit(1)
-            }
+            write(PlantView(species: marigold, stage: stage), cell, "marigold_\(stage.rawValue).png")
         }
+        write(PlantView(species: marigold, stage: .bloom, droop: 0.8), cell, "marigold_bloom_droop.png")
 
-        let bloomDroop = PlantView(species: SpeciesCatalog.marigold, stage: .bloom, droop: 0.8)
-        if let data = pngData(for: bloomDroop, size: cellSize) {
-            try? data.write(to: out.appendingPathComponent("marigold_bloom_droop.png"))
-            print("wrote \(out.appendingPathComponent("marigold_bloom_droop.png").path)")
-        } else {
-            print("RENDER FAILED"); exit(1)
+        // Shareable portrait card (spec §7): the bloom, its name (EN + KO), a date/
+        // streak line, no UI chrome. Preview of the ImageRenderer export the app ships.
+        write(PortraitCard(species: marigold, day: 7, streak: 3),
+              CGSize(width: 360, height: 460), "marigold_bloom_portrait.png")
+    }
+}
+
+/// A clean framed portrait of a bloom — the share card the app will export.
+struct PortraitCard: View {
+    let species: Species
+    let day: Int
+    let streak: Int
+    var body: some View {
+        let accent = SpeciesPalette.palette(for: species.id).bloom
+        VStack(spacing: 0) {
+            PlantView(species: species, stage: .bloom)
+                .frame(width: 300, height: 340)
+                .frame(maxWidth: .infinity)
+            VStack(spacing: 3) {
+                Text(species.nameEN)
+                    .font(.system(size: 26, weight: .semibold, design: .serif))
+                    .foregroundStyle(Color(red: 0.28, green: 0.22, blue: 0.16))
+                Text(species.nameKO)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text("Day \(day)  ·  \(streak)-day streak")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(accent)
+                    .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(red: 0.99, green: 0.97, blue: 0.92))
         }
+        .background(Color(red: 0.99, green: 0.97, blue: 0.92))
     }
 }
