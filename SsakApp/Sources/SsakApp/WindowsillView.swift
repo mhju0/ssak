@@ -53,6 +53,14 @@ public struct WindowsillView: View {
             }
             .foregroundStyle(Color(red: 0.28, green: 0.22, blue: 0.16))
 
+            // Forgiving: warn (don't block) if watering again would waterlog.
+            if model.wouldOverwater(now: now) {
+                Text("Watered today — go easy on the water 💧")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color(red: 0.82, green: 0.52, blue: 0.12))
+                    .padding(.top, 6)
+            }
+
             HStack(spacing: 18) {
                 DropGauge(fraction: model.moistureFraction, band: band).frame(width: 34, height: 48)
                 Button(action: onWater) { Label("Water", systemImage: "drop.fill") }

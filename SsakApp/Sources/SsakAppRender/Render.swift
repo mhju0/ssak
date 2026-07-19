@@ -56,6 +56,8 @@ struct Render {
               phone, "windowsill_dry.png")
         write(windowsill({ $0.progress = 0.4; $0.moisture = 0.0; $0.isNursing = true; $0.lastWateredAt = d0 }, now: d3),
               phone, "windowsill_nursing.png")
+        write(windowsill({ $0.progress = 0.7; $0.moisture = 1.2; $0.lastWateredAt = Self.day0h(8) }, now: Self.day0h(14)),
+              phone, "windowsill_overwater_warn.png")
     }
 
     // fixed dates (Date.now is unavailable / non-deterministic for renders)
