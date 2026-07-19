@@ -1,0 +1,77 @@
+import XCTest
+import SsakCore
+@testable import SsakApp
+
+@MainActor
+final class GardenModelTests: XCTestCase {
+
+    func testNewGamePlantsStarter() {
+        let m = GardenModel(store: tempStore(), now: day(0), calendar: utcCal)
+        XCTAssertEqual(m.state.plant.speciesID, "marigold")
+        XCTAssertEqual(m.stage, .seed)
+        XCTAssertTrue(m.collected.isEmpty)
+    }
+
+    func testReconcileOnOpenAccruesHealthyGrowth() {
+        var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        s.moisture = 1.0                      // well-watered → stays in the healthy band
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        let before = m.state.plant.progress
+        m.reconcileOnOpen(now: day(1))
+        XCTAssertGreaterThan(m.state.plant.progress, before)
+    }
+
+    func testWaterRaisesMoistureAndMarksWateredToday() {
+        var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        s.moisture = 0.2
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        m.water(now: day(0, hour: 12))
+        XCTAssertGreaterThan(m.state.plant.moisture, 0.2)
+        XCTAssertTrue(m.hasWateredToday(now: day(0, hour: 13)))
+    }
+
+    func testWouldOverwaterOnlyWhenWateredTodayAndWaterlogged() {
+        var wet = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        wet.moisture = 1.2                    // > tooWetThreshold (1.0)
+        wet.lastWateredAt = day(0)            // watered today
+        let m = GardenModel(state: GameState(plant: wet, collected: []), store: tempStore(), calendar: utcCal)
+        XCTAssertTrue(m.wouldOverwater(now: day(0, hour: 15)))
+
+        var ok = wet; ok.moisture = 0.5       // not waterlogged
+        let m2 = GardenModel(state: GameState(plant: ok, collected: []), store: tempStore(), calendar: utcCal)
+        XCTAssertFalse(m2.wouldOverwater(now: day(0, hour: 15)))
+    }
+
+    func testStreakAliveUnlessFullDayMissed() {
+        var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        s.lastWateredAt = day(0)
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        XCTAssertTrue(m.isStreakAlive(now: day(0, hour: 20)))   // same day
+        XCTAssertTrue(m.isStreakAlive(now: day(1, hour: 8)))    // next day, today not yet missed
+        XCTAssertFalse(m.isStreakAlive(now: day(2, hour: 8)))   // a full day (day 1) was missed
+    }
+
+    func testPressAndReplantCollectsOnceAndResets() {
+        var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        s.progress = 1.0                      // bloomed
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        XCTAssertEqual(m.stage, .bloom)
+        m.pressAndReplant(SpeciesCatalog.cosmos, now: day(1))
+        XCTAssertEqual(m.collected, ["marigold"])
+        XCTAssertEqual(m.state.plant.speciesID, "cosmos")
+        XCTAssertEqual(m.stage, .seed)
+        // pressing the new (seed, un-bloomed) plant does nothing
+        m.pressAndReplant(SpeciesCatalog.zinnia, now: day(2))
+        XCTAssertEqual(m.collected, ["marigold"])
+    }
+
+    func testGardenCompleteOnlyWithAllSix() {
+        let s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        let five = ["marigold", "nasturtium", "cosmos", "zinnia", "sunflower"]
+        let m = GardenModel(state: GameState(plant: s, collected: five), store: tempStore(), calendar: utcCal)
+        XCTAssertFalse(m.isGardenComplete)
+        let m2 = GardenModel(state: GameState(plant: s, collected: five + ["morning_glory"]),
+                             store: tempStore(), calendar: utcCal)
+        XCTAssertTrue(m2.isGardenComplete)
+    }
+}
