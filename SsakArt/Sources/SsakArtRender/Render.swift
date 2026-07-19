@@ -36,6 +36,20 @@ struct Render {
         }
         write(PlantView(species: marigold, stage: .bloom, droop: 0.8), cell, "marigold_bloom_droop.png")
 
+        // The whole collectible garden at a glance: 6 species × 5 stages.
+        let gc = CGSize(width: 160, height: 200)
+        let grid = VStack(spacing: 0) {
+            ForEach(SpeciesCatalog.all, id: \.id) { species in
+                HStack(spacing: 0) {
+                    ForEach(GrowthStage.allCases, id: \.self) { stage in
+                        PlantView(species: species, stage: stage)
+                            .frame(width: gc.width, height: gc.height)
+                    }
+                }
+            }
+        }
+        write(grid, CGSize(width: gc.width * 5, height: gc.height * 6), "all_species_grid.png")
+
         // Shareable portrait card (spec §7): the bloom, its name (EN + KO), a date/
         // streak line, no UI chrome. Preview of the ImageRenderer export the app ships.
         write(PortraitCard(species: marigold, day: 7, streak: 3),
