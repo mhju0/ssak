@@ -48,7 +48,12 @@ public enum GrowthEngine {
             let wetPause = startM > t.tooWetThreshold ? (startM - t.tooWetThreshold) / drain : 0
             let healthyStart = min(wetPause, elapsed)
             let moistureAtStart = startM - drain * healthyStart
-            let timeUntilDry = max(0, (moistureAtStart - t.dryThreshold) / drain)
+            let timeUntilDry: Double
+            if drain == 0 {
+                timeUntilDry = moistureAtStart > t.dryThreshold ? .infinity : 0
+            } else {
+                timeUntilDry = max(0, (moistureAtStart - t.dryThreshold) / drain)
+            }
             healthyDuration = max(0, min(elapsed, healthyStart + timeUntilDry) - healthyStart)
         }
         // startM < dryThreshold → dry the whole window → no growth

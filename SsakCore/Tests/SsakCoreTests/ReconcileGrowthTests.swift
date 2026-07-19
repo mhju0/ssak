@@ -27,4 +27,14 @@ final class ReconcileGrowthTests: XCTestCase {
         let out = GrowthEngine.reconcile(s, to: day(0), species: SpeciesCatalog.marigold)
         XCTAssertEqual(out.progress, s.progress, accuracy: 0.0001)
     }
+
+    func testDrainZeroAtDryThresholdDoesNotNaN() {
+        var tuning = GrowthTuning.default
+        tuning.drainPerDay = 0
+        var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        s.moisture = tuning.dryThreshold   // exactly at the dry boundary
+        let out = GrowthEngine.reconcile(s, to: day(3), species: SpeciesCatalog.marigold, tuning: tuning)
+        XCTAssertFalse(out.progress.isNaN)
+        XCTAssertEqual(out.progress, 0, accuracy: 0.0001)   // at/below dry boundary → no growth
+    }
 }
