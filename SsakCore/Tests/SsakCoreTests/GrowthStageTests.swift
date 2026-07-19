@@ -6,8 +6,12 @@ final class GrowthStageTests: XCTestCase {
         XCTAssertEqual(GrowthEngine.stage(forProgress: 0.0), .seed)
         XCTAssertEqual(GrowthEngine.stage(forProgress: 0.14), .seed)
         XCTAssertEqual(GrowthEngine.stage(forProgress: 0.15), .sprout)
+        XCTAssertEqual(GrowthEngine.stage(forProgress: 0.39), .sprout)
+        XCTAssertEqual(GrowthEngine.stage(forProgress: 0.40), .leaves)
         XCTAssertEqual(GrowthEngine.stage(forProgress: 0.50), .leaves)
+        XCTAssertEqual(GrowthEngine.stage(forProgress: 0.74), .leaves)
         XCTAssertEqual(GrowthEngine.stage(forProgress: 0.75), .bud)
+        XCTAssertEqual(GrowthEngine.stage(forProgress: 0.99), .bud)
         XCTAssertEqual(GrowthEngine.stage(forProgress: 1.0), .bloom)
     }
     func testPreviousStage() {
