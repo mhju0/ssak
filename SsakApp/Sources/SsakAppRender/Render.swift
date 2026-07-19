@@ -69,6 +69,9 @@ struct Render {
         write(shelf([]), phone, "shelf_empty.png")
         write(shelf(["marigold", "cosmos", "sunflower"]), phone, "shelf_partial.png")
         write(shelf(SpeciesCatalog.all.map(\.id)), phone, "shelf_complete.png")
+
+        // Task 7: onboarding.
+        write(OnboardingView(onDone: {}), phone, "onboarding.png")
     }
 
     // fixed dates (Date.now is unavailable / non-deterministic for renders)
