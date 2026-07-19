@@ -31,6 +31,19 @@ final class RenderInvariantsTests: XCTestCase {
         XCTAssertNotNil(a); XCTAssertNotNil(b)
         XCTAssertNotEqual(a, b)   // the effect must visibly change the image
     }
+
+    @MainActor
+    func testMarigoldStagesRenderDistinctly() {
+        let m = SpeciesCatalog.marigold
+        let size = CGSize(width: 180, height: 220)
+        var seen: [Data] = []
+        for stage in GrowthStage.allCases {
+            let data = pngData(for: PlantView(species: m, stage: stage, droop: 0), size: size)
+            XCTAssertNotNil(data, "\(stage) failed to render")
+            for prior in seen { XCTAssertNotEqual(prior, data, "\(stage) is identical to an earlier stage") }
+            seen.append(data!)
+        }
+    }
 }
 
 /// Read width/height back out of PNG bytes to confirm the render honoured size*scale.

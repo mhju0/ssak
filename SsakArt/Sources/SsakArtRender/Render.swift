@@ -59,5 +59,24 @@ struct Render {
         } else {
             print("RENDER FAILED"); exit(1)
         }
+
+        for stage in GrowthStage.allCases {
+            let view = PlantView(species: SpeciesCatalog.marigold, stage: stage, droop: 0)
+            let name = "marigold_\(stage.rawValue).png"
+            if let data = pngData(for: view, size: cellSize) {
+                try? data.write(to: out.appendingPathComponent(name))
+                print("wrote \(out.appendingPathComponent(name).path)")
+            } else {
+                print("RENDER FAILED"); exit(1)
+            }
+        }
+
+        let bloomDroop = PlantView(species: SpeciesCatalog.marigold, stage: .bloom, droop: 0.8)
+        if let data = pngData(for: bloomDroop, size: cellSize) {
+            try? data.write(to: out.appendingPathComponent("marigold_bloom_droop.png"))
+            print("wrote \(out.appendingPathComponent("marigold_bloom_droop.png").path)")
+        } else {
+            print("RENDER FAILED"); exit(1)
+        }
     }
 }
