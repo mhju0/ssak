@@ -18,21 +18,37 @@ struct Render {
         let marigold = SpeciesCatalog.marigold
         let cell = CGSize(width: 180, height: 220)
 
-        // Full lifecycle strip — the "five visibly distinct stages" gate.
-        let row = HStack(spacing: 0) {
-            ForEach(GrowthStage.allCases, id: \.self) { stage in
-                PlantView(species: marigold, stage: stage, droop: 0)
-                    .frame(width: cell.width, height: cell.height)
+        // Species with authored art so far (extended as each lands).
+        let implemented = SpeciesCatalog.all   // all six now authored
+
+        for species in implemented {
+            let row = HStack(spacing: 0) {
+                ForEach(GrowthStage.allCases, id: \.self) { stage in
+                    PlantView(species: species, stage: stage, droop: 0)
+                        .frame(width: cell.width, height: cell.height)
+                }
+            }
+            write(row, CGSize(width: cell.width * CGFloat(GrowthStage.allCases.count), height: cell.height),
+                  "\(species.id)_row.png")
+            for stage in GrowthStage.allCases {
+                write(PlantView(species: species, stage: stage), cell, "\(species.id)_\(stage.rawValue).png")
             }
         }
-        write(row, CGSize(width: cell.width * CGFloat(GrowthStage.allCases.count), height: cell.height),
-              "marigold_row.png")
-
-        // Each stage on its own, plus the droop variant of the bloom.
-        for stage in GrowthStage.allCases {
-            write(PlantView(species: marigold, stage: stage), cell, "marigold_\(stage.rawValue).png")
-        }
         write(PlantView(species: marigold, stage: .bloom, droop: 0.8), cell, "marigold_bloom_droop.png")
+
+        // The whole collectible garden at a glance: 6 species × 5 stages.
+        let gc = CGSize(width: 160, height: 200)
+        let grid = VStack(spacing: 0) {
+            ForEach(SpeciesCatalog.all, id: \.id) { species in
+                HStack(spacing: 0) {
+                    ForEach(GrowthStage.allCases, id: \.self) { stage in
+                        PlantView(species: species, stage: stage)
+                            .frame(width: gc.width, height: gc.height)
+                    }
+                }
+            }
+        }
+        write(grid, CGSize(width: gc.width * 5, height: gc.height * 6), "all_species_grid.png")
 
         // Shareable portrait card (spec §7): the bloom, its name (EN + KO), a date/
         // streak line, no UI chrome. Preview of the ImageRenderer export the app ships.

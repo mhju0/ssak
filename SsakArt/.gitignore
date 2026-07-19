@@ -1,6 +1,7 @@
 rendered/*.png
 !rendered/.gitkeep
-# curated reference renders — the approved marigold look, tracked on purpose
+# curated reference renders — the approved look, tracked on purpose
 !rendered/marigold_row.png
 !rendered/marigold_bloom_portrait.png
+!rendered/all_species_grid.png
 .build/
