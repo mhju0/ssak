@@ -72,6 +72,10 @@ struct Render {
 
         // Task 7: onboarding.
         write(OnboardingView(onDone: {}), phone, "onboarding.png")
+
+        // Task 8: shareable bloom card (any species).
+        write(BloomCard(species: SpeciesCatalog.morningGlory, day: 13, streak: 5),
+              CGSize(width: 360, height: 460), "share_card.png")
     }
 
     // fixed dates (Date.now is unavailable / non-deterministic for renders)
