@@ -44,5 +44,20 @@ struct Render {
         } else {
             print("RENDER FAILED"); exit(1)
         }
+
+        let cellSize = CGSize(width: 180, height: 220)
+        let marigoldRow = HStack(spacing: 0) {
+            ForEach(GrowthStage.allCases, id: \.self) { stage in
+                PlantView(species: SpeciesCatalog.marigold, stage: stage, droop: 0)
+                    .frame(width: cellSize.width, height: cellSize.height)
+            }
+        }
+        let rowSize = CGSize(width: cellSize.width * CGFloat(GrowthStage.allCases.count), height: cellSize.height)
+        if let data = pngData(for: marigoldRow, size: rowSize) {
+            try? data.write(to: out.appendingPathComponent("marigold_row.png"))
+            print("wrote \(out.appendingPathComponent("marigold_row.png").path)")
+        } else {
+            print("RENDER FAILED"); exit(1)
+        }
     }
 }
