@@ -22,6 +22,15 @@ final class RenderInvariantsTests: XCTestCase {
         XCTAssertNotEqual(SpeciesPalette.palette(for: "marigold").bloom,
                           SpeciesPalette.palette(for: "cosmos").bloom)
     }
+
+    @MainActor
+    func testDroopAltersRenderedImage() {
+        let base = ZStack { Color.green; Circle().fill(.orange).frame(width: 30, height: 30) }
+        let a = pngData(for: base.droop(0), size: CGSize(width: 80, height: 80))
+        let b = pngData(for: base.droop(0.9), size: CGSize(width: 80, height: 80))
+        XCTAssertNotNil(a); XCTAssertNotNil(b)
+        XCTAssertNotEqual(a, b)   // the effect must visibly change the image
+    }
 }
 
 /// Read width/height back out of PNG bytes to confirm the render honoured size*scale.
