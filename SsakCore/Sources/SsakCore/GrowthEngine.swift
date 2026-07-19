@@ -63,4 +63,28 @@ public enum GrowthEngine {
         out.lastUpdate = now
         return out
     }
+
+    public static func water(_ state: PlantState, at now: Date, species: Species,
+                             tuning t: GrowthTuning = .default,
+                             calendar: Calendar = .current) -> PlantState {
+        var out = reconcile(state, to: now, species: species, tuning: t)
+
+        if let last = out.lastWateredAt {
+            let from = calendar.startOfDay(for: last)
+            let to = calendar.startOfDay(for: now)
+            let dayDelta = calendar.dateComponents([.day], from: from, to: to).day ?? 0
+            switch dayDelta {
+            case 0:  break               // already counted today
+            case 1:  out.streak += 1     // consecutive day
+            default: out.streak = 1      // gap (or backwards) resets
+            }
+        } else {
+            out.streak = 1
+        }
+
+        out.moisture = min(t.moistureMax, out.moisture + t.waterAmount)
+        out.lastWateredAt = now
+        out.isNursing = false
+        return out
+    }
 }
