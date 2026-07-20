@@ -58,6 +58,14 @@ struct Render {
         write(glassCard.environment(\.colorScheme, .dark), CGSize(width: 320, height: 260),
               "glass_primitives_dark.png")
 
+        // Redesign Plan A Task 2: real-time sky bands (pure now+calendar; UTC cal → reproducible).
+        let skySize = CGSize(width: 300, height: 300)
+        for (h, band) in [(6, "dawn"), (12, "day"), (18, "dusk"), (22, "night")] {
+            let sky = SkyBackdrop(now: Self.day0h(h), calendar: Self.cal)
+            write(sky, skySize, "sky_\(band).png")
+            write(sky.environment(\.colorScheme, .dark), skySize, "sky_\(band)_dark.png")
+        }
+
         // Task 4: windowsill in a few states.
         let d0 = Self.day0, d3 = Self.day3
         func windowsill(_ mutate: (inout PlantState) -> Void, now: Date) -> some View {
