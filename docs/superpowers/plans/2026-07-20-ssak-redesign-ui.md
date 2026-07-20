@@ -1,6 +1,6 @@
 # Ssak UI Redesign (Plan A) — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. Steps use checkbox (`- [ ]`). **This plan is almost entirely UI** — there is no new game logic (guardrail: `SsakCore` untouched). **Three verification modes:** (a) screens are authored against the headless render→PNG→inspect loop (`swift run SsakAppRender`, reuse `SsakArt.pngData`); (b) the `PlantView`/`Sill` refactor is guarded by a **byte-identical git-diff** of the tracked SsakArt reference PNGs; (c) VoiceOver, tap/drag gestures, real Liquid Glass, and on-device Dynamic Type run only in a Simulator/device — flagged per task.
+> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. Steps use checkbox (`- [ ]`). **This plan is almost entirely UI** — there is no new game logic (guardrail: `SsakCore` untouched). **Three verification modes:** (a) screens are authored against the headless render→PNG→inspect loop (`swift run SsakAppRender`, reuse `SsakArt.pngData`); (b) the `PlantView`/`Sill` refactor is guarded by a **same-machine before/after render diff** (PNG output is environment-sensitive — the committed refs were rendered on another SDK and already differ on this host, so the guard diffs against a baseline rendered on the *same* machine, never the committed refs); (c) VoiceOver, tap/drag gestures, real Liquid Glass, and on-device Dynamic Type run only in a Simulator/device — flagged per task.
 
 **Goal:** Ship the visual redesign in spec [`2026-07-20-ssak-redesign.md`](../specs/2026-07-20-ssak-redesign.md): a real-time sky windowsill with a floating Liquid Glass Water control decoupled from the nav, a quiet glass Share, a gauge-only status cluster, a faint 싹 watermark; re-spaced onboarding; a light Shelf restyle; Liquid Glass on tab bar / controls; and accessibility to a production bar — all inside the existing `SsakApp`/`SsakArt` packages, with **no gameplay, logic, persistence, or species-art changes.**
 
@@ -14,7 +14,7 @@
 - **`SsakArt` species drawings untouched.** Only `Backdrop.swift` (`Sill`) and `PlantView.swift` gain the `wall` toggle, plus two *new* SsakArt files (`SkyBackdrop`, `SsakMark`). — verbatim (spec §0).
 - **iOS 16 min deployment retained; both packages still build for macOS 13.** All iOS-26-only glass API is inside `#if os(iOS)` + `if #available(iOS 26.0, *)`, so the macOS module compiles and takes the fallback branch — the deterministic render path. — verbatim (spec §0, §1.4).
 - **No sound, no haptics** ([ADR-0002](../../adr/0002-drop-haptics.md)). Levers only: layout, color, type, motion, glass. Portrait-only, iPhone-only, offline, no dependencies. — verbatim (spec §0).
-- **`PlantView(wall: true)` (the default) must render byte-identical to pre-change.** The guard is a **reference-image diff**, not `RenderInvariantsTests` (which only asserts non-nil + stage-distinctness and cannot see the wall) — spec §6, §7 risk 1.
+- **`PlantView(wall: true)` (the default) must render byte-identical to pre-change.** The guard is a **same-machine before/after render diff**: snapshot the renders with the pre-change code, re-render after the edit, `diff` the two on the *same host*. **PNG bytes are environment-sensitive** (verified: this macOS-26 host re-renders `all_species_grid.png` differently from the committed ref, but same-machine re-renders are byte-identical), so the committed refs must **not** be the comparison target. This is the real guard — not `RenderInvariantsTests` (which only asserts non-nil + stage-distinctness and cannot see the wall) — spec §6, §7 risk 1.
 - **Text uses semantic Dynamic Type styles (spec §1.3), never fixed `Font.system(size:)`.** The app today has **17 fixed-size font sites and zero semantic styles**, so Dynamic Type is currently broken. Each view-rebuild task (6–9) converts its own sites as it goes — serif names/titles → `Font.system(.title2/.title3/…, design: .serif)` (the `TextStyle` overload carries `design:` and scales; **never** `Font.system(size:relativeTo:)`, which doesn't exist), UI → semantic styles. Task 10 audits AX1→AX5 and catches any straggler (`DropGauge`/`StreakBadge`). — spec §1.3, §5.
 
 ### Two refinements to the spec's design (deliberate, flagged)
@@ -27,7 +27,7 @@
 | Layer | How verified | Who |
 |---|---|---|
 | New reusable views (`SkyBackdrop`, `SsakMark`, glass primitives, `SpeciesWatermark`, `StatusCluster`) | `SsakAppRender`/`SsakArtRender` → PNG → open & inspect; fallback branch on macOS | headless (this env) |
-| `PlantView`/`Sill` `wall` split | `swift run SsakArtRender` → **`git diff --exit-code SsakArt/rendered/`** = 0 | headless (this env) |
+| `PlantView`/`Sill` `wall` split | same-machine baseline: render → snapshot → edit → re-render → **`diff -rq`** the two = no differences (**not** vs committed refs — env-sensitive) | headless (this env) |
 | Redesigned screens (Windowsill, Onboarding, Shelf, BloomCard) | render matrix (state × band × light/dark) → open; re-approve tracked references | headless (this env) |
 | macOS compile gate (§1.4) | `swift build` in `SsakApp` + `SsakArt` (host = macOS) is green | headless (this env) |
 | Real Liquid Glass, VoiceOver, tap/drag, on-device Dynamic Type, idle-chrome fade | Xcode Simulator / device | **user, on a Mac** |
@@ -101,9 +101,10 @@ public struct PlantView: View {
 ```
 `wall: true` re-renders the **exact old static cream wall** (the current `Sill` LinearGradient `#FCF7E8→#F7EDD9` + board, `Backdrop.swift:10–19`) — *not* `SkyBackdrop`. Only `WindowsillView` (Task 6) passes `wall: false` and layers `SkyBackdrop` itself. Do the split by wrapping the current gradient in `if wall { … }`; the board/ledge always draws. Nothing else in `Sill`/`PlantView` moves.
 
-- [ ] Step 1: Add `wall: Bool = true` to `Sill.init` and `PlantView.init`; gate only the wall LinearGradient on `wall`; `PlantView` passes `wall` into `Sill(wall:)`.
-- [ ] Step 2: **Byte-stability guard.** `cd SsakArt && swift run SsakArtRender && git diff --exit-code rendered/` → **must exit 0** (the tracked `marigold_row.png`, `marigold_bloom_portrait.png`, `all_species_grid.png` all render `PlantView` at its default `wall: true`; zero bytes may change). If it is non-zero, the default path was disturbed — fix before proceeding.
-- [ ] Step 3: `swift test` in SsakArt green (`RenderInvariantsTests` still passes — note it does *not* guard the wall; the git-diff above does). Commit `refactor(art): PlantView wall toggle; Sill wall/board split — byte-identical default (Plan A Task 3)`.
+- [ ] Step 1: **Capture a same-machine baseline BEFORE editing** (committed refs are env-shifted and can't be the target; same-machine re-render is byte-identical): `cd SsakArt && swift run SsakArtRender && rm -rf /tmp/ssakart-base && cp -R rendered /tmp/ssakart-base && git checkout -- rendered/`.
+- [ ] Step 2: Add `wall: Bool = true` to `Sill.init` and `PlantView.init`; gate only the wall LinearGradient on `wall`; `PlantView` passes `wall` into `Sill(wall:)`.
+- [ ] Step 3: **Byte-stability guard.** `swift run SsakArtRender && diff -rq rendered /tmp/ssakart-base` → **must report no differences** (every render — incl. `marigold_row`, `marigold_bloom_portrait`, `all_species_grid` — routes `PlantView` at its default `wall: true`; zero bytes may change vs the baseline). Non-empty diff → the default path was disturbed; fix before proceeding. Then `git checkout -- rendered/` (leave the committed env-shifted refs untouched — species art is unchanged, §0).
+- [ ] Step 4: `swift test` in SsakArt green (`RenderInvariantsTests` still passes — note it does *not* guard the wall; the same-machine diff above does). Commit `refactor(art): PlantView wall toggle; Sill wall/board split — byte-identical default (Plan A Task 3)`.
 
 ---
 
@@ -245,7 +246,7 @@ Use `@ScaledMetric` for spacings that must track type size; ink → `.inkText()`
 **Files:** Finalize `SsakApp/.gitignore` (curated reference set), track the re-approved PNGs, `SsakAppRender/Render.swift` (final render list).
 
 - [ ] Step 1: Curate and re-approve the tracked SsakApp references: replace `windowsill_bloom.png` with a representative redesigned windowsill (e.g. `windowsill_bloom_day.png` + one dark, one night), the mono-glyph `shelf_partial.png`, respaced `onboarding.png`, watermarked `share_card.png`. Update `.gitignore`'s `!rendered/...` allowlist to match; `git add` the approved PNGs.
-- [ ] Step 2: **Full green gate:** `swift test` in `SsakCore`, `SsakArt`, `SsakApp` all pass (SsakCore proves no logic touched — spec §7 risk 6); `swift build` in SsakApp + SsakArt (macOS compile gate, §1.4); **`cd SsakArt && swift run SsakArtRender && git diff --exit-code rendered/`** = 0 one final time (byte-stability).
+- [ ] Step 2: **Full green gate:** `swift test` in `SsakCore`, `SsakArt`, `SsakApp` all pass (SsakCore proves no logic touched — spec §7 risk 6); `swift build` in SsakApp + SsakArt (macOS compile gate, §1.4); re-run the **same-machine before/after SsakArt render diff** from Task 3 one final time (byte-stability — never a diff against the committed refs, which are env-shifted).
 - [ ] Step 3: Commit `docs(app): re-approve redesigned reference screens (Plan A Task 11)`.
 
 ---
