@@ -1,8 +1,10 @@
 # Ssak (싹) — UI Redesign & App Icon Spec
 
 **Date:** 2026-07-20
-**Status:** Drafted in brainstorming session with Michael Ju. Pending user review before writing-plans.
-**Extends:** `2026-07-19-ssak-design.md` (concept, growth model, six species — all unchanged). This spec covers **only the visual/UI layer**: onboarding, windowsill, navigation, share card, the app icon, and a real-time sky. No gameplay, logic, persistence, or species-art changes.
+**Status:** Drafted in brainstorming session with Michael Ju; hardened against a 4-way adversarial red-team (2026-07-20). Pending user review before writing-plans.
+**Extends:** `2026-07-19-ssak-design.md` (concept, growth model, six species — all unchanged). This spec covers **only the visual/UI layer**. No gameplay, logic, persistence, or species-art changes.
+
+**Two plans will come out of this spec:** **Plan A — UI redesign** (screens, glass, sky, a11y) and **Plan B — app-icon pipeline** (asset delivery). Keeping the icon separate because its work (asset catalog, Icon Composer, build-setting wiring) is orthogonal to the SwiftUI screens.
 
 ---
 
@@ -10,19 +12,17 @@
 
 Elevate Ssak's UI to "clean, calm, Apple-Design-Award" quality while staying inside the project's soul and scope.
 
-**In scope**
-- Re-spaced onboarding (fix the cramping).
-- Windowsill: lift **Water** into a floating **Liquid Glass** control detached from the nav; move **Share** to a quiet top-right glass icon; a **real-time warm sky**; a **faint 싹 watermark** behind the plant; a quiet status cluster.
-- A new **app icon** — the *Bloom-Point* sprout mark — with the full iOS 26 variant set.
-- **Liquid Glass** on the tab bar, the floating Water pill, top-corner icons, and sheets.
-- **Accessibility** brought up to production bar (Dynamic Type, VoiceOver, Reduce Transparency/Motion, contrast, tap targets).
+**In scope (Plan A):** re-spaced onboarding; windowsill with a floating **Liquid Glass** Water control detached from the nav, a quiet top-right glass share, a **real-time sky**, a faint **싹 watermark**, and a gauge-only status cluster; a light Shelf restyle; **Liquid Glass** on tab bar / controls / sheets; **accessibility** to production bar.
+
+**In scope (Plan B):** the **Bloom-Point** app icon delivered as an iOS 26 layered asset + fallback.
 
 **Guardrails (hard lines)**
-- `SsakCore` (all gameplay/logic/persistence) is **untouched**. Its tests must still pass unchanged.
-- `SsakArt` per-species drawings are **untouched** (only `Sill`/backdrop is refactored, and one new `SsakMark`).
-- **iOS 16 minimum deployment is retained.** Liquid Glass is *progressive enhancement* on iOS 26+ with a graceful `.ultraThinMaterial`/bordered fallback below — never a hard gate.
-- **No sound, no haptics** — dropped by [ADR-0002](../../adr/0002-drop-haptics.md) and out of scope in the base spec §10. Levers are layout, color, type, motion, and glass only.
-- Portrait-only, iPhone-only (`TARGETED_DEVICE_FAMILY=1`), offline, no dependencies. "Finishable first" — we polish the existing two screens, we do not add features.
+- `SsakCore` (gameplay/logic/persistence) **untouched**; its tests pass unchanged.
+- `SsakArt` species drawings **untouched**. Only `Backdrop`/`PlantView` gain a wall toggle, plus one new `SsakMark`.
+- **iOS 16 min deployment retained.** Liquid Glass is progressive enhancement (iOS 26+) with a `.ultraThinMaterial`/opaque fallback — never a hard gate.
+- **Both packages also build for `macOS 13`** (render harness + tests run on the Mac). All iOS-26-only API must be gated so the **macOS module still compiles** — see §1.4.
+- **No sound, no haptics** ([ADR-0002](../../adr/0002-drop-haptics.md), base §10). Levers: layout, color, type, motion, glass.
+- Portrait-only, iPhone-only, offline, no dependencies. "Finishable first."
 
 ---
 
@@ -31,128 +31,144 @@ Elevate Ssak's UI to "clean, calm, Apple-Design-Award" quality while staying ins
 ### 1.1 Palette (existing, reused)
 | Token | Hex | Use |
 |---|---|---|
-| cream | `#FCF7EB` / grad `#FCF8EE→#E7F0DA` | app ground |
-| ink | `#473828` | primary text, mono mark |
-| sage / sprout | `#5B9A4F`, `#6EAE59`, `#80BF69`, deep `#4E8A44` | leaves, accents |
-| terracotta | `#CF7A54`→`#9E523B` | pot, warm accent |
+| cream ground | `#FCF7EB` / grad `#FCF8EE→#E7F0DA` | day sky / app ground |
+| ink (adaptive) | `#473828` light · `#ECE4D5` dark | primary text (see §3.4 adaptive rule) |
+| sage / sprout | `#5B9A4F`,`#6EAE59`,`#80BF69`, deep `#4E8A44` | leaves, accents |
+| terracotta | `#CF7A54`→`#9E523B` | pot |
 | marigold gold | `#E8A23A` / bud `#F7CE78→#E1962C` | single warm accent, bud |
-| water blue | `#5C9EDB` | water action, gauge |
-| warn amber | `#D1850F` (darkened from current `#EB9E38` for contrast — see §5) | overwater nudge |
+| water blue | `#5C9EDB` | Water action, gauge |
+| overwater text | `#7A4E08` (deep amber-brown, ≥4.5:1 on cream) | the nudge line — see §5 |
 
-### 1.2 Real-time sky (new)
-A `TimeBand` derived from the injected `now` (never stored, never a new clock read — `WindowsillView` already gets `now`):
-| Band | Hours (local) | Wall gradient (top→bottom) |
-|---|---|---|
-| dawn | 05–08 | `#FBE6C4 → #F3D9C0` warm gold |
-| day | 08–17 | `#FCF8EE → #E7F0DA` (current cream) |
-| dusk | 17–20 | `#F6D9BE → #E8C4A8` amber |
-| night | 20–05 | `#2E3550 → #232A42` dim indigo (plant + pot stay lit; text flips to light) |
-Bands **cross-fade** (interpolate over the ~1h boundary) so there is no hard snap. A `TimelineView(.periodic(from:by:))` at ~5-min cadence keeps it live while the app is open; otherwise it settles from `now` on appear.
+### 1.2 Real-time sky (new) — **all light-mode bands stay light so ink text always reads**
+`TimeBand` derived from the injected `now`. Deliberately warm and *light* across the day so the plant, name, and status never need a color flip and never clash with the (cream) Shelf on a tab switch:
+| Band | Hours (local) | Wall gradient (top→bottom) | ink text ratio |
+|---|---|---|---|
+| dawn | 05–08 | `#FBE9CE → #F4DEC6` warm gold | ≥ 6:1 |
+| day | 08–17 | `#FCF8EE → #E7F0DA` cream | ≥ 8:1 |
+| dusk | 17–20 | `#F7DFC6 → #EAC9AE` amber | ≥ 5.5:1 |
+| night | 20–05 | `#E7E2EC → #D9D3E0` soft dusk-mauve (**light, not indigo**) | ≥ 6:1 |
+Bands **cross-fade** over the ~1h boundary. **System Dark Mode** is a separate axis (§3.4): in dark mode both screens use a warm-dark ground with light text; the band only nudges hue.
+
+**Determinism:** `SkyBackdrop(now:)` derives the band **purely from the injected `now`** — no internal clock read. The *interactive* `WindowsillView` wraps it in a `TimelineView(.periodic(...))` that feeds `context.date` back through the same pure derivation to keep it live; the **render harness constructs `SkyBackdrop(now: fixedDate)` directly (no TimelineView)** so PNG references are reproducible. The live clock read is cosmetic and test-exempt; streak/watered logic stays `now`-injected.
 
 ### 1.3 Typography
-- **Serif (New York, `.serif`)** for the wordmark, species names, and screen titles (kept upright per user — no italic).
-- **SF / SF Rounded** for all UI labels and controls.
-- **Dynamic Type**: replace fixed `.font(.system(size:))` with semantic styles (`.title`, `.headline`, `.subheadline`, `.body`, `.caption`) or `.system(size:relativeTo:)` so everything scales. Target legible layout to AX3, no clipping to AX5.
+- **Serif (New York)** for wordmark / species names / titles (upright), **with Dynamic Type**: `Font.system(.title2, design: .serif)` — the `TextStyle` overload *does* carry `design:` and scales. (Do **not** use `Font.system(size:relativeTo:)` — it doesn't exist; the `relativeTo:` overload is only on `Font.custom`.)
+- **SF / SF Rounded** for UI via semantic styles.
+- `@ScaledMetric` for any spacing that must track type size. Target legible to AX3, graceful to AX5.
 
-### 1.4 Liquid Glass (iOS 26+, with fallback)
-One shared modifier hides the availability check:
+### 1.4 Liquid Glass (iOS 26+, macOS-safe, fallback + a11y aware)
+A **`ViewModifier` struct** (not a bare extension — a free `View` method can't host `@Environment`), gated so the **macOS build compiles** (`if #available(iOS 26.0, *)` does *not* raise the macOS floor, and glass APIs are macOS-26-only):
 ```swift
 // GlassBackground.swift
-extension View {
-    /// Liquid Glass on iOS 26+, ultraThinMaterial fallback below. Honors Reduce Transparency.
-    @ViewBuilder func ssakGlass(_ shape: some Shape, tint: Color? = nil, interactive: Bool = false) -> some View {
+struct SsakGlass<S: InsettableShape>: ViewModifier {   // InsettableShape → strokeBorder is available
+    let shape: S; let tint: Color?; let interactive: Bool
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    func body(content: Content) -> some View {
+        #if os(iOS)                                    // macOS render build always takes the fallback → deterministic
         if #available(iOS 26.0, *), !reduceTransparency {
-            self.glassEffect(.regular.tint(tint).interactive(interactive), in: shape)
-        } else if !reduceTransparency {
-            self.background(.ultraThinMaterial, in: shape).overlay(shape.strokeBorder(.white.opacity(0.25)))
-        } else {
-            self.background(tint?.opacity(0.16) ?? Color(white: 0.96), in: shape) // opaque
+            var glass = Glass.regular
+            if let tint { glass = glass.tint(tint) }   // Glass.tint takes a non-optional Color → apply only when set
+            glass = glass.interactive(interactive)
+            return AnyView(content.glassEffect(glass, in: shape)
+                .overlay(contrast == .increased ? shape.strokeBorder(.primary.opacity(0.3)) : nil))
         }
+        #endif
+        let fill: AnyShapeStyle = reduceTransparency
+            ? AnyShapeStyle(tint?.opacity(0.16) ?? Color(white: 0.96))   // opaque
+            : AnyShapeStyle(.ultraThinMaterial)
+        return AnyView(content.background(fill, in: shape)
+            .overlay(shape.strokeBorder(.white.opacity(0.25))))
+    }
+}
+extension View {
+    func ssakGlass<S: InsettableShape>(_ shape: S, tint: Color? = nil, interactive: Bool = false) -> some View {
+        modifier(SsakGlass(shape: shape, tint: tint, interactive: interactive))
     }
 }
 ```
-- **Floating Water pill** → `.buttonStyle(.glassProminent)` (26+) / `.borderedProminent` capsule (fallback), water-blue tint, `.interactive()`.
-- **Top-corner icons (share, and shelf if full-screen later)** → `.buttonStyle(.glass)` grouped in a `GlassEffectContainer` so they share one glass surface.
-- **Tab bar** auto-adopts Liquid Glass when built against the iOS 26 SDK; no code needed, fallback is the standard bar.
-- **Sheets** (seed-chooser, share) → glass backgrounds where 26+.
+- **Floating Water pill** → `.buttonStyle(.glassProminent)` (26+) / `.borderedProminent` capsule (fallback), water-blue tint, interactive.
+- **Top-corner icons** → `.buttonStyle(.glass)` in a `GlassEffectContainer`.
+- **Tab bar** auto-adopts glass on the iOS 26 SDK; fallback is the standard bar.
 
 ### 1.5 Motion (existing scope only)
-Idle plant sway, water ripple on the gauge, the bloom-open ceremony, sky cross-fade. All gated by `@Environment(\.accessibilityReduceMotion)` → static when reduced. No new heavy animation.
+Idle sway, gauge ripple, bloom-open ceremony, sky cross-fade — all gated by `@Environment(\.accessibilityReduceMotion)` (static when reduced). No sound/haptics.
 
 ### 1.6 Spacing
-8pt grid throughout; screen side margins 20pt; group spacing 24–32pt; tap targets ≥44pt, the primary Water control ≥64pt tall.
+8pt grid; side margins 20pt; group spacing 24–32pt; tap targets ≥44pt; the Water control ≥64pt tall.
 
 ---
 
 ## 2. Screen-by-screen
 
 ### 2.1 Onboarding — re-space (the cramping fix)
-Same three beats and copy, rebuilt for air. Current → target spacing:
+Same three beats and copy, rebuilt for air:
 | Element | Now | Target |
 |---|---|---|
-| top inset | `Spacer(minLength: 8)` | `Spacer()` (balanced) + 8pt-grid top pad |
+| top inset | `Spacer(minLength: 8)` | balanced `Spacer()` |
 | title → subtitle | 4pt | 12pt |
 | title block → beats | 22pt | 44pt |
 | between beats | 18pt | 28pt |
-| beat icon → text | 16pt | 16pt (keep) |
 | beats → CTA | flexible | `Spacer()` + generous |
 | CTA bottom | 28pt | safe-area + 24pt |
-- Beats become an 8pt-grid list; icons 44pt; title `.largeTitle`-ish serif, subtitle `.subheadline` secondary.
-- Microcopy: keep all; single tweak — *"Watch the drop — it reads the soil."*
-- Dark mode: warm-dark ground; text flips light. Dynamic Type: list reflows, CTA never clipped.
-- **No** animated/floating hero (user chose the static re-space).
+Dynamic Type reflow; CTA never clipped. Microcopy kept; one tweak — *"Watch the drop — it reads the soil."* No animated hero (user's choice).
 
 ### 2.2 Windowsill — the core redesign
-Vertical zones, top to bottom:
-1. **Status bar (top).** Left: `StreakBadge`. Right: a `GlassEffectContainer` with the `WateredTodayTick` and a **quiet glass Share icon**. 20pt margins, ≥44pt targets.
-2. **Hero.** `SkyBackdrop(now:)` fills the frame (real-time band); a **`SpeciesWatermark`** (faint oversized 싹, tinted to species, ~6% opacity) sits behind; `PlantView` centered with large negative space (~50%+). Idle sway. **Tap-the-plant waters** (with the ripple), in addition to the button.
-3. **Name block.** EN serif + KO secondary.
-4. **Status cluster (quiet).** `DropGauge` + a small "watered today"/streak read-out, grouped and *visually separate from the action* — this is the fix for "the gauge is mixed in with the buttons." Small, low-emphasis.
-5. **Overwater nudge (conditional).** The existing gentle amber line when `wouldOverwater`.
-6. **Floating Water control.** A large Liquid Glass **capsule**, water-blue, centered low, clearly **detached** from the tab bar (padding + shadow + glass separates it). This is the one primary verb. Disabled state: never — watering stays allowed (freedom); over-full shows the nudge, not a disable.
+Zones, top→bottom:
+1. **Status bar (top).** `StreakBadge` (left); a `GlassEffectContainer` with `WateredTodayTick` + a **quiet glass Share icon** (right). These two signals live **here only** (not duplicated below). 20pt margins, ≥44pt targets.
+2. **Hero.** `SkyBackdrop(now:)` fills the frame; a faint **`SpeciesWatermark`** (~6% 싹, species-tinted) behind; `PlantView(wall: false)` centered with ~50%+ negative space; idle sway. **Tap-the-plant waters** (ripple) in addition to the button.
+3. **Name block.** EN serif + KO secondary, in the **adaptive ink color** (§3.4) so it reads on every band and in dark mode.
+4. **Status cluster (quiet, gauge-only).** Just `DropGauge` (+ a small moisture read) — the streak/tick are **not** repeated here. This is the fix for "the gauge is mixed in with the buttons": the read-out is now visually separate from *and* de-duplicated against the action.
+5. **Overwater nudge (conditional).** The gentle line, deep-amber `#7A4E08`, with its 💧 as a non-color cue.
+6. **Floating Water control.** A large Liquid Glass capsule, water-blue, **floating in the lower third — clearly above and separated from the tab bar** (it must not sit flush against it, or the two glass surfaces re-couple, undoing "Water out of the nav"). One primary verb; never disabled (freedom — over-full shows the nudge).
 
-Bloom moment: when `stage == .bloom`, the Share icon promotes to a prominent labeled CTA ("Share your bloom"); the plant plays the bloom-open ceremony; the "press to shelf" affordance remains on the Shelf (unchanged flow).
+**Screenshot-ready / chrome-light (base §6):** in the idle "just looking" state (no recent interaction) the **Water pill and tab bar recede** (fade + slight translate) so the plant + sky stand alone; they return on tap/scroll. Only the tab bar anchors the very bottom edge.
+
+**Bloom moment:** at `stage == .bloom` the Share icon promotes to a labeled CTA ("Share your bloom") and the plant plays the bloom-open ceremony; press-to-shelf stays on the Shelf.
 
 ### 2.3 Shelf — light restyle only
-Keep the 6-slot grid and replant behavior. Changes: match the glass tab bar; empty slots become **soft species silhouettes** (a faint mono `PlantView` shape) instead of dashed circles (per cozy-games research); 8pt spacing; "Garden complete 🌸" state kept. No structural change.
+Keep the 6-slot grid + replant. Empty slots become a **faint `SsakMark(.mono)` sprout glyph** (generic — *not* a per-species outline, which would require touching species art). Match the glass tab bar; 8pt spacing; "Garden complete 🌸" kept.
 
 ### 2.4 Navigation (`RootView`)
-Two-tab `TabView` (Windowsill · Shelf) — restyled Liquid Glass tab bar on 26+, standard below. `reconcileOnOpen` on `scenePhase == .active` is unchanged. Share presentation (`UIActivityViewController`) unchanged.
+Two-tab `TabView` (Windowsill · Shelf), glass bar on 26+. `reconcileOnOpen` on `scenePhase == .active` and share presentation **unchanged**.
 
 ### 2.5 Share card (`BloomCard`)
-Add the faint 싹 watermark; keep the clean cream frame (timeless — **no** real-time sky here). Otherwise unchanged; still rendered via `ImageRenderer`.
+Add the faint 싹 watermark; keep the clean cream frame — **no** real-time sky (timeless, and it dodges the `ImageRenderer` determinism trap). Otherwise unchanged.
 
-### 2.6 App icon — Bloom-Point
-The chosen mark: two green cotyledons framing a **furled gold bud** rising from them (bloom implied, never opened). Verified to read at 40px and as a flat mono silhouette.
-- Authored as vector (source SVG locked; ported to a SwiftUI `SsakMark` Shape in `SsakArt` for reuse as icon + watermark).
-- **iOS 26 layered icon** (Icon Composer): background layer (cream→sage gradient) + foreground (sprout), yielding **Light / Dark / Tinted / Clear** automatically. Variant recipes in Appendix A.
-- Delivery: an `AppIcon` asset set with PNGs exported at required sizes from the render harness (`SsakMark` → `ImageRenderer`), plus the `.icon` layered source. All app-icon sizes (1024 marketing + home/spotlight/settings).
+### 2.6 App icon — Bloom-Point (Plan B)
+Chosen mark: two green cotyledons framing a **furled gold bud** (bloom implied, never opened). **Designed and proofed this session** — rendered via headless Chrome at 1024/40px and as a flat mono silhouette (proof PNGs in the working scratchpad); the **SVG source is not yet committed** — Plan B commits it (mirroring commit `0e850b7`'s reference-render pattern).
+- Ported to a SwiftUI `SsakMark` Shape (SsakArt) for reuse as icon + watermark + shelf glyph.
+- **Delivery (Plan B):** an `Assets.xcassets/AppIcon` set. Wire it explicitly in `project.yml`: add `Assets.xcassets` to the App target `sources` and set `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Ship the **iOS 26 layered `.icon`** (Icon Composer → Light/Dark/Tinted/Clear) **plus a single 1024 PNG fallback** — not the full legacy size set. Add an iOS-16 icon-render sanity check to the manual list.
+- Variant recipes: Appendix A.
 
 ---
 
 ## 3. Component architecture
 
-### 3.1 Page-level (modified)
-`OnboardingView`, `WindowsillView`, `ShelfView`, `RootView`, `BloomCard` — same public entry points; internals reworked.
+### 3.1 Page-level (modified): `OnboardingView`, `WindowsillView`, `ShelfView`, `RootView`, `BloomCard` — same entry points, reworked internals.
 
-### 3.2 Reusable components (new)
+### 3.2 New reusable components
 | Component | Package | Props / API | Purpose |
 |---|---|---|---|
-| `SkyBackdrop` | SsakArt | `init(now: Date)` → derives `TimeBand` | real-time wall gradient behind the plant |
-| `SsakMark` | SsakArt | `init(variant: Variant = .light)` where `Variant ∈ {light,dark,tinted,mono,glass}` | the sprout icon as a `View`; app icon + watermark + onboarding accent |
-| `SpeciesWatermark` | SsakApp/Art | `init(species:opacity:)` | faint ghosted mark behind hero |
-| `WaterButton` | SsakApp | `init(isOverfull:Bool, action:@escaping ()->Void)` | floating Liquid Glass primary pill (+ fallback) |
+| `SkyBackdrop` | SsakArt | `init(now: Date)` (pure band derivation) | real-time wall behind the plant |
+| `SsakMark` | SsakArt | `init(_ variant: Variant = .light)`, `Variant ∈ {light,dark,tinted,mono,glass}` | sprout mark: icon + watermark + shelf glyph |
+| `SpeciesWatermark` | SsakApp | `init(species:opacity:)` | faint ghosted mark behind hero |
+| `WaterButton` | SsakApp | `init(isOverfull:Bool, action:@escaping ()->Void)` | floating glass primary pill (+ fallback) |
 | `GlassIconButton` | SsakApp | `init(systemImage:label:prominent:action:)` | top-corner glass icon (share) |
-| `StatusCluster` | SsakApp | `init(fraction:band:streak:alive:wateredToday:)` | quiet grouped read-out (wraps `DropGauge`, streak, tick) |
-| `View.ssakGlass(_:tint:interactive:)` | SsakApp | modifier | glass-or-fallback, honors Reduce Transparency |
+| `StatusCluster` | SsakApp | `init(fraction: Double, band: ClosedRange<Double>)` — **gauge only** (`band` = moisture range) | quiet moisture read-out |
+| `SsakGlass` / `.ssakGlass` | SsakApp | ViewModifier (see §1.4) | glass-or-fallback, a11y-aware, macOS-safe |
 
 ### 3.3 Modified components
-`Sill` (SsakArt): split so the **wall gradient** moves to `SkyBackdrop`; `Sill` keeps only the board/ledge. `PlantView` gains an optional `wall: Bool = true` param (default keeps current behavior so **existing call sites and `RenderInvariantsTests` don't break**); `WindowsillView` passes `wall: false` and layers `SkyBackdrop` itself. `DropGauge`, `StreakBadge`, `WateredTodayTick` visuals unchanged (regrouped into `StatusCluster`).
+- `Backdrop.swift` (`Sill`): factor the wall gradient into `SkyBackdrop`; `Sill` keeps the board/ledge.
+- `PlantView.swift`: add `wall: Bool = true`. **`wall: true` re-renders the exact old static cream wall** (the current `Sill` colors, *not* the live `SkyBackdrop`) so every default caller stays **byte-identical**. `WindowsillView` alone passes `wall: false` and layers `SkyBackdrop` itself.
+- `DropGauge`/`StreakBadge`/`WateredTodayTick`: visuals unchanged; regrouped (gauge → `StatusCluster`; streak/tick → top bar).
 
-### 3.4 State ownership
+### 3.4 State ownership & adaptive color
 - `GardenModel` (`@MainActor ObservableObject`) stays the single source of truth. **No new persistent fields.**
-- `TimeBand` is **derived** from `now` in the view — not stored, not a new clock read (`now` already flows in; `RootView` reads `Date()` at the boundary; a `TimelineView` refreshes the derivation).
-- Accessibility flags via `@Environment(\.accessibilityReduceTransparency / .accessibilityReduceMotion / .legibilityWeight)`.
+- `TimeBand` is **derived** from the injected `now` (§1.2) — not stored, no new logic clock read.
+- **Adaptive text color:** replace hardcoded ink `#473828` / bare `.secondary` with a color that responds to `@Environment(\.colorScheme)` (ink in light, `#ECE4D5` in dark). Because all *light-mode* bands stay light (§1.2), ink always clears ≥4.5:1; dark mode uses the dark ground + light text. No per-band text threading needed.
+- A11y flags via `@Environment(\.accessibilityReduceTransparency / .accessibilityReduceMotion / .colorSchemeContrast)`.
 
 ---
 
@@ -160,114 +176,96 @@ The chosen mark: two green cotyledons framing a **furled gold bud** rising from 
 
 | Screen | Loading | Empty | Error | Disabled | Notable edge cases |
 |---|---|---|---|---|---|
-| Onboarding | none (static) | — | — | CTA always enabled | Dynamic Type AX5 (reflow), dark mode, small device (SE) |
-| Windowsill | none — local state is instant; render plant on first frame, reconcile already ran | never empty (always a plant) | persistence save is `try?` (local, non-fatal) — keep silent, document | Water **never disabled** (freedom); over-full → nudge | fresh plant (no `lastWateredAt`) → gauge/streak read "—"; midnight/DST rollover for streak+sky; band boundary cross-fade while open; very long KO names; Reduce Transparency → solid; Reduce Motion → no sway/ripple |
-| Shelf | none | 0 collected → six silhouettes (the "empty" state) | — | replant tap only on collected | all six → "Garden complete"; partial fills |
-| Share | `ImageRenderer` may return nil → guard already returns (no crash) | — | render nil → no-op (log) | — | huge Dynamic Type doesn't affect the fixed-size card |
-| Icon | — | — | Clear/Glass is OS-composited (can't fully preview statically) | — | tinted legibility at 40px (verified), dark-mode home screen |
+| Onboarding | none | — | — | CTA always on | Dynamic Type AX5, dark mode, SE |
+| Windowsill | none — local state instant | never empty | persistence `try?` (local, non-fatal) — silent, documented | Water **never disabled** (over-full → nudge) | fresh plant (no `lastWateredAt`) → gauge/streak "—"; **dark mode**; midnight/DST streak roll; band cross-fade while open; longest KO name; Reduce Transparency → solid; Reduce Motion → still |
+| Shelf | none | 0 collected → six `SsakMark(.mono)` glyphs | — | replant only when collected | all six → "Garden complete"; dark mode |
+| Share | `ImageRenderer` nil → guarded no-op | — | render nil → log, no crash | — | fixed-size card ignores Dynamic Type |
+| Icon (Plan B) | — | — | Clear/Glass is OS-composited (not statically previewable) | — | tinted legibility @40px (proofed); iOS-16 render path |
 
 ---
 
 ## 5. Accessibility
 
-- **Dynamic Type** everywhere (semantic fonts); verify no clipping to AX3, graceful to AX5.
-- **VoiceOver**: a combined plant-status label on the hero (e.g. *"Marigold, budding, soil moist, watered today"*); `WaterButton` label "Water" + hint "Waters your plant"; Share labeled; decorative art `.accessibilityHidden(true)`. Tap-to-water plant is an `.accessibilityAction`.
-- **Reduce Transparency** → glass becomes opaque material/solid (handled in `ssakGlass`).
-- **Reduce Motion** → no sway, no ripple, instant sky.
-- **Contrast**: the current overwater amber `#EB9E38` on cream is ~2.1:1 — **fails**. Darken to `#D1850F` (~3.3:1, and it's ≥18pt semibold so AA-large passes). Verify all text ≥ AA.
+- **Dynamic Type** everywhere via semantic fonts (serif included, §1.3); no clipping to AX3, graceful to AX5.
+- **VoiceOver** (currently zero a11y code in the app — all of this is net-new):
+  - Hero: combined label *"Marigold, budding, soil moist"* (**omit "watered today"** — the top-bar tick carries it, avoiding double-speak). Tap-to-water exposed as an `.accessibilityAction`.
+  - `WaterButton` label "Water", hint "Waters your plant"; Share labeled.
+  - `StreakBadge` → "Streak, N days"; `WateredTodayTick` → "Watered today"; `DropGauge` → "Soil moisture, N percent".
+  - Decorative art (`SkyBackdrop`, `SpeciesWatermark`, `PlantView`) `.accessibilityHidden(true)`.
+- **Contrast (recomputed, on real adjacent colors):**
+  - Overwater **text** is a 12–13pt line → needs AA **4.5:1**. The current `#D1851F` is ~2.8:1 (**fails**) and can't reach 3:1 on any background. Fix → **`#7A4E08`** (deep amber-brown, ≥4.5:1 on cream), kept warm/gentle, with the 💧 as a non-color cue.
+  - `DropGauge` dry-fill `#EB9E38` is a **graphic**, judged at 3:1 against its **own** drop background `#D2E3F2` (not cream) — it clears that bar, so it **stays unchanged** (resolves the earlier false "2.1:1 on cream" premise, which used the wrong adjacent color).
+  - Verify all text ≥4.5:1 on **every** band (§1.2 ratios) and in dark mode.
+- **Reduce Transparency** → opaque (handled in `SsakGlass`). **Reduce Motion** → no sway/ripple/instant sky. **Increased Contrast** → glass hairline border (§1.4).
 - **Tap targets** ≥44pt; Water ≥64pt.
-- **Increased Contrast** → add a hairline border to glass surfaces.
 
 ---
 
 ## 6. Files to create / update
 
-**Create**
-- `SsakArt/Sources/SsakArt/SkyBackdrop.swift` — real-time wall.
-- `SsakArt/Sources/SsakArt/SsakMark.swift` — sprout mark (icon/watermark).
-- `SsakApp/Sources/SsakApp/GlassBackground.swift` — `ssakGlass` modifier + `WaterButton` + `GlassIconButton`.
-- `SsakApp/Sources/SsakApp/SpeciesWatermark.swift`.
-- `SsakApp/Sources/SsakApp/StatusCluster.swift`.
-- App icon asset set (`Assets.xcassets/AppIcon`) + layered `.icon` source; `project.yml` `INFOPLIST`/asset wiring.
+**Create** — `SsakArt/Sources/SsakArt/SkyBackdrop.swift`, `SsakArt/Sources/SsakArt/SsakMark.swift`, `SsakApp/Sources/SsakApp/GlassBackground.swift` (`SsakGlass`+`WaterButton`+`GlassIconButton`), `SsakApp/Sources/SsakApp/SpeciesWatermark.swift`, `SsakApp/Sources/SsakApp/StatusCluster.swift`. **(Plan B)** `Assets.xcassets/AppIcon` + layered `.icon`.
 
-**Update**
-- `OnboardingView.swift` (re-space, Dynamic Type).
-- `WindowsillView.swift` (zones, floating Water, top-right share, sky, watermark, cluster, tap-to-water, a11y).
-- `ShelfView.swift` (silhouette empty slots, spacing).
-- `RootView.swift` (glass tab bar wiring; bloom-share promotion).
-- `BloomCard.swift` (watermark).
-- `SsakArt/Backdrop.swift` (`Sill` split; `PlantView` `wall` param).
-- `SsakApp/Sources/SsakAppRender/Render.swift` (new/updated renders: respaced onboarding, windowsill at each `TimeBand`, silhouette shelf, icon variants).
-- `project.yml` (AppIcon asset; retain iOS 16 target).
+**Update** — `SsakApp/Sources/SsakApp/OnboardingView.swift`, `WindowsillView.swift`, `ShelfView.swift`, `RootView.swift`, `BloomCard.swift`; `SsakArt/Sources/SsakArt/Backdrop.swift`, **`SsakArt/Sources/SsakArt/PlantView.swift`** (the `wall` param); `SsakApp/Sources/SsakAppRender/Render.swift` (new/updated renders: respaced onboarding, windowsill × TimeBand, mono-glyph shelf, dark mode). **(Plan B)** `project.yml` (AppIcon wiring; retain iOS 16).
 
-**Unchanged (must not regress)**
-- All of `SsakCore` + its tests; all `SsakArt` species drawings; `SsakArtRender`; `RenderInvariantsTests` (guarded by the `wall` default); `GardenModelTests`.
+**Unchanged — but verified byte-stable, not merely by signature:** all `SsakCore` + tests; all `SsakArt` species drawings; `SsakArtRender/Render.swift` and `RenderInvariantsTests` (`RenderInvariantsTests` only asserts non-nil + stage-distinctness, so it can **not** guard the wall — the real guard is a **reference-image diff** confirming `PlantView(wall: true)` output is byte-identical); `GardenModelTests`.
 
 ---
 
 ## 7. Verification
 
-**Automated / headless**
-- `cd SsakApp && swift run SsakAppRender` → regenerate PNGs; visually diff onboarding, windowsill (bloom/dry/nursing/overwater × dawn/day/dusk/night), shelf (empty/partial/complete), share card, icon variants against committed references.
-- Icon SVG variants already rendered + verified via headless Chrome.
-- `swift test` in all three packages → **all existing tests green** (proves no logic regression).
+**Automated / headless** — `cd SsakApp && swift run SsakAppRender` → regenerate PNGs; **reference-diff** onboarding, windowsill (bloom/dry/nursing/overwater × dawn/day/dusk/night × light/dark), shelf (empty/partial/complete), share card. Prove `PlantView(wall: true)` renders **byte-identical** to pre-change (the real Sill-split guard). `swift test` in all three packages green (macOS build must compile — §1.4 gate). Icon SVG variants proofed via headless Chrome.
 
-**Manual (Simulator + device)** checklist
-- [ ] Tap **Water** pill and **tap the plant** both water; gauge/ripple respond.
-- [ ] Share icon (top-right) opens the sheet; card image is crisp.
-- [ ] Background → wait → foreground: `reconcileOnOpen` grows the plant.
-- [ ] Sky matches time of day; cross-fades near a boundary.
-- [ ] Dynamic Type slider AX1→AX5: no clipping, CTA visible.
-- [ ] VoiceOver sweep: hero status, Water, Share, tabs all labeled.
-- [ ] Dark mode; Reduce Transparency (glass→solid); Reduce Motion (still).
-- [ ] iOS 26 device (real glass) **and** iOS 16 device (fallback) both correct.
-- [ ] iPhone SE (smallest) and Pro Max (largest): layout holds.
-- [ ] App icon on home screen in light/dark/tinted.
+**Manual (Simulator + device)**
+- [ ] Water pill **and** tap-the-plant both water; ripple responds.
+- [ ] Share (top-right) opens sheet; card crisp.
+- [ ] Background→foreground: `reconcileOnOpen` grows the plant.
+- [ ] Sky matches time of day; cross-fades near a boundary; **idle chrome fades** so the plant stands alone.
+- [ ] Dynamic Type AX1→AX5: no clipping.
+- [ ] VoiceOver: hero, Water, Share, streak, tick, gauge, tabs all labeled; no double-speak.
+- [ ] Light **and** Dark mode both coherent across a Windowsill↔Shelf tab switch.
+- [ ] Reduce Transparency (glass→solid); Reduce Motion (still).
+- [ ] iOS 26 (real glass) **and** iOS 16 (fallback) devices.
+- [ ] iPhone SE and Pro Max layouts.
+- [ ] (Plan B) App icon on home screen in light/dark/tinted; iOS-16 render path.
 
-**Edge cases to test**: fresh plant (no water yet), midnight & DST streak rollover, band boundary while open, longest KO name, over-full watering nudge, garden-complete shelf.
+**Edge cases** — fresh plant, midnight/DST roll, band boundary while open, longest KO name, over-full nudge, garden-complete, dark mode on both screens.
 
 **Regression risks**
-1. `PlantView`/`Sill` refactor → guarded by `wall` default; re-run `RenderInvariantsTests` + `SsakArtRender`.
-2. Glass availability branch → test both iOS 16 and 26 paths (fallback must never crash/blank).
+1. `PlantView`/`Sill` refactor → guarded by `wall: true` re-rendering the exact old wall; **reference-diff** proves byte-stability (not `RenderInvariantsTests`).
+2. Glass availability branch → **macOS module must compile** (§1.4 `#if os(iOS)`); test both iOS 16 and 26 runtime paths; fallback never blanks.
 3. Tab selection & share presentation unchanged — smoke test.
-4. Time-of-day derivation must not read a second clock or mutate state (keep `now`-injected).
-5. Contrast change on the amber warning — confirm the new value still reads "gentle."
+4. Sky determinism → `SkyBackdrop(now:)` is pure; the live `TimelineView` clock read is cosmetic/test-exempt; logic stays `now`-injected.
+5. Overwater text recolor — confirm it still reads "gentle."
 6. No `SsakCore` edits — logic tests are the tripwire.
 
 ---
 
 ## 8. Out of scope (someday)
-Full-screen "place" navigation (chose the glass dock), diegetic-only watering, tap-to-water haptics, sound, notifications, animated onboarding hero, italic species names, iPad/landscape, sharing the shelf, any AI/raster art.
+Full-screen "place" nav, diegetic-only watering, haptics, sound, notifications, animated onboarding hero, italic species names, iPad/landscape, sharing the shelf, any AI/raster art.
 
 ---
 
 ## Appendix A — Bloom-Point icon (reproducible)
+Canvas 220×220, squircle `rx≈49`, mark centered `x=110`, ~53% frame height, calm corners.
+- **Stem** `M110 146 C110 154 110 160 110 166`, 8pt round `#4C8642`.
+- **Left leaf** `M108 147 C88 151 64 145 54 122 C66 112 90 128 108 147 Z`, grad `#7EBA61→#4C8642`.
+- **Right leaf** `M112 147 C132 151 156 145 166 124 C154 114 130 130 112 147 Z`, grad `#6BA956→#47823E`.
+- **Bud (rounded furl)** `M110 146 C94 120 96 88 106 60 C107 55 113 55 114 60 C124 88 126 120 110 146 Z`, grad `#F7CE78→#E1962C`; furl seam `#C9812A@0.5`; left highlight `#FADFA0@0.55`.
+- **Contact shadow** radial ellipse `cx110 cy170 rx44 ry9`, `#473828@0.18→0`.
 
-Canvas 220×220, squircle `rx≈49` (22.3%), mark centered on `x=110`, filling ~53% frame height, calm corners.
-
-- **Stem**: `M110 146 C110 154 110 160 110 166`, 8pt round, `#4C8642`.
-- **Left leaf**: `M108 147 C88 151 64 145 54 122 C66 112 90 128 108 147 Z`, grad `#7EBA61→#4C8642`.
-- **Right leaf**: `M112 147 C132 151 156 145 166 124 C154 114 130 130 112 147 Z`, grad `#6BA956→#47823E` (one value darker → recedes).
-- **Bud (rounded furl)**: `M110 146 C94 120 96 88 106 60 C107 55 113 55 114 60 C124 88 126 120 110 146 Z`, grad `#F7CE78→#E1962C`; furl seam `#C9812A@0.5`; left-lobe highlight `#FADFA0@0.55`.
-- **Contact shadow**: radial ellipse `cx110 cy170 rx44 ry9`, `#473828@0.18→0`.
-
-**Variant recipes**
-- **Light**: cream→sage bg `#FCF8EE→#E7F0DA`, mark as above.
-- **Dark**: bg `#2A241C→#17130F` + warm radial glow behind bud; leaves brighten `#8AC86C→#4F9145`; bud `#FAD583→#E89B32`.
-- **Tinted**: dark bg, mark in a single light tint (grayscale source: bud lightest `#DCE7C8`, leaves mid, stem darkest) — system applies user tint.
-- **Clear/Glass**: OS-composited frosted; source = translucent white relief + specular top edges over the layered art.
+**Variants** — Light: cream→sage bg, mark as above. Dark: bg `#2A241C→#17130F` + warm radial glow; leaves `#8AC86C→#4F9145`; bud `#FAD583→#E89B32`. Tinted: dark bg, single-tint grayscale source (bud lightest `#DCE7C8`). Clear/Glass: OS-composited frosted (translucent white relief + specular edges over the layered art).
 
 ---
 
-## Decision ledger (this session)
+## Decision ledger
 | # | Decision | Choice |
 |---|---|---|
-| R1 | Home layout | Liquid Glass dock + 2 tabs; Water lifted to a floating detached glass pill |
-| R2 | Onboarding | Re-space the existing 3-beat screen on an 8pt grid (no animated hero) |
-| R3 | Share | Quiet top-right glass icon always; promotes to CTA at bloom |
-| R4 | Sky | Real-time warm gradient (dawn/day/dusk/night), derived from `now` |
-| R5 | Watermark | Faint oversized 싹/species mark behind the hero + share card |
-| R6 | Typography | Upright serif names (no italic); SF for UI; Dynamic Type |
-| R7 | App icon | *Bloom-Point* sprout — two cotyledons + furled gold bud; full iOS 26 variant set |
-| R8 | Liquid Glass | iOS 26+ with iOS 16 `ultraThinMaterial`/bordered fallback; Reduce-Transparency aware |
-| R9 | Guardrails | No `SsakCore`/species-art/gameplay changes; no sound/haptics; portrait iPhone only |
+| R1 | Home layout | Liquid Glass dock + 2 tabs; Water = floating pill, decoupled from nav, idle-fading |
+| R2 | Onboarding | Re-space existing 3-beat screen (no animated hero) |
+| R3 | Share | Quiet top-right glass icon; CTA at bloom |
+| R4 | Sky | Real-time warm gradient, **all light-mode bands light** (night = dusk-mauve); dark mode = warm-dark ground; pure `now`-derived |
+| R5 | Watermark | Faint 싹 behind hero + share card |
+| R6 | Typography | Upright serif names via `Font.system(.style, design:.serif)`; SF for UI; Dynamic Type |
+| R7 | App icon | Bloom-Point; **Plan B** delivers the iOS 26 layered asset |
+| R8 | Liquid Glass | `SsakGlass` ViewModifier; `#if os(iOS)` + iOS-26 avail; material/opaque fallback; Reduce-Transparency & Increased-Contrast aware |
+| R9 | Guardrails | No SsakCore/species-art/gameplay/sound/haptics; macOS build must compile; portrait iPhone only |
