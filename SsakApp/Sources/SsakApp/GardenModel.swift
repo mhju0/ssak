@@ -55,8 +55,16 @@ public final class GardenModel: ObservableObject {
     public var species: Species { SpeciesCatalog.species(id: state.plant.speciesID) ?? SpeciesCatalog.starter }
     public var stage: GrowthStage { GrowthEngine.stage(forProgress: state.plant.progress) }
     public var moistureFraction: Double { min(1, max(0, state.plant.moisture / tuning.moistureMax)) }
+    public var soil: SoilState { SoilState(moisture: state.plant.moisture, tuning: tuning) }
+    public var streak: Int { state.plant.streak }
     public var isNursing: Bool { state.plant.isNursing }
     public var collected: [String] { state.collected }
+
+    /// The plant's age in whole days, 1-based (planting day is Day 1). Time-injected like the
+    /// other derivations, so views (the share card) don't reach into `state.plant` themselves.
+    public func currentDay(now: Date) -> Int {
+        (calendar.dateComponents([.day], from: state.plant.plantedAt, to: now).day ?? 0) + 1
+    }
     public var isGardenComplete: Bool {
         Set(state.collected).isSuperset(of: SpeciesCatalog.all.map(\.id))
     }

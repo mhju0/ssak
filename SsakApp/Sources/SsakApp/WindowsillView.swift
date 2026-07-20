@@ -23,11 +23,9 @@ public struct WindowsillView: View {
     @State private var wake = 0
     @State private var bloomScale: CGFloat = 1   // bloom-open ceremony (spec §1.5, §2.2)
 
-    /// The soil's care category — one classification, decided here from raw moisture and
-    /// handed down to the status cluster and the VoiceOver label (spec §3.2).
-    private var soil: SoilState {
-        SoilState(moisture: model.state.plant.moisture, tuning: model.tuning)
-    }
+    /// The soil's care category, decided by the model and handed to the status cluster and the
+    /// VoiceOver label (spec §3.2). Local alias so the view never reaches into `state.plant`.
+    private var soil: SoilState { model.soil }
 
     /// How much the plant sags: strong while nursing, else scaled by how far below the dry
     /// line. Sag is a *degree* (not a category), so it stays numeric — the normalized dry
@@ -80,7 +78,7 @@ public struct WindowsillView: View {
     // Zone 1: streak (left) · watered-tick + quiet glass Share (right). These signals live here only.
     private var statusBar: some View {
         HStack {
-            StreakBadge(count: model.state.plant.streak, alive: model.isStreakAlive(now: now))
+            StreakBadge(count: model.streak, alive: model.isStreakAlive(now: now))
             Spacer()
             trailingChrome
         }
