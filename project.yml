@@ -23,6 +23,8 @@ targets:
         product: SsakCore
     settings:
       base:
+        # Plan B: create App/Assets.xcassets/AppIcon (Icon Composer, art/appicon/README.md) before building.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: com.mhju.ssak
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
