@@ -14,9 +14,13 @@ public struct BloomCard: View {
     public var body: some View {
         let accent = SpeciesPalette.palette(for: species.id).bloom
         VStack(spacing: 0) {
-            PlantView(species: species, stage: .bloom)
-                .frame(width: 300, height: 340)
-                .frame(maxWidth: .infinity)
+            ZStack {
+                SpeciesWatermark(species: species, opacity: 0.05)   // faint 싹 (spec §2.5); timeless, no sky
+                    .frame(width: 190, height: 190)
+                PlantView(species: species, stage: .bloom)
+                    .frame(width: 300, height: 340)
+            }
+            .frame(maxWidth: .infinity)
             VStack(spacing: 3) {
                 Text(species.nameEN)
                     .font(.system(size: 26, weight: .semibold, design: .serif))
