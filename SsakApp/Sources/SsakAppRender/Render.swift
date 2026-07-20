@@ -66,6 +66,25 @@ struct Render {
             write(sky.environment(\.colorScheme, .dark), skySize, "sky_\(band)_dark.png")
         }
 
+        // Redesign Plan A Task 4: SsakMark variants (rendered here to keep SsakArtRender pristine).
+        let cream = Color(red: 0.99, green: 0.97, blue: 0.92)
+        let darkbg = Color(red: 0.16, green: 0.14, blue: 0.11)
+        func markCell(_ v: SsakMark.Variant, _ bg: Color, _ label: String) -> some View {
+            VStack(spacing: 4) {
+                SsakMark(v).frame(width: 84, height: 84).padding(8).background(bg)
+                Text(label).font(.system(size: 10)).foregroundStyle(.secondary)
+            }
+        }
+        let markRow = HStack(spacing: 10) {
+            markCell(.light, cream, "light")
+            markCell(.dark, darkbg, "dark")
+            markCell(.tinted, Color(white: 0.18), "tinted")
+            markCell(.mono, cream, "mono")
+            markCell(.glass, Color(white: 0.45), "glass")
+        }
+        .padding(16).background(Color(white: 0.9))
+        write(markRow, CGSize(width: 540, height: 130), "ssakmark_variants.png")
+
         // Task 4: windowsill in a few states.
         let d0 = Self.day0, d3 = Self.day3
         func windowsill(_ mutate: (inout PlantState) -> Void, now: Date) -> some View {
