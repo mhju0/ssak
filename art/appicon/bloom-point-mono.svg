@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <!-- Bloom-Point — MONO silhouette (legibility check at small sizes / tinted source shape). -->
+  <rect width="220" height="220" fill="#FFFFFF"/>
+  <g fill="#3F5A36">
+    <path d="M110 146 C108 154 108 160 108 168 L112 168 C112 160 112 154 110 146 Z"/>
+    <path d="M108 147 C88 151 64 145 54 122 C66 112 90 128 108 147 Z"/>
+    <path d="M112 147 C132 151 156 145 166 124 C154 114 130 130 112 147 Z"/>
+    <path d="M110 146 C94 120 96 88 106 60 C107 55 113 55 114 60 C124 88 126 120 110 146 Z"/>
+  </g>
+</svg>

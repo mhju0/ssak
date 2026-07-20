@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <!-- Bloom-Point app icon — TINTED (spec Appendix A): single-tint grayscale source, bud
+       lightest, so iOS can recolor it as one monochrome layer. Full-bleed opaque. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#242019"/><stop offset="1" stop-color="#141019"/>
+    </linearGradient>
+  </defs>
+  <rect width="220" height="220" fill="url(#bg)"/>
+  <path d="M110 146 C110 154 110 160 110 166" fill="none" stroke="#7E8A76" stroke-width="8" stroke-linecap="round"/>
+  <path d="M108 147 C88 151 64 145 54 122 C66 112 90 128 108 147 Z" fill="#93A186"/>
+  <path d="M112 147 C132 151 156 145 166 124 C154 114 130 130 112 147 Z" fill="#8A9880"/>
+  <path d="M110 146 C94 120 96 88 106 60 C107 55 113 55 114 60 C124 88 126 120 110 146 Z" fill="#DCE7C8"/>
+</svg>

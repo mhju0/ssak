@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; }
+    img { display: block; width: 100vw; height: 100vh; }
+    /* ?preview=1 shows the iOS superellipse mask so the full-bleed source can be judged as it ships. */
+    body.preview img { border-radius: 22.37%; }
+  </style>
+</head>
+<body>
+  <script>
+    const p = new URLSearchParams(location.search);
+    if (p.get('preview') === '1') document.body.classList.add('preview');
+    const src = p.get('src') || 'bloom-point.svg';
+    document.write('<img src="' + src.replace(/[^a-zA-Z0-9._-]/g, '') + '">');
+  </script>
+</body>
+</html>

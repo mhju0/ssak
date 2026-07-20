@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <!-- Bloom-Point app icon — LIGHT (spec Appendix A). Full-bleed opaque square: iOS applies
+       its own superellipse mask, so the source must NOT bake in rounded corners or alpha. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FCF8EE"/><stop offset="1" stop-color="#E7F0DA"/>
+    </linearGradient>
+    <linearGradient id="leafL" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7EBA61"/><stop offset="1" stop-color="#4C8642"/>
+    </linearGradient>
+    <linearGradient id="leafR" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6BA956"/><stop offset="1" stop-color="#47823E"/>
+    </linearGradient>
+    <linearGradient id="bud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7CE78"/><stop offset="1" stop-color="#E1962C"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#473828" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#473828" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="220" height="220" fill="url(#bg)"/>
+  <ellipse cx="110" cy="170" rx="44" ry="9" fill="url(#shadow)"/>
+  <path d="M110 146 C110 154 110 160 110 166" fill="none" stroke="#4C8642" stroke-width="8" stroke-linecap="round"/>
+  <path d="M108 147 C88 151 64 145 54 122 C66 112 90 128 108 147 Z" fill="url(#leafL)"/>
+  <path d="M112 147 C132 151 156 145 166 124 C154 114 130 130 112 147 Z" fill="url(#leafR)"/>
+  <path d="M110 146 C94 120 96 88 106 60 C107 55 113 55 114 60 C124 88 126 120 110 146 Z" fill="url(#bud)"/>
+  <path d="M110 146 C94 120 96 88 106 60" fill="none" stroke="#C9812A" stroke-opacity="0.5" stroke-width="1.5"/>
+  <path d="M108 66 C105 90 106 118 110 138" fill="none" stroke="#FADFA0" stroke-opacity="0.55" stroke-width="2" stroke-linecap="round"/>
+</svg>
