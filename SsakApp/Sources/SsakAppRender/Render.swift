@@ -143,6 +143,8 @@ struct Render {
         write(shelf([]), phone, "shelf_empty.png")
         write(shelf(["marigold", "cosmos", "sunflower"]), phone, "shelf_partial.png")
         write(shelf(SpeciesCatalog.all.map(\.id)), phone, "shelf_complete.png")
+        write(shelf(["marigold", "cosmos", "sunflower"]).environment(\.colorScheme, .dark),
+              phone, "shelf_partial_dark.png")
 
         // Task 7: onboarding (re-spaced) — light + dark. (Dynamic Type scaling isn't observable
         // via ImageRenderer, which ignores \.dynamicTypeSize; semantic fonts are Simulator-verified.)
