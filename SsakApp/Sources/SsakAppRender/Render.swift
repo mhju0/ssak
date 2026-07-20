@@ -16,8 +16,6 @@ struct Render {
             print("wrote \(name)")
         }
 
-        write(RootPlaceholder(), CGSize(width: 200, height: 260), "_app_loop_check.png")
-
         // Task 3: gauge states + status chrome, on a soft card.
         // Demo fractions → the SoilState the real UI would derive (fraction × moistureMax).
         func soilFor(_ f: Double) -> SoilState { SoilState(moisture: f * GrowthTuning.default.moistureMax) }
