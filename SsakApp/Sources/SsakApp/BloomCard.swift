@@ -15,9 +15,9 @@ public struct BloomCard: View {
         let accent = SpeciesPalette.palette(for: species.id).bloom
         VStack(spacing: 0) {
             ZStack {
-                SpeciesWatermark(species: species, opacity: 0.05)   // faint 싹 (spec §2.5); timeless, no sky
-                    .frame(width: 190, height: 190)
-                PlantView(species: species, stage: .bloom)
+                SpeciesWatermark(species: species, opacity: 0.07)   // faint 싹 (spec §2.5); timeless, no sky
+                    .frame(width: 200, height: 200)
+                PlantView(species: species, stage: .bloom, wall: false)   // wall:false so the watermark shows
                     .frame(width: 300, height: 340)
             }
             .frame(maxWidth: .infinity)

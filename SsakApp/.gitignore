@@ -1,8 +1,10 @@
 rendered/*.png
 !rendered/.gitkeep
-# curated reference screens
-!rendered/windowsill_bloom.png
+# curated reference screens (Liquid Glass redesign)
+!rendered/windowsill_bloom_day.png
+!rendered/windowsill_bloom_dark.png
 !rendered/shelf_partial.png
 !rendered/onboarding.png
 !rendered/share_card.png
+!rendered/ssakmark_variants.png
 .build/
