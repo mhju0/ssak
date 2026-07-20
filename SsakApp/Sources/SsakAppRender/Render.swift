@@ -40,6 +40,24 @@ struct Render {
         .background(Color(red: 0.99, green: 0.97, blue: 0.92))
         write(statusRow, CGSize(width: 420, height: 180), "status_chrome.png")
 
+        // Redesign Plan A Task 1: glass primitives + adaptive ink/ground (macOS = fallback path).
+        let glassCard = VStack(spacing: 16) {
+            Text("Water controls").font(.system(size: 13, weight: .medium)).inkText()
+            WaterButton(isOverfull: false, action: {})
+            WaterButton(isOverfull: true, action: {})
+            HStack(spacing: 16) {
+                GlassIconButton(systemImage: "square.and.arrow.up", label: "Share", action: {})
+                GlassIconButton(systemImage: "square.and.arrow.up", label: "Share your bloom",
+                                prominent: true, action: {})
+            }
+        }
+        .padding(24)
+        .frame(width: 320, height: 260)
+        .ssakGround()
+        write(glassCard, CGSize(width: 320, height: 260), "glass_primitives.png")
+        write(glassCard.environment(\.colorScheme, .dark), CGSize(width: 320, height: 260),
+              "glass_primitives_dark.png")
+
         // Task 4: windowsill in a few states.
         let d0 = Self.day0, d3 = Self.day3
         func windowsill(_ mutate: (inout PlantState) -> Void, now: Date) -> some View {
