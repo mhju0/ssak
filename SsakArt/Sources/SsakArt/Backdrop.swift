@@ -6,6 +6,7 @@ public struct Sill: View {
     /// original for every existing caller. `wall: false` draws only the board/ledge, so a
     /// caller (WindowsillView) can layer its own live `SkyBackdrop` behind (spec §3.3).
     public init(wall: Bool = true) { self.wall = wall }
+    @Environment(\.colorScheme) private var scheme   // board dims in dark mode (light path unchanged → byte-stable)
     public var body: some View {
         GeometryReader { geo in
             let h = geo.size.height
@@ -19,9 +20,10 @@ public struct Sill: View {
                                             Color(red: 0.97, green: 0.93, blue: 0.85)],
                                    startPoint: .top, endPoint: .bottom)
                 }
-                // sill board the pot rests on
+                // sill board the pot rests on — dim in dark mode so it recedes into the night sky
                 Rectangle()
-                    .fill(Color(red: 0.91, green: 0.85, blue: 0.73))
+                    .fill(scheme == .dark ? Color(red: 0.32, green: 0.27, blue: 0.20)
+                                          : Color(red: 0.91, green: 0.85, blue: 0.73))
                     .frame(height: h * 0.14)
                     .overlay(alignment: .top) {                    // thin front lip shadow
                         Rectangle().fill(Color.black.opacity(0.05)).frame(height: h * 0.012)

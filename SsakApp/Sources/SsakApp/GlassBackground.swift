@@ -92,17 +92,14 @@ public struct GlassIconButton: View {
         }
         .frame(minWidth: 44, minHeight: 44)                            // ≥44pt tap target (spec §1.6)
 
+        // `prominent` only promotes the icon to a *labeled* button — it keeps the quiet .glass
+        // style so it never competes with the prominent-blue Water pill (found on-device: at bloom,
+        // a prominent Share was a second loud blue button next to Water).
         #if os(iOS)
         if #available(iOS 26.0, *) {
-            if prominent {
-                return AnyView(Button(action: action) { content }.buttonStyle(.glassProminent).accessibilityLabel(label))
-            }
             return AnyView(Button(action: action) { content }.buttonStyle(.glass).accessibilityLabel(label))
         }
         #endif
-        if prominent {
-            return AnyView(Button(action: action) { content }.buttonStyle(.borderedProminent).accessibilityLabel(label))
-        }
         return AnyView(Button(action: action) { content }.buttonStyle(.bordered).accessibilityLabel(label))
     }
 }
