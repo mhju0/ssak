@@ -1,15 +1,21 @@
 import SwiftUI
 
 public struct Sill: View {
-    public init() {}
+    let wall: Bool
+    /// `wall: true` (default) draws the static cream wall + board — byte-identical to the
+    /// original for every existing caller. `wall: false` draws only the board/ledge, so a
+    /// caller (WindowsillView) can layer its own live `SkyBackdrop` behind (spec §3.3).
+    public init(wall: Bool = true) { self.wall = wall }
     public var body: some View {
         GeometryReader { geo in
             let h = geo.size.height
             ZStack(alignment: .bottom) {
                 // soft warm wall, faint vertical light gradient
-                LinearGradient(colors: [Color(red: 0.99, green: 0.97, blue: 0.91),
-                                        Color(red: 0.97, green: 0.93, blue: 0.85)],
-                               startPoint: .top, endPoint: .bottom)
+                if wall {
+                    LinearGradient(colors: [Color(red: 0.99, green: 0.97, blue: 0.91),
+                                            Color(red: 0.97, green: 0.93, blue: 0.85)],
+                                   startPoint: .top, endPoint: .bottom)
+                }
                 // sill board the pot rests on
                 Rectangle()
                     .fill(Color(red: 0.91, green: 0.85, blue: 0.73))

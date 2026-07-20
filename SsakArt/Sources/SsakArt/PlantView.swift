@@ -5,9 +5,12 @@ public struct PlantView: View {
     let species: Species
     let stage: GrowthStage
     let droop: Double
+    let wall: Bool
 
-    public init(species: Species, stage: GrowthStage, droop: Double = 0) {
-        self.species = species; self.stage = stage; self.droop = droop
+    /// `wall: true` (default) renders the static cream wall — byte-identical for every
+    /// existing caller. Only `WindowsillView` passes `wall: false` and layers `SkyBackdrop`.
+    public init(species: Species, stage: GrowthStage, droop: Double = 0, wall: Bool = true) {
+        self.species = species; self.stage = stage; self.droop = droop; self.wall = wall
     }
 
     public var body: some View {
@@ -17,7 +20,7 @@ public struct PlantView: View {
             let soilY = h * 0.66                       // the shared soil line
             let potW = w * 0.54, potH = h * 0.40
             ZStack {
-                Sill()
+                Sill(wall: wall)
                 // Pot placed so its soil surface sits on the soil line.
                 Pot()
                     .frame(width: potW, height: potH)
