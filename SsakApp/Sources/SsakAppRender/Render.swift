@@ -144,8 +144,10 @@ struct Render {
         write(shelf(["marigold", "cosmos", "sunflower"]), phone, "shelf_partial.png")
         write(shelf(SpeciesCatalog.all.map(\.id)), phone, "shelf_complete.png")
 
-        // Task 7: onboarding.
+        // Task 7: onboarding (re-spaced) — light + dark. (Dynamic Type scaling isn't observable
+        // via ImageRenderer, which ignores \.dynamicTypeSize; semantic fonts are Simulator-verified.)
         write(OnboardingView(onDone: {}), phone, "onboarding.png")
+        write(OnboardingView(onDone: {}).environment(\.colorScheme, .dark), phone, "onboarding_dark.png")
 
         // Task 8: shareable bloom card (any species).
         write(BloomCard(species: SpeciesCatalog.morningGlory, day: 13, streak: 5),

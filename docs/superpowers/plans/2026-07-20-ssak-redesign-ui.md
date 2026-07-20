@@ -191,7 +191,7 @@ Idle "just looking" state: Water pill + tab bar recede (fade + slight translate)
 Use `@ScaledMetric` for spacings that must track type size; ink → `.inkText()`; one copy tweak — the "Watch the drop" sub becomes *"Watch the drop — it reads the soil."* (spec §2.1). No animated hero (R2). CTA never clipped under Dynamic Type reflow.
 
 - [ ] Step 1: Apply the spacing table; `.inkText()`; copy tweak; `@ScaledMetric` where noted.
-- [ ] Step 2: `Render.swift`: re-render `onboarding.png` (and an AX3-ish variant via `.environment(\.dynamicTypeSize, .accessibility3)` to confirm no clip). Open; confirm it breathes.
+- [ ] Step 2: `Render.swift`: re-render `onboarding.png` (+ a dark variant). Open; confirm it breathes. **NOTE (found in execution): `ImageRenderer` ignores `\.dynamicTypeSize`**, so a headless AX render is pixel-identical to default and proves nothing — Dynamic Type scaling/clipping is **Simulator-verified**. The real headless deliverable is the *semantic fonts* themselves (grep confirms no `Font.system(size:)`).
 - [ ] Step 3: Commit `feat(ui): re-spaced onboarding (Plan A Task 7)`.
 
 ---
@@ -235,7 +235,7 @@ Use `@ScaledMetric` for spacings that must track type size; ink → `.inkText()`
 - **Contrast verify:** all text ≥4.5:1 on **every** band (§1.2 ratios) and dark mode; overwater `#7A4E08` confirmed ≥4.5:1 on cream; `DropGauge` dry-fill unchanged (judged 3:1 against its own drop background, not cream — spec §5).
 
 - [ ] Step 1: Add labels/hints/actions/hidden flags; gate motion on `accessibilityReduceMotion`; verify the hero label composes without double-speak.
-- [ ] Step 2: `Render.swift`: `windowsill_reduce_transparency.png` (`.environment(\.accessibilityReduceTransparency, true)` → glass goes solid, must not blank) and an AX5 Dynamic Type render (no clip). Open; confirm. (VoiceOver speech itself is simulator-only.)
+- [ ] Step 2: `Render.swift`: `windowsill_reduce_transparency.png` (`.environment(\.accessibilityReduceTransparency, true)` → glass goes solid, must not blank). Open; confirm. (Dynamic Type scaling and VoiceOver speech are Simulator-only — `ImageRenderer` ignores `\.dynamicTypeSize`; the headless guarantee is that every text site uses a *semantic* font, checked by grep.)
 - [ ] Step 3: Commit `feat(a11y): VoiceOver labels, reduce-motion/transparency, contrast pass (Plan A Task 10)`.
 - [ ] **Simulator (user):** VoiceOver reads hero/Water/Share/streak/tick/gauge/tabs with no double-speak; Reduce Motion still; Reduce Transparency solid; AX1→AX5 no clipping on SE + Pro Max.
 

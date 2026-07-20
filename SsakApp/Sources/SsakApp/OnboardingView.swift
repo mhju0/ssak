@@ -1,39 +1,45 @@
 import SwiftUI
 
-/// First-run coach (spec §6): three calm beats — water once a day, watch the
-/// drop, don't drown it — then plant the first seed.
+/// First-run coach (spec §2.1): three calm beats — water once a day, watch the drop, don't
+/// drown it — rebuilt for air. Semantic Dynamic Type throughout; adaptive ink; no animated hero.
 public struct OnboardingView: View {
     var onDone: () -> Void
     public init(onDone: @escaping () -> Void) { self.onDone = onDone }
 
-    private let ink = Color(red: 0.28, green: 0.22, blue: 0.16)
+    @ScaledMetric(relativeTo: .largeTitle) private var titleToBeats: CGFloat = 44
+    @ScaledMetric(relativeTo: .body) private var beatGap: CGFloat = 28
 
     public var body: some View {
-        VStack(spacing: 22) {
-            Spacer(minLength: 8)
-            VStack(spacing: 4) {
-                Text("Ssak 싹").font(.system(size: 34, weight: .bold, design: .serif)).foregroundStyle(ink)
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 12) {
+                Text("Ssak 싹")
+                    .font(.system(.largeTitle, design: .serif).weight(.bold))
+                    .inkText()
                 Text("Raise one flower, on the real clock.")
-                    .font(.system(size: 14)).foregroundStyle(.secondary)
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: beatGap) {
                 beat("drop.fill", "Water once a day", "A little is plenty.")
-                beat("eye.fill", "Watch the drop", "It shows the soil's moisture.")
+                beat("eye.fill", "Watch the drop", "It reads the soil.")
                 beat("leaf.fill", "Don't drown it", "Too much stalls growth — but it's forgiving.")
             }
             .padding(.horizontal, 30)
+            .padding(.top, titleToBeats)
+            Spacer()
             Spacer()
             Button(action: onDone) {
                 Text("Plant your first seed")
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(maxWidth: .infinity).padding(.vertical, 14)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity).padding(.vertical, 15)
             }
             .buttonStyle(.borderedProminent)
             .tint(Color(red: 0.36, green: 0.60, blue: 0.34))
-            .padding(.horizontal, 30).padding(.bottom, 28)
+            .padding(.horizontal, 30)
+            .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(red: 0.99, green: 0.97, blue: 0.92))
+        .ssakGround()
     }
 
     @ViewBuilder private func beat(_ icon: String, _ title: String, _ sub: String) -> some View {
@@ -44,8 +50,8 @@ public struct OnboardingView: View {
                     .foregroundStyle(Color(red: 0.34, green: 0.56, blue: 0.30))
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(ink)
-                Text(sub).font(.system(size: 13)).foregroundStyle(.secondary)
+                Text(title).font(.headline).inkText()
+                Text(sub).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
         }
