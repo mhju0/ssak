@@ -21,7 +21,7 @@ Elevate Ssak's UI to "clean, calm, Apple-Design-Award" quality while staying ins
 - `SsakArt` species drawings **untouched**. Only `Backdrop`/`PlantView` gain a wall toggle, plus one new `SsakMark`.
 - **iOS 16 min deployment retained.** Liquid Glass is progressive enhancement (iOS 26+) with a `.ultraThinMaterial`/opaque fallback — never a hard gate.
 - **Both packages also build for `macOS 13`** (render harness + tests run on the Mac). All iOS-26-only API must be gated so the **macOS module still compiles** — see §1.4.
-- **No sound, no haptics** ([ADR-0002](../../adr/0002-drop-haptics.md), base §10). Levers: layout, color, type, motion, glass.
+- **No sound, no haptics** ([ADR-0001](../../adr/0001-no-sound-no-haptics.md), base §10). Levers: layout, color, type, motion, glass.
 - Portrait-only, iPhone-only, offline, no dependencies. "Finishable first."
 
 ---
