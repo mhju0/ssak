@@ -66,5 +66,7 @@ public struct StreakBadge: View {
         .foregroundStyle(alive ? Color(red: 0.34, green: 0.56, blue: 0.30) : Color.secondary)
         .padding(.horizontal, 10).padding(.vertical, 5)
         .background(Capsule().fill(alive ? Color(red: 0.90, green: 0.94, blue: 0.86) : Color(white: 0.92)))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Streak, \(count) \(count == 1 ? "day" : "days")")
     }
 }

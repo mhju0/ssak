@@ -235,7 +235,7 @@ Use `@ScaledMetric` for spacings that must track type size; ink → `.inkText()`
 - **Contrast verify:** all text ≥4.5:1 on **every** band (§1.2 ratios) and dark mode; overwater `#7A4E08` confirmed ≥4.5:1 on cream; `DropGauge` dry-fill unchanged (judged 3:1 against its own drop background, not cream — spec §5).
 
 - [ ] Step 1: Add labels/hints/actions/hidden flags; gate motion on `accessibilityReduceMotion`; verify the hero label composes without double-speak.
-- [ ] Step 2: `Render.swift`: `windowsill_reduce_transparency.png` (`.environment(\.accessibilityReduceTransparency, true)` → glass goes solid, must not blank). Open; confirm. (Dynamic Type scaling and VoiceOver speech are Simulator-only — `ImageRenderer` ignores `\.dynamicTypeSize`; the headless guarantee is that every text site uses a *semantic* font, checked by grep.)
+- [ ] Step 2: **Reduce Transparency, Dynamic Type, and VoiceOver are all Simulator-only (found in execution):** `\.accessibilityReduceTransparency` is a **read-only** environment key (can't be set via `.environment()`, so no headless render), and `ImageRenderer` ignores `\.dynamicTypeSize`. The headless guarantees are structural instead: `SsakGlass` reads `@Environment(\.accessibilityReduceTransparency)` and branches to an opaque fill (verbatim §1.4), every text site uses a *semantic* font (grep-checked), and every decorative view is `.accessibilityHidden(true)`. Confirm the rest on device.
 - [ ] Step 3: Commit `feat(a11y): VoiceOver labels, reduce-motion/transparency, contrast pass (Plan A Task 10)`.
 - [ ] **Simulator (user):** VoiceOver reads hero/Water/Share/streak/tick/gauge/tabs with no double-speak; Reduce Motion still; Reduce Transparency solid; AX1→AX5 no clipping on SE + Pro Max.
 

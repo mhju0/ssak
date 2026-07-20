@@ -21,6 +21,7 @@ public struct WindowsillView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var chromeVisible = true
     @State private var wake = 0
+    @State private var bloomScale: CGFloat = 1   // bloom-open ceremony (spec §1.5, §2.2)
 
     private var band: ClosedRange<Double> {
         let lo = model.tuning.dryThreshold / model.tuning.moistureMax
@@ -40,6 +41,7 @@ public struct WindowsillView: View {
         ZStack {
             SkyBackdrop(now: now, calendar: model.calendar)   // fills the frame; dark-mode aware
                 .ignoresSafeArea()
+                .accessibilityHidden(true)
 
             VStack(spacing: 0) {
                 statusBar.opacity(chromeVisible ? 1 : 0)
@@ -63,6 +65,11 @@ public struct WindowsillView: View {
             guard !reduceMotion else { return }          // Reduce Motion → chrome stays put
             try? await Task.sleep(for: .seconds(4))
             chromeVisible = false                          // idle "just looking" → plant + sky alone
+        }
+        .onChange(of: model.stage) { newStage in         // bloom-open ceremony (Simulator-verified)
+            guard newStage == .bloom, !reduceMotion else { return }
+            bloomScale = 0.7
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.6)) { bloomScale = 1 }
         }
     }
 
@@ -107,6 +114,7 @@ public struct WindowsillView: View {
             SpeciesWatermark(species: model.species).frame(width: 150, height: 150)
             PlantView(species: model.species, stage: model.stage, droop: droop, wall: false)
                 .frame(width: 280, height: 340)
+                .scaleEffect(bloomScale)
                 .accessibilityHidden(true)
         }
         .contentShape(Rectangle())

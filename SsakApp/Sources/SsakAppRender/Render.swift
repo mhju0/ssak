@@ -132,6 +132,8 @@ struct Render {
               phone, "windowsill_nursing.png")
         write(windowsill({ $0.progress = 0.7; $0.moisture = 1.2; $0.lastWateredAt = Self.day0h(8) }, now: Self.day0h(14)),
               phone, "windowsill_overwater.png")
+        // Task 10 a11y note: Reduce Transparency (read-only env key), Dynamic Type (ImageRenderer
+        // ignores \.dynamicTypeSize), and VoiceOver are all Simulator-verified — not headless-injectable.
 
         // Task 6: shelf states.
         func shelf(_ collected: [String]) -> some View {
