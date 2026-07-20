@@ -1,4 +1,5 @@
 import SwiftUI
+import SsakCore
 
 /// An upward-pointing water-drop silhouette.
 struct DropShape: Shape {
@@ -14,24 +15,25 @@ struct DropShape: Shape {
     }
 }
 
-/// A water-drop gauge that fills bottom-up to `fraction` (0…1). Calm blue when
-/// in the healthy `band`, amber when too dry, brighter with a sheen when over-full.
+/// A water-drop gauge that fills bottom-up to `fraction` (0…1). Amber when the soil
+/// is `.dry`, calm blue when `.moist`/`.overfull`, with an extra sheen when `.overfull`.
+/// Classification is decided by the caller (`SoilState`); the gauge only draws it.
 public struct DropGauge: View {
     let fraction: Double
-    let band: ClosedRange<Double>
-    public init(fraction: Double, band: ClosedRange<Double>) {
-        self.fraction = fraction; self.band = band
+    let soil: SoilState
+    public init(fraction: Double, soil: SoilState) {
+        self.fraction = fraction; self.soil = soil
     }
     public var body: some View {
         let f = min(1, max(0, fraction))
-        let water: Color = f < band.lowerBound
+        let water: Color = soil == .dry
             ? Color(red: 0.92, green: 0.62, blue: 0.22)          // too dry → amber
             : Color(red: 0.36, green: 0.62, blue: 0.86)          // healthy / full → blue
         GeometryReader { geo in
             let h = geo.size.height
             ZStack(alignment: .bottom) {
                 Rectangle().fill(water).frame(height: h * f)
-                if f > band.upperBound {                          // over-full sheen
+                if soil == .overfull {                            // over-full sheen
                     Rectangle().fill(.white.opacity(0.18)).frame(height: h * f)
                 }
             }

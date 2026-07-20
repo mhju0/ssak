@@ -1,13 +1,14 @@
 import SwiftUI
+import SsakCore
 
 /// The quiet, gauge-only moisture read-out (spec §2.2 zone 4, §3.2). Deliberately separate from
 /// and de-duplicated against the streak/tick (which live only in the top status bar) — this is
 /// the fix for "the gauge is mixed in with the buttons": the read-out is its own quiet cluster.
 public struct StatusCluster: View {
     let fraction: Double
-    let band: ClosedRange<Double>
-    public init(fraction: Double, band: ClosedRange<Double>) {
-        self.fraction = fraction; self.band = band
+    let soil: SoilState
+    public init(fraction: Double, soil: SoilState) {
+        self.fraction = fraction; self.soil = soil
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -15,7 +16,7 @@ public struct StatusCluster: View {
 
     public var body: some View {
         HStack(spacing: 8) {
-            DropGauge(fraction: fraction, band: band)
+            DropGauge(fraction: fraction, soil: soil)
                 .frame(width: 30, height: 44)
                 .overlay(surfaceRipple)                 // spec §1.5 gauge ripple (static under Reduce Motion)
             Text(moistureLabel)
@@ -27,10 +28,11 @@ public struct StatusCluster: View {
     }
 
     private var moistureLabel: String {
-        let f = min(1, max(0, fraction))
-        if f < band.lowerBound { return "dry" }
-        if f > band.upperBound { return "over-full" }
-        return "moist"
+        switch soil {
+        case .dry:      return "dry"
+        case .overfull: return "over-full"
+        case .moist:    return "moist"
+        }
     }
 
     /// A faint highlight at the waterline that gently bobs — the "surface" of the water.

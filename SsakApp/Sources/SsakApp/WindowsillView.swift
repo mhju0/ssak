@@ -23,16 +23,18 @@ public struct WindowsillView: View {
     @State private var wake = 0
     @State private var bloomScale: CGFloat = 1   // bloom-open ceremony (spec §1.5, §2.2)
 
-    private var band: ClosedRange<Double> {
-        let lo = model.tuning.dryThreshold / model.tuning.moistureMax
-        let hi = model.tuning.tooWetThreshold / model.tuning.moistureMax
-        return lo...hi
+    /// The soil's care category — one classification, decided here from raw moisture and
+    /// handed down to the status cluster and the VoiceOver label (spec §3.2).
+    private var soil: SoilState {
+        SoilState(moisture: model.state.plant.moisture, tuning: model.tuning)
     }
 
-    /// How much the plant sags: strong while nursing, else scaled by how far below the dry line.
+    /// How much the plant sags: strong while nursing, else scaled by how far below the dry
+    /// line. Sag is a *degree* (not a category), so it stays numeric — the normalized dry
+    /// line is `dryThreshold/moistureMax`, exactly the old `band.lowerBound`.
     private var droop: Double {
         if model.isNursing { return 0.65 }
-        let lower = band.lowerBound
+        let lower = model.tuning.dryThreshold / model.tuning.moistureMax
         let f = model.moistureFraction
         return f < lower ? min(1, (lower - f) / max(lower, 0.001)) * 0.8 : 0
     }
@@ -48,7 +50,7 @@ public struct WindowsillView: View {
                 Spacer()
                 hero
                 nameBlock.padding(.top, 12)
-                StatusCluster(fraction: model.moistureFraction, band: band).padding(.top, 14)
+                StatusCluster(fraction: model.moistureFraction, soil: soil).padding(.top, 14)
                 if model.wouldOverwater(now: now) { overwaterNudge.padding(.top, 8) }
                 Spacer()
                 // Zone 6: floating Water control — lower third, in clear space above the tab bar.
@@ -147,8 +149,12 @@ public struct WindowsillView: View {
 
     /// Combined VoiceOver label (spec §5) — omits "watered today" (the top-bar tick carries it).
     private var heroLabel: String {
-        let f = model.moistureFraction
-        let soil = f < band.lowerBound ? "soil dry" : (f > band.upperBound ? "soil over-full" : "soil moist")
+        let soilWord: String
+        switch soil {
+        case .dry:      soilWord = "soil dry"
+        case .overfull: soilWord = "soil over-full"
+        case .moist:    soilWord = "soil moist"
+        }
         let stageWord: String
         switch model.stage {
         case .seed:   stageWord = "a seed"
@@ -157,6 +163,6 @@ public struct WindowsillView: View {
         case .bud:    stageWord = "budding"
         case .bloom:  stageWord = "blooming"
         }
-        return "\(model.species.nameEN), \(stageWord), \(soil)"
+        return "\(model.species.nameEN), \(stageWord), \(soilWord)"
     }
 }

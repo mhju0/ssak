@@ -19,10 +19,11 @@ struct Render {
         write(RootPlaceholder(), CGSize(width: 200, height: 260), "_app_loop_check.png")
 
         // Task 3: gauge states + status chrome, on a soft card.
-        let band = 0.154...0.77   // dryThreshold/moistureMax … tooWetThreshold/moistureMax
+        // Demo fractions → the SoilState the real UI would derive (fraction × moistureMax).
+        func soilFor(_ f: Double) -> SoilState { SoilState(moisture: f * GrowthTuning.default.moistureMax) }
         func gaugeCard(_ f: Double, _ label: String) -> some View {
             VStack(spacing: 8) {
-                DropGauge(fraction: f, band: band).frame(width: 70, height: 96)
+                DropGauge(fraction: f, soil: soilFor(f)).frame(width: 70, height: 96)
                 Text(label).font(.system(size: 12)).foregroundStyle(.secondary)
             }.padding(16)
         }
@@ -104,9 +105,9 @@ struct Render {
         write(watermarkRow, CGSize(width: 340, height: 180), "watermark_marigold.png")
 
         let clusterRow = HStack(spacing: 22) {
-            StatusCluster(fraction: 0.08, band: band)   // dry
-            StatusCluster(fraction: 0.5, band: band)    // moist
-            StatusCluster(fraction: 1.05, band: band)   // over-full
+            StatusCluster(fraction: 0.08, soil: soilFor(0.08))   // dry
+            StatusCluster(fraction: 0.5, soil: soilFor(0.5))     // moist
+            StatusCluster(fraction: 1.05, soil: soilFor(1.05))   // over-full
         }
         .padding(20).background(cream)
         write(clusterRow, CGSize(width: 380, height: 90), "status_cluster.png")
