@@ -85,6 +85,32 @@ struct Render {
         .padding(16).background(Color(white: 0.9))
         write(markRow, CGSize(width: 540, height: 130), "ssakmark_variants.png")
 
+        // Redesign Plan A Task 5: species watermark (over a band) + gauge-only status cluster.
+        func watermarkCell(_ op: Double, _ label: String) -> some View {
+            VStack(spacing: 4) {
+                ZStack {
+                    SkyBackdrop(now: Self.day0h(12), calendar: Self.cal)
+                    SpeciesWatermark(species: SpeciesCatalog.marigold, opacity: op)
+                }
+                .frame(width: 140, height: 140)
+                Text(label).font(.system(size: 10)).foregroundStyle(.secondary)
+            }
+        }
+        let watermarkRow = HStack(spacing: 12) {
+            watermarkCell(0.06, "0.06 (real)")
+            watermarkCell(0.18, "0.18 (shape)")
+        }
+        .padding(16).background(Color(white: 0.9))
+        write(watermarkRow, CGSize(width: 340, height: 180), "watermark_marigold.png")
+
+        let clusterRow = HStack(spacing: 22) {
+            StatusCluster(fraction: 0.08, band: band)   // dry
+            StatusCluster(fraction: 0.5, band: band)    // moist
+            StatusCluster(fraction: 1.05, band: band)   // over-full
+        }
+        .padding(20).background(cream)
+        write(clusterRow, CGSize(width: 380, height: 90), "status_cluster.png")
+
         // Task 4: windowsill in a few states.
         let d0 = Self.day0, d3 = Self.day3
         func windowsill(_ mutate: (inout PlantState) -> Void, now: Date) -> some View {
