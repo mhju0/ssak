@@ -86,10 +86,7 @@ public enum GrowthEngine {
         var out = reconcile(state, to: now, species: species, tuning: t)
 
         if let last = out.lastWateredAt {
-            let from = calendar.startOfDay(for: last)
-            let to = calendar.startOfDay(for: now)
-            let dayDelta = calendar.dateComponents([.day], from: from, to: to).day ?? 0
-            switch dayDelta {
+            switch calendar.dayGap(from: last, to: now) ?? 0 {
             case 0:  break               // already counted today
             case 1:  out.streak += 1     // consecutive day
             default: out.streak = 1      // gap (or backwards) resets

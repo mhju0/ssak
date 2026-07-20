@@ -81,8 +81,6 @@ public final class GardenModel: ObservableObject {
     /// (spec §3.2, derived at the UI rather than in the engine).
     public func isStreakAlive(now: Date) -> Bool {
         guard let last = state.plant.lastWateredAt else { return false }
-        let delta = calendar.dateComponents([.day], from: calendar.startOfDay(for: last),
-                                            to: calendar.startOfDay(for: now)).day ?? 99
-        return delta <= 1
+        return (calendar.dayGap(from: last, to: now) ?? 99) <= 1
     }
 }
