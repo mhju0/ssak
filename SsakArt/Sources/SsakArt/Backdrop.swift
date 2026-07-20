@@ -10,6 +10,9 @@ public struct Sill: View {
         GeometryReader { geo in
             let h = geo.size.height
             ZStack(alignment: .bottom) {
+                Color.clear    // keeps the sill filling its frame even when wall:false (else the
+                               // board-only ZStack collapses to the top); occluded by the opaque
+                               // gradient when wall:true, so that path stays byte-identical.
                 // soft warm wall, faint vertical light gradient
                 if wall {
                     LinearGradient(colors: [Color(red: 0.99, green: 0.97, blue: 0.91),

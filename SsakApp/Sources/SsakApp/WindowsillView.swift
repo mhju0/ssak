@@ -2,8 +2,10 @@ import SwiftUI
 import SsakCore
 import SsakArt
 
-/// The home screen (spec §6): the current plant on its sill, chrome-light so it's
-/// screenshot-ready — streak, watered-today, moisture gauge, water + share actions.
+/// The home screen (spec §2.2): the current plant on a real-time sky, chrome-light and
+/// screenshot-ready. A floating Liquid Glass Water control decoupled from the nav, a quiet
+/// glass Share, a faint 싹 watermark, and a gauge-only status cluster (streak/tick live only
+/// in the top bar). Tapping the plant waters it too.
 public struct WindowsillView: View {
     @ObservedObject var model: GardenModel
     let now: Date
@@ -15,14 +17,18 @@ public struct WindowsillView: View {
         self.model = model; self.now = now; self.onWater = onWater; self.onShare = onShare
     }
 
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var chromeVisible = true
+    @State private var wake = 0
+
     private var band: ClosedRange<Double> {
         let lo = model.tuning.dryThreshold / model.tuning.moistureMax
         let hi = model.tuning.tooWetThreshold / model.tuning.moistureMax
         return lo...hi
     }
 
-    /// How much the plant sags: strong while nursing, else scaled by how far
-    /// below the dry line the soil is.
+    /// How much the plant sags: strong while nursing, else scaled by how far below the dry line.
     private var droop: Double {
         if model.isNursing { return 0.65 }
         let lower = band.lowerBound
@@ -31,46 +37,118 @@ public struct WindowsillView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                StreakBadge(count: model.state.plant.streak, alive: model.isStreakAlive(now: now))
+        ZStack {
+            SkyBackdrop(now: now, calendar: model.calendar)   // fills the frame; dark-mode aware
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                statusBar.opacity(chromeVisible ? 1 : 0)
                 Spacer()
-                if model.hasWateredToday(now: now) {
-                    WateredTodayTick().font(.system(size: 22))
-                }
+                hero
+                nameBlock.padding(.top, 12)
+                StatusCluster(fraction: model.moistureFraction, band: band).padding(.top, 14)
+                if model.wouldOverwater(now: now) { overwaterNudge.padding(.top, 8) }
+                Spacer()
+                // Zone 6: floating Water control — lower third, in clear space above the tab bar.
+                WaterButton(isOverfull: model.wouldOverwater(now: now)) { onWater(); poke() }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 30)
+                    .opacity(chromeVisible ? 1 : 0)
             }
-            .padding(.horizontal, 20).padding(.top, 14)
-
-            PlantView(species: model.species, stage: model.stage, droop: droop)
-                .frame(maxWidth: .infinity)
-                .layoutPriority(1)
-
-            VStack(spacing: 2) {
-                Text(model.species.nameEN)
-                    .font(.system(size: 20, weight: .semibold, design: .serif))
-                Text(model.species.nameKO)
-                    .font(.system(size: 13)).foregroundStyle(.secondary)
-            }
-            .foregroundStyle(Color(red: 0.28, green: 0.22, blue: 0.16))
-
-            // Forgiving: warn (don't block) if watering again would waterlog.
-            if model.wouldOverwater(now: now) {
-                Text("Watered today — go easy on the water 💧")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color(red: 0.82, green: 0.52, blue: 0.12))
-                    .padding(.top, 6)
-            }
-
-            HStack(spacing: 18) {
-                DropGauge(fraction: model.moistureFraction, band: band).frame(width: 34, height: 48)
-                Button(action: onWater) { Label("Water", systemImage: "drop.fill") }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color(red: 0.36, green: 0.62, blue: 0.86))
-                Button(action: onShare) { Image(systemName: "square.and.arrow.up").font(.system(size: 18)) }
-                    .buttonStyle(.bordered)
-            }
-            .padding(.vertical, 18)
+            .padding(.horizontal, 20)
         }
-        .background(Color(red: 0.99, green: 0.97, blue: 0.92))
+        .animation(.easeInOut(duration: 0.6), value: chromeVisible)
+        .task(id: wake) {
+            chromeVisible = true
+            guard !reduceMotion else { return }          // Reduce Motion → chrome stays put
+            try? await Task.sleep(for: .seconds(4))
+            chromeVisible = false                          // idle "just looking" → plant + sky alone
+        }
+    }
+
+    private func poke() { wake += 1 }                      // re-show chrome on interaction
+
+    // Zone 1: streak (left) · watered-tick + quiet glass Share (right). These signals live here only.
+    private var statusBar: some View {
+        HStack {
+            StreakBadge(count: model.state.plant.streak, alive: model.isStreakAlive(now: now))
+            Spacer()
+            trailingChrome
+        }
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder private var trailingChrome: some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer { chromeCluster }
+        } else {
+            chromeCluster
+        }
+        #else
+        chromeCluster                                      // macOS render path → structural fallback
+        #endif
+    }
+
+    private var chromeCluster: some View {
+        HStack(spacing: 12) {
+            if model.hasWateredToday(now: now) {
+                WateredTodayTick().font(.system(size: 20)).accessibilityLabel("Watered today")
+            }
+            GlassIconButton(systemImage: "square.and.arrow.up",
+                            label: model.stage == .bloom ? "Share your bloom" : "Share",
+                            prominent: model.stage == .bloom) { onShare() }
+        }
+    }
+
+    // Zone 2: sky hero — faint watermark behind, plant centered with generous negative space.
+    private var hero: some View {
+        ZStack {
+            SpeciesWatermark(species: model.species).frame(width: 150, height: 150)
+            PlantView(species: model.species, stage: model.stage, droop: droop, wall: false)
+                .frame(width: 280, height: 340)
+                .accessibilityHidden(true)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onWater(); poke() }                // tap-the-plant waters too
+        .accessibilityElement()
+        .accessibilityLabel(heroLabel)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: "Water") { onWater() }
+    }
+
+    // Zone 3: name — serif EN + KO secondary, adaptive ink so it reads on every band + dark mode.
+    private var nameBlock: some View {
+        VStack(spacing: 2) {
+            Text(model.species.nameEN)
+                .font(.system(.title3, design: .serif).weight(.semibold))
+            Text(model.species.nameKO)
+                .font(.subheadline).foregroundStyle(.secondary)
+        }
+        .inkText()
+    }
+
+    // Zone 5: gentle overwater nudge — deep amber-brown (light) / light amber (dark), 💧 non-color cue.
+    private var overwaterNudge: some View {
+        Text("Watered today — go easy on the water 💧")
+            .font(.footnote.weight(.medium))
+            .foregroundStyle(scheme == .dark
+                ? Color(red: 0.941, green: 0.753, blue: 0.467)     // light amber for dark ground
+                : Color(red: 0.478, green: 0.306, blue: 0.031))    // #7A4E08, ≥4.5:1 on cream
+    }
+
+    /// Combined VoiceOver label (spec §5) — omits "watered today" (the top-bar tick carries it).
+    private var heroLabel: String {
+        let f = model.moistureFraction
+        let soil = f < band.lowerBound ? "soil dry" : (f > band.upperBound ? "soil over-full" : "soil moist")
+        let stageWord: String
+        switch model.stage {
+        case .seed:   stageWord = "a seed"
+        case .sprout: stageWord = "sprouting"
+        case .leaves: stageWord = "leafing out"
+        case .bud:    stageWord = "budding"
+        case .bloom:  stageWord = "blooming"
+        }
+        return "\(model.species.nameEN), \(stageWord), \(soil)"
     }
 }

@@ -111,7 +111,7 @@ struct Render {
         .padding(20).background(cream)
         write(clusterRow, CGSize(width: 380, height: 90), "status_cluster.png")
 
-        // Task 4: windowsill in a few states.
+        // Redesign Plan A Task 6: windowsill in a few states × bands × light/dark.
         let d0 = Self.day0, d3 = Self.day3
         func windowsill(_ mutate: (inout PlantState) -> Void, now: Date) -> some View {
             var plant = GrowthEngine.plant(SpeciesCatalog.marigold, at: d0)
@@ -120,15 +120,18 @@ struct Render {
                                     store: PlantStore(url: URL(fileURLWithPath: "/dev/null")), calendar: Self.cal)
             return WindowsillView(model: model, now: now, onWater: {}, onShare: {})
         }
-        let phone = CGSize(width: 300, height: 560)
-        write(windowsill({ $0.progress = 1.0; $0.moisture = 0.7; $0.lastWateredAt = d0 }, now: Self.day0h(12)),
-              phone, "windowsill_bloom.png")
+        let phone = CGSize(width: 320, height: 640)
+        let bloom: (inout PlantState) -> Void = { $0.progress = 1.0; $0.moisture = 0.7; $0.lastWateredAt = d0 }
+        write(windowsill(bloom, now: Self.day0h(12)), phone, "windowsill_bloom_day.png")
+        write(windowsill(bloom, now: Self.day0h(22)), phone, "windowsill_bloom_night.png")
+        write(windowsill(bloom, now: Self.day0h(12)).environment(\.colorScheme, .dark),
+              phone, "windowsill_bloom_dark.png")
         write(windowsill({ $0.progress = 0.6; $0.moisture = 0.05; $0.lastWateredAt = d0 }, now: d3),
               phone, "windowsill_dry.png")
         write(windowsill({ $0.progress = 0.4; $0.moisture = 0.0; $0.isNursing = true; $0.lastWateredAt = d0 }, now: d3),
               phone, "windowsill_nursing.png")
         write(windowsill({ $0.progress = 0.7; $0.moisture = 1.2; $0.lastWateredAt = Self.day0h(8) }, now: Self.day0h(14)),
-              phone, "windowsill_overwater_warn.png")
+              phone, "windowsill_overwater.png")
 
         // Task 6: shelf states.
         func shelf(_ collected: [String]) -> some View {
