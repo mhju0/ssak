@@ -12,7 +12,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-5F8F45?style=flat-square" alt="License: MIT" /></a>
 </p>
 
-<img src="SsakApp/rendered/windowsill_bloom_day.png" width="248" alt="A marigold blooming on the windowsill" />
+<img src="art/hero.png" width="266" alt="The Ssak windowsill — a marigold in bloom on a sunlit sill" />
 
 </div>
 
