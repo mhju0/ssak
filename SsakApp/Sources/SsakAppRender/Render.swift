@@ -65,6 +65,14 @@ struct Render {
             write(sky.environment(\.colorScheme, .dark), skySize, "sky_\(band)_dark.png")
         }
 
+        // Round 2 T2: the living room scene — bands × light/dark.
+        let roomSize = CGSize(width: 320, height: 640)
+        for (h, band) in [(12, "day"), (18, "dusk"), (22, "night")] {
+            write(RoomScene(now: Self.day0h(h), calendar: Self.cal), roomSize, "room_\(band).png")
+        }
+        write(RoomScene(now: Self.day0h(12), calendar: Self.cal).environment(\.colorScheme, .dark),
+              roomSize, "room_day_dark.png")
+
         // Redesign Plan A Task 4: SsakMark variants (rendered here to keep SsakArtRender pristine).
         let cream = Color(red: 0.99, green: 0.97, blue: 0.92)
         let darkbg = Color(red: 0.16, green: 0.14, blue: 0.11)

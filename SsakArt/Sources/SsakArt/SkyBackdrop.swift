@@ -27,54 +27,32 @@ public struct SkyBackdrop: View {
         }
     }
 
-    /// Continuous hour-of-day (0…24) in the injected calendar — the sole input to the band.
-    private var hourOfDay: Double {
-        let c = calendar.dateComponents([.hour, .minute], from: now)
-        return Double(c.hour ?? 12) + Double(c.minute ?? 0) / 60
-    }
-
-    /// (top, bottom) gradient stops, cross-fading over the ±0.5h window around each boundary.
+    /// (top, bottom) gradient stops via the shared `Daylight` band machinery —
+    /// same math as ever, now also feeding `RoomScene`.
     private var colors: (Color, Color) {
-        let h = hourOfDay
-        var top = Self.band(atHour: h).top
-        var bottom = Self.band(atHour: h).bottom
-        let w = 0.5
-        for b in [5.0, 8.0, 17.0, 20.0] where abs(h - b) < w {      // boundaries are >1h apart → at most one matches
-            let before = Self.band(atHour: b - 0.01), after = Self.band(atHour: b + 0.01)
-            let t = (h - (b - w)) / (2 * w)                         // 0 at b-w … 1 at b+w
-            top = Self.lerp(before.top, after.top, t)
-            bottom = Self.lerp(before.bottom, after.bottom, t)
-        }
+        let h = Daylight.hour(of: now, in: calendar)
+        let top = Daylight.blend(atHour: h) { Self.stops($0).top }
+        let bottom = Daylight.blend(atHour: h) { Self.stops($0).bottom }
         return scheme == .dark
-            ? (Self.dark(nudgedBy: top), Self.dark(nudgedBy: bottom, deep: true))
-            : (Self.color(top), Self.color(bottom))
+            ? (Daylight.dark(nudgedBy: top), Daylight.dark(nudgedBy: bottom, deep: true))
+            : (Daylight.color(top), Daylight.color(bottom))
     }
 
-    // Bands (top, bottom) sRGB — spec §1.2. All light so ink clears its contrast bar.
-    private typealias RGB = (Double, Double, Double)
+    // Bands (top, bottom) sRGB — round-2 mockup sky ramps. Night is genuinely dark now:
+    // since round 2 the sky lives inside RoomScene's window and chrome ink flips to cream
+    // at night via TimeBand, so the "all bands light" round-1 compromise is retired.
+    private typealias RGB = Daylight.RGB
     private static let dawn:  (top: RGB, bottom: RGB) = ((0.984, 0.914, 0.808), (0.957, 0.871, 0.776)) // #FBE9CE→#F4DEC6
-    private static let day:   (top: RGB, bottom: RGB) = ((0.988, 0.973, 0.933), (0.906, 0.941, 0.855)) // #FCF8EE→#E7F0DA
-    private static let dusk:  (top: RGB, bottom: RGB) = ((0.969, 0.875, 0.776), (0.918, 0.788, 0.682)) // #F7DFC6→#EAC9AE
-    private static let night: (top: RGB, bottom: RGB) = ((0.906, 0.886, 0.925), (0.851, 0.827, 0.878)) // #E7E2EC→#D9D3E0
+    private static let day:   (top: RGB, bottom: RGB) = ((0.843, 0.910, 0.945), (0.957, 0.914, 0.812)) // #D7E8F1→#F4E9CF
+    private static let dusk:  (top: RGB, bottom: RGB) = ((0.910, 0.812, 0.878), (0.949, 0.769, 0.537)) // #E8CFE0→#F2C489
+    private static let night: (top: RGB, bottom: RGB) = ((0.141, 0.227, 0.329), (0.055, 0.086, 0.133)) // #243A54→#0E1622
 
-    private static func band(atHour h: Double) -> (top: RGB, bottom: RGB) {
-        switch h {
-        case 5..<8:   return dawn
-        case 8..<17:  return day
-        case 17..<20: return dusk
-        default:      return night        // 20…24 and 0…5
+    private static func stops(_ b: TimeBand) -> (top: RGB, bottom: RGB) {
+        switch b {
+        case .dawn:  return dawn
+        case .day:   return day
+        case .dusk:  return dusk
+        case .night: return night
         }
-    }
-
-    private static func lerp(_ a: RGB, _ b: RGB, _ t: Double) -> RGB {
-        (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t, a.2 + (b.2 - a.2) * t)
-    }
-    private static func color(_ c: RGB) -> Color { Color(red: c.0, green: c.1, blue: c.2) }
-
-    /// Warm-dark ground, hue nudged ~10% toward the day's band so night/dawn/dusk still
-    /// read differently in dark mode without lifting the low luminance (spec §1.2, §3.4).
-    private static func dark(nudgedBy band: RGB, deep: Bool = false) -> Color {
-        let base: RGB = deep ? (0.090, 0.075, 0.059) : (0.165, 0.141, 0.110)   // #17130F / #2A241C
-        return color(lerp(base, band, 0.10))
     }
 }
