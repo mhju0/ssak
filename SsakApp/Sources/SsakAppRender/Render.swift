@@ -156,10 +156,15 @@ struct Render {
         write(shelf(["marigold", "cosmos", "sunflower"]).environment(\.colorScheme, .dark),
               phone, "shelf_partial_dark.png")
 
-        // Task 7: onboarding (re-spaced) — light + dark. (Dynamic Type scaling isn't observable
-        // via ImageRenderer, which ignores \.dynamicTypeSize; semantic fonts are Simulator-verified.)
-        write(OnboardingView(onDone: {}), phone, "onboarding.png")
-        write(OnboardingView(onDone: {}).environment(\.colorScheme, .dark), phone, "onboarding_dark.png")
+        // Round 2 T4: start guide over the live windowsill — welcome sheet + a spotlight step.
+        let guideBase = windowsill(bloom, now: Self.day0h(12))
+        write(ZStack { guideBase; StartGuide(anchors: [:], speciesName: "Marigold", onDone: {}) },
+              phone, "guide_welcome.png")
+        let waterRect = CGRect(x: 238, y: 479, width: 62, height: 62)   // where the drop floats at 320×640
+        write(ZStack { guideBase
+                       StartGuide(anchors: ["water": waterRect], speciesName: "Marigold",
+                                  startAt: 1, onDone: {}) },
+              phone, "guide_step_water.png")
 
         // Task 8: shareable bloom card (any species).
         write(BloomCard(species: SpeciesCatalog.morningGlory, day: 13, streak: 5),

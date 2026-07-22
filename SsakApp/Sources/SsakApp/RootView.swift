@@ -16,7 +16,18 @@ public struct RootView: View {
     public init(model: GardenModel) { _model = StateObject(wrappedValue: model) }
 
     public var body: some View {
-        content
+        main
+            .overlayPreferenceValue(GuideTargetKey.self) { anchors in
+                if !hasOnboarded {
+                    GeometryReader { proxy in
+                        StartGuide(anchors: anchors.mapValues { proxy[$0] },
+                                   speciesName: model.species.nameEN) {
+                            model.reconcileOnOpen(now: Date())
+                            hasOnboarded = true
+                        }
+                    }
+                }
+            }
             .onChange(of: scenePhase) { phase in
                 if phase == .active { model.reconcileOnOpen(now: Date()) }
             }
@@ -26,18 +37,6 @@ public struct RootView: View {
     /// windowsill room behind them is dark (same rule as WindowsillView's chrome).
     private var chromeScheme: ColorScheme {
         TimeBand(now: Date(), calendar: model.calendar) == .night ? .dark : scheme
-    }
-
-    @ViewBuilder private var content: some View {
-        if !hasOnboarded {
-            // ponytail: interim gate — T4 replaces this screen with the coach-mark StartGuide
-            OnboardingView {
-                model.reconcileOnOpen(now: Date())
-                hasOnboarded = true
-            }
-        } else {
-            main
-        }
     }
 
     @ViewBuilder private var main: some View {

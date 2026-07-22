@@ -102,6 +102,7 @@ public struct WindowsillView: View {
             .padding(.bottom, 32)
 
             WaterButton(action: water)
+                .guideTarget("water")
                 .padding(.trailing, Design.pad)
                 .padding(.bottom, height * 0.155)          // floats clear of the name block
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -153,6 +154,7 @@ public struct WindowsillView: View {
                 .accessibilityHidden(true)
         }
         .contentShape(Rectangle())
+        .guideTarget("plant")
         .onTapGesture { water() }                          // tap-the-plant waters too
         .accessibilityElement()
         .accessibilityLabel(heroLabel)

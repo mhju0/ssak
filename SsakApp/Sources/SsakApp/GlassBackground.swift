@@ -103,7 +103,7 @@ public struct TopNavPill: View {
     public var body: some View {
         HStack(spacing: 2) {
             segment("Windowsill", 0)
-            segment("Shelf", 1)
+            segment("Shelf", 1).guideTarget("shelf")
         }
         .padding(.horizontal, 4)
         .ssakGlass(Capsule())
