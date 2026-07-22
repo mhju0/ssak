@@ -33,3 +33,15 @@ public extension View {
     /// Scene ground fill, adaptive to light/dark (spec §3.4).
     func ssakGround() -> some View { modifier(SsakGround()) }
 }
+
+/// Round-2 Toss-pass tokens (mockup in `docs/design/`): one edge inset, one radius scale.
+/// Type is deliberately NOT here — the approved 28/20/17/15/13 scale maps 1:1 onto semantic
+/// Dynamic Type styles (.title / .title3 / .headline / .subheadline / .footnote), and
+/// nothing renders below .footnote (the 13pt floor).
+public enum Design {
+    /// The one horizontal edge inset — left == right for all screen chrome.
+    public static let pad: CGFloat = 20
+    public static let rSM: CGFloat = 12
+    public static let rMD: CGFloat = 16
+    public static let rLG: CGFloat = 24
+}

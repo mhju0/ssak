@@ -39,22 +39,27 @@ struct Render {
         .background(Color(red: 0.99, green: 0.97, blue: 0.92))
         write(statusRow, CGSize(width: 420, height: 180), "status_chrome.png")
 
-        // Redesign Plan A Task 1: glass primitives + adaptive ink/ground (macOS = fallback path).
+        // Round 2 T3: glass primitives — floating drop, top nav pill, chips (macOS = fallback path).
         let glassCard = VStack(spacing: 16) {
-            Text("Water controls").font(.system(size: 13, weight: .medium)).inkText()
-            WaterButton(isOverfull: false, action: {})
-            WaterButton(isOverfull: true, action: {})
+            TopNavPill(tab: .constant(0))
             HStack(spacing: 16) {
+                WaterButton(action: {})
                 GlassIconButton(systemImage: "square.and.arrow.up", label: "Share", action: {})
                 GlassIconButton(systemImage: "square.and.arrow.up", label: "Share your bloom",
                                 prominent: true, action: {})
             }
+            HStack(spacing: 16) {
+                StreakBadge(count: 4, alive: true)
+                MoistChip(fraction: 0.08, soil: soilFor(0.08))
+                MoistChip(fraction: 0.5, soil: soilFor(0.5))
+                MoistChip(fraction: 1.05, soil: soilFor(1.05))
+            }
         }
         .padding(24)
-        .frame(width: 320, height: 260)
+        .frame(width: 400, height: 280)
         .ssakGround()
-        write(glassCard, CGSize(width: 320, height: 260), "glass_primitives.png")
-        write(glassCard.environment(\.colorScheme, .dark), CGSize(width: 320, height: 260),
+        write(glassCard, CGSize(width: 400, height: 280), "glass_primitives.png")
+        write(glassCard.environment(\.colorScheme, .dark), CGSize(width: 400, height: 280),
               "glass_primitives_dark.png")
 
         // Redesign Plan A Task 2: real-time sky bands (pure now+calendar; UTC cal → reproducible).
@@ -110,22 +115,18 @@ struct Render {
         .padding(16).background(Color(white: 0.9))
         write(watermarkRow, CGSize(width: 340, height: 180), "watermark_marigold.png")
 
-        let clusterRow = HStack(spacing: 22) {
-            StatusCluster(fraction: 0.08, soil: soilFor(0.08))   // dry
-            StatusCluster(fraction: 0.5, soil: soilFor(0.5))     // moist
-            StatusCluster(fraction: 1.05, soil: soilFor(1.05))   // over-full
-        }
-        .padding(20).background(cream)
-        write(clusterRow, CGSize(width: 380, height: 90), "status_cluster.png")
-
-        // Redesign Plan A Task 6: windowsill in a few states × bands × light/dark.
+        // Round 2: windowsill in a few states × bands × light/dark.
         let d0 = Self.day0, d3 = Self.day3
         func windowsill(_ mutate: (inout PlantState) -> Void, now: Date) -> some View {
             var plant = GrowthEngine.plant(SpeciesCatalog.marigold, at: d0)
             mutate(&plant)
             let model = GardenModel(state: GameState(plant: plant, collected: []),
                                     store: PlantStore(url: URL(fileURLWithPath: "/dev/null")), calendar: Self.cal)
-            return WindowsillView(model: model, now: now, onWater: {}, onShare: {})
+            // Composed like RootView: the top nav pill overlays the windowsill.
+            return ZStack(alignment: .top) {
+                WindowsillView(model: model, now: now, onWater: {}, onShare: {})
+                TopNavPill(tab: .constant(0)).padding(.top, 8)
+            }
         }
         let phone = CGSize(width: 320, height: 640)
         let bloom: (inout PlantState) -> Void = { $0.progress = 1.0; $0.moisture = 0.7; $0.lastWateredAt = d0 }

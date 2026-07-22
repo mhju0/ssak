@@ -1,13 +1,16 @@
 import SwiftUI
 import SsakCore
+import SsakArt
 
-/// The app root: gates first-run onboarding, swaps between the windowsill and the
-/// shelf, and reconciles the plant against the real clock whenever the app becomes
+/// The app root (round 2): the windowsill or the shelf under a single top glass pill nav
+/// (the bottom `TabView` is retired), with the first-run start guide overlaid on the live
+/// windowsill. Reconciles the plant against the real clock whenever the app becomes
 /// active. The real `Date()` is read only here, at the interaction boundary.
 public struct RootView: View {
     @StateObject private var model: GardenModel
     @AppStorage("hasOnboarded") private var hasOnboarded = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.colorScheme) private var scheme
     @State private var tab = 0
 
     public init(model: GardenModel) { _model = StateObject(wrappedValue: model) }
@@ -19,23 +22,37 @@ public struct RootView: View {
             }
     }
 
+    /// Night flips nav + shelf chrome to dark ink even in system light mode — the
+    /// windowsill room behind them is dark (same rule as WindowsillView's chrome).
+    private var chromeScheme: ColorScheme {
+        TimeBand(now: Date(), calendar: model.calendar) == .night ? .dark : scheme
+    }
+
     @ViewBuilder private var content: some View {
         if !hasOnboarded {
+            // ponytail: interim gate — T4 replaces this screen with the coach-mark StartGuide
             OnboardingView {
                 model.reconcileOnOpen(now: Date())
                 hasOnboarded = true
             }
         } else {
-            TabView(selection: $tab) {
+            main
+        }
+    }
+
+    @ViewBuilder private var main: some View {
+        ZStack(alignment: .top) {
+            if tab == 0 {
                 WindowsillView(model: model, now: Date(),
                                onWater: { model.water(now: Date()) },
                                onShare: { presentShare() })
-                    .tag(0)
-                    .tabItem { Label("Windowsill", systemImage: "sun.max.fill") }
+            } else {
                 ShelfView(model: model, onReplant: { model.pressAndReplant($0, now: Date()) })
-                    .tag(1)
-                    .tabItem { Label("Shelf", systemImage: "square.grid.2x2.fill") }
+                    .environment(\.colorScheme, chromeScheme)
             }
+            TopNavPill(tab: $tab)
+                .padding(.top, 8)
+                .environment(\.colorScheme, chromeScheme)
         }
     }
 

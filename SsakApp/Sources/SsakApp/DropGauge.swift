@@ -54,7 +54,8 @@ public struct WateredTodayTick: View {
     }
 }
 
-/// A small streak badge — a sprout leaf + count, muted when the streak is broken.
+/// A small streak badge — a sprout leaf + count in a corner glass chip (round-2 restyle),
+/// muted when the streak is broken.
 public struct StreakBadge: View {
     let count: Int
     let alive: Bool
@@ -62,13 +63,50 @@ public struct StreakBadge: View {
     public var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "leaf.fill")
-            Text("\(count)")
+                .foregroundStyle(alive ? Color(red: 0.34, green: 0.56, blue: 0.30) : Color.secondary)
+            Text("\(count)").inkText()
         }
-        .font(.system(size: 14, weight: .semibold))
-        .foregroundStyle(alive ? Color(red: 0.34, green: 0.56, blue: 0.30) : Color.secondary)
-        .padding(.horizontal, 10).padding(.vertical, 5)
-        .background(Capsule().fill(alive ? Color(red: 0.90, green: 0.94, blue: 0.86) : Color(white: 0.92)))
+        .font(.footnote.weight(.semibold))
+        .padding(.horizontal, 12)
+        .frame(minHeight: 40)
+        .ssakGlass(Capsule())
+        .opacity(alive ? 1 : 0.7)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Streak, \(count) \(count == 1 ? "day" : "days")")
+    }
+}
+
+/// The quiet moisture read-out (round 2): a glass pill holding a *miniature* DropGauge plus
+/// the soil word — the mockup's "moist" chip, but keeping the fill-level signal the gauge
+/// carries ("watch the drop" stays a real mechanic, not just a label). Also carries the
+/// watered-today seal: the shared top row (nav pill + corner chips) has no room for it.
+public struct MoistChip: View {
+    let fraction: Double
+    let soil: SoilState
+    let watered: Bool
+    public init(fraction: Double, soil: SoilState, watered: Bool = false) {
+        self.fraction = fraction; self.soil = soil; self.watered = watered
+    }
+
+    public var body: some View {
+        HStack(spacing: 8) {
+            DropGauge(fraction: fraction, soil: soil).frame(width: 13, height: 18)
+            Text(word).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+            if watered { WateredTodayTick().font(.footnote) }
+        }
+        .padding(.horizontal, 12)
+        .frame(minHeight: 28)
+        .ssakGlass(Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Soil moisture, \(Int((min(1, max(0, fraction)) * 100).rounded())) percent, \(word)"
+                            + (watered ? ", watered today" : ""))
+    }
+
+    private var word: String {
+        switch soil {
+        case .dry:      return "dry"
+        case .overfull: return "over-full"
+        case .moist:    return "moist"
+        }
     }
 }

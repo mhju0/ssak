@@ -2,10 +2,12 @@ import SwiftUI
 
 public struct Sill: View {
     let wall: Bool
+    let board: Bool
     /// `wall: true` (default) draws the static cream wall + board — byte-identical to the
     /// original for every existing caller. `wall: false` draws only the board/ledge, so a
-    /// caller (WindowsillView) can layer its own live `SkyBackdrop` behind (spec §3.3).
-    public init(wall: Bool = true) { self.wall = wall }
+    /// caller can layer its own live backdrop behind (spec §3.3). `board: false` (round 2)
+    /// drops the ledge too — the pot sits directly on `RoomScene`'s own sill.
+    public init(wall: Bool = true, board: Bool = true) { self.wall = wall; self.board = board }
     @Environment(\.colorScheme) private var scheme   // board dims in dark mode (light path unchanged → byte-stable)
     public var body: some View {
         GeometryReader { geo in
@@ -21,13 +23,15 @@ public struct Sill: View {
                                    startPoint: .top, endPoint: .bottom)
                 }
                 // sill board the pot rests on — dim in dark mode so it recedes into the night sky
-                Rectangle()
-                    .fill(scheme == .dark ? Color(red: 0.32, green: 0.27, blue: 0.20)
-                                          : Color(red: 0.91, green: 0.85, blue: 0.73))
-                    .frame(height: h * 0.14)
-                    .overlay(alignment: .top) {                    // thin front lip shadow
-                        Rectangle().fill(Color.black.opacity(0.05)).frame(height: h * 0.012)
-                    }
+                if board {
+                    Rectangle()
+                        .fill(scheme == .dark ? Color(red: 0.32, green: 0.27, blue: 0.20)
+                                              : Color(red: 0.91, green: 0.85, blue: 0.73))
+                        .frame(height: h * 0.14)
+                        .overlay(alignment: .top) {                    // thin front lip shadow
+                            Rectangle().fill(Color.black.opacity(0.05)).frame(height: h * 0.012)
+                        }
+                }
             }
         }
     }
