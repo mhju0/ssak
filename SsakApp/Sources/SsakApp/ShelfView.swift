@@ -38,6 +38,8 @@ public struct ShelfView: View {
                     .inkText()
                 Text(model.isGardenComplete
                      ? "All six pressed. Replant any bloom."
+                     : model.collected.isEmpty
+                     ? "Nothing pressed yet — your first bloom will live here."
                      : "\(Self.counts[model.collected.count]) of six pressed. Keep growing.")
                     .font(.footnote).foregroundStyle(.secondary)
                 // Six fixed slots — a plain grid, not LazyVGrid (lazy children never
@@ -58,6 +60,13 @@ public struct ShelfView: View {
 
     @ViewBuilder private func slot(_ sp: Species) -> some View {
         let have = model.collected.contains(sp.id)
+        Button { onReplant(sp) } label: { card(sp, have: have) }
+            .buttonStyle(.pressable)
+            .disabled(!have)                       // empty slots aren't tappable
+            .accessibilityLabel(have ? "\(sp.nameEN), collected. Replants this bloom." : "Empty slot")
+    }
+
+    private func card(_ sp: Species, have: Bool) -> some View {
         ZStack(alignment: .bottom) {
             if have {
                 PlantView(species: sp, stage: .bloom, wall: false, board: false)
@@ -76,8 +85,5 @@ public struct ShelfView: View {
         .aspectRatio(3 / 4, contentMode: .fit)
         .ssakGlass(RoundedRectangle(cornerRadius: Design.rMD))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(have ? "\(sp.nameEN), collected" : "Empty slot")
-        .accessibilityAddTraits(have ? .isButton : [])
-        .onTapGesture { if have { onReplant(sp) } }
     }
 }

@@ -119,7 +119,7 @@ public struct StartGuide: View {
                         .frame(minHeight: 44)
                         .background(RoundedRectangle(cornerRadius: Design.rSM).fill(accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
             }
             .padding(.top, 8)
         }
@@ -127,7 +127,8 @@ public struct StartGuide: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: Design.rMD)
             .fill(Color(red: 1, green: 0.99, blue: 0.97))
-            .overlay(RoundedRectangle(cornerRadius: Design.rMD).strokeBorder(.white.opacity(0.65))))
+            .overlay(RoundedRectangle(cornerRadius: Design.rMD).strokeBorder(.white.opacity(0.65)))
+            .shadow(color: Design.shadow.opacity(0.5), radius: 14, y: 8))
         .foregroundStyle(cardInk)
         .background(GeometryReader { g in
             Color.clear.onAppear { bubbleHeight = g.size.height }
@@ -145,6 +146,7 @@ public struct StartGuide: View {
             SsakMark(.light).frame(width: 52, height: 52).padding(.bottom, 12)
             Text("Raise one flower")
                 .font(.system(.title, design: .serif).weight(.semibold))
+                .tracking(-0.3)
                 .padding(.bottom, 8)
             Text("From a single seed to full bloom — on the real clock, at your own pace.")
                 .font(.subheadline).foregroundStyle(cardSoft)
@@ -167,7 +169,7 @@ public struct StartGuide: View {
                     .frame(maxWidth: .infinity, minHeight: 52)         // TDS BottomCTA: 52pt, r16
                     .background(RoundedRectangle(cornerRadius: Design.rMD).fill(accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressable)
         }
         .padding(24)
         .frame(maxWidth: .infinity)
@@ -176,7 +178,7 @@ public struct StartGuide: View {
                                           Color(red: 0.98, green: 0.95, blue: 0.88)],
                                  startPoint: .top, endPoint: .bottom))
             .overlay(RoundedRectangle(cornerRadius: Design.rLG).strokeBorder(.white.opacity(0.65)))
-            .shadow(color: .black.opacity(0.25), radius: 20, y: -4))
+            .shadow(color: Design.shadow.opacity(0.4), radius: 20, y: -4))
         .foregroundStyle(cardInk)
         .padding(.horizontal, Design.pad)
         .padding(.bottom, Design.pad)
@@ -215,7 +217,7 @@ public struct StartGuide: View {
                 .frame(minHeight: 44)                                  // ≥44pt target
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .background(Capsule().fill(.white.opacity(0.5)).frame(height: 32))
         .accessibilityLabel("Skip the start guide")
     }

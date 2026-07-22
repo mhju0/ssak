@@ -167,6 +167,7 @@ public struct WindowsillView: View {
         VStack(spacing: 2) {
             Text(model.species.nameEN)
                 .font(.system(.title, design: .serif).weight(.semibold))
+                .tracking(-0.3)
             Text(model.species.nameKO)
                 .font(.footnote.weight(.medium)).foregroundStyle(.secondary)
         }

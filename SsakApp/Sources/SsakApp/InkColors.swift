@@ -44,4 +44,22 @@ public enum Design {
     public static let rSM: CGFloat = 12
     public static let rMD: CGFloat = 16
     public static let rLG: CGFloat = 24
+    /// The one shadow hue: warm brown (rgb 40,25,10), never pure black on the cream world.
+    public static let shadow = Color(red: 0.157, green: 0.098, blue: 0.039)
+}
+
+/// Shared pressed-state feedback: every tappable visibly responds under the finger
+/// (scale dip, spring back). Respects Reduce Motion.
+struct Pressable: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(reduceMotion ? nil : .spring(response: 0.15, dampingFraction: 0.7),
+                       value: configuration.isPressed)
+    }
+}
+
+extension ButtonStyle where Self == Pressable {
+    static var pressable: Pressable { Pressable() }
 }

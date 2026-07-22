@@ -88,7 +88,7 @@ public struct WaterButton: View {
                     .overlay(Circle().strokeBorder(.white.opacity(0.35)))
                     .shadow(color: waterBlue.opacity(0.5), radius: 10, y: 6))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 }
 
@@ -120,14 +120,14 @@ public struct TopNavPill: View {
                     if tab == i {
                         Capsule().fill(scheme == .dark ? Color.white.opacity(0.16)
                                                        : Color.white.opacity(0.9))
-                            .shadow(color: .black.opacity(0.12), radius: 3, y: 1)
+                            .shadow(color: Design.shadow.opacity(0.28), radius: 3, y: 1)
                     }
                 }
                 .opacity(tab == i ? 1 : 0.62)
                 .frame(minHeight: 44)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .inkText()
         .accessibilityLabel(label)
         .accessibilityAddTraits(tab == i ? [.isButton, .isSelected] : .isButton)
