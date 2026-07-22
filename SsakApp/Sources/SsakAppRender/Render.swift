@@ -148,7 +148,10 @@ struct Render {
             let plant = GrowthEngine.plant(SpeciesCatalog.marigold, at: d0)
             let model = GardenModel(state: GameState(plant: plant, collected: collected),
                                     store: PlantStore(url: URL(fileURLWithPath: "/dev/null")), calendar: Self.cal)
-            return ShelfView(model: model, onReplant: { _ in })
+            return ZStack(alignment: .top) {
+                ShelfView(model: model, onReplant: { _ in })
+                TopNavPill(tab: .constant(1)).padding(.top, 8)
+            }
         }
         write(shelf([]), phone, "shelf_empty.png")
         write(shelf(["marigold", "cosmos", "sunflower"]), phone, "shelf_partial.png")
