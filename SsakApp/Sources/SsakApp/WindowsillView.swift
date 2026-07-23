@@ -50,7 +50,7 @@ public struct WindowsillView: View {
                     .ignoresSafeArea()
 
                 hero
-                    .position(x: geo.size.width / 2, y: geo.size.height * 0.80 - 170)
+                    .position(x: geo.size.width / 2, y: geo.size.height * 0.80 - 194)   // 24pt clear of the name block
 
                 chrome(height: geo.size.height)
                     .environment(\.colorScheme, chromeScheme)
