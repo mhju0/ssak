@@ -85,7 +85,7 @@ public struct WindowsillView: View {
                 MoistChip(fraction: model.moistureFraction, soil: soil,
                           watered: model.hasWateredToday(now: now))
                     .padding(.top, 14)
-                if model.wouldOverwater(now: now) { overwaterNudge.padding(.top, 8) }
+                if soil == .overfull { overwaterNudge.padding(.top, 8) }
             }
             .padding(.horizontal, Design.pad)
             .padding(.bottom, 32)
@@ -163,8 +163,11 @@ public struct WindowsillView: View {
     }
 
     // Gentle overwater nudge — deep amber-brown (light) / light amber (dark), 💧 non-color cue.
+    // Shows whenever the soil is over-full (growth is paused), not only on watering day.
     private var overwaterNudge: some View {
-        Text("Watered today — go easy on the water 💧")
+        Text(model.hasWateredToday(now: now)
+             ? "Watered today — go easy on the water 💧"
+             : "Soil is over-full — let it dry out a little 💧")
             .font(.footnote.weight(.medium))
             .foregroundStyle(chromeScheme == .dark
                 ? Color(red: 0.941, green: 0.753, blue: 0.467)     // light amber for dark ground

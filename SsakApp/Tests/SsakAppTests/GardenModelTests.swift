@@ -30,18 +30,6 @@ final class GardenModelTests: XCTestCase {
         XCTAssertTrue(m.hasWateredToday(now: day(0, hour: 13)))
     }
 
-    func testWouldOverwaterOnlyWhenWateredTodayAndWaterlogged() {
-        var wet = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
-        wet.moisture = 1.2                    // > tooWetThreshold (1.0)
-        wet.lastWateredAt = day(0)            // watered today
-        let m = GardenModel(state: GameState(plant: wet, collected: []), store: tempStore(), calendar: utcCal)
-        XCTAssertTrue(m.wouldOverwater(now: day(0, hour: 15)))
-
-        var ok = wet; ok.moisture = 0.5       // not waterlogged
-        let m2 = GardenModel(state: GameState(plant: ok, collected: []), store: tempStore(), calendar: utcCal)
-        XCTAssertFalse(m2.wouldOverwater(now: day(0, hour: 15)))
-    }
-
     func testStreakAliveUnlessFullDayMissed() {
         var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
         s.lastWateredAt = day(0)

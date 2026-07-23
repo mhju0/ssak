@@ -79,10 +79,6 @@ public final class GardenModel: ObservableObject {
         GrowthEngine.hasWateredToday(state.plant, now: now, calendar: calendar)
     }
 
-    public func wouldOverwater(now: Date) -> Bool {
-        hasWateredToday(now: now) && state.plant.moisture > tuning.tooWetThreshold
-    }
-
     /// Streak is alive unless a full calendar day has passed with no watering
     /// (spec §3.2, derived at the UI rather than in the engine).
     public func isStreakAlive(now: Date) -> Bool {

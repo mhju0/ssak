@@ -24,11 +24,17 @@ public struct DropGauge: View {
     public init(fraction: Double, soil: SoilState) {
         self.fraction = fraction; self.soil = soil
     }
+    private var waterColor: Color {
+        switch soil {
+        case .dry:      return Color(red: 0.92, green: 0.62, blue: 0.22)   // too dry → amber
+        case .moist:    return Color(red: 0.36, green: 0.62, blue: 0.86)   // healthy → calm blue
+        case .overfull: return Color(red: 0.30, green: 0.45, blue: 0.62)   // waterlogged → murky slate
+        }
+    }
+
     public var body: some View {
         let f = min(1, max(0, fraction))
-        let water: Color = soil == .dry
-            ? Color(red: 0.92, green: 0.62, blue: 0.22)          // too dry → amber
-            : Color(red: 0.36, green: 0.62, blue: 0.86)          // healthy / full → blue
+        let water = waterColor
         GeometryReader { geo in
             let h = geo.size.height
             ZStack(alignment: .bottom) {
@@ -92,7 +98,9 @@ public struct MoistChip: View {
         HStack(spacing: 8) {
             DropGauge(fraction: fraction, soil: soil).frame(width: 13, height: 18)
             Text(word).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
-            if watered { WateredTodayTick().font(.footnote) }
+            // No green seal while over-full — a "well done" mark next to a warning word
+            // reads as mixed signals; the chip word + the nudge carry the message.
+            if watered && soil != .overfull { WateredTodayTick().font(.footnote) }
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 28)
