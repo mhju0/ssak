@@ -54,6 +54,16 @@ struct Render {
         // streak line, no UI chrome. Preview of the ImageRenderer export the app ships.
         write(PortraitCard(species: marigold, day: 7, streak: 3),
               CGSize(width: 360, height: 460), "marigold_bloom_portrait.png")
+
+        // Round 3: the hanji album paper, band by band (UTC calendar → reproducible).
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(identifier: "UTC")!
+        let d0 = utc.date(from: DateComponents(year: 2026, month: 7, day: 1))!
+        for (h, band) in [(6, "dawn"), (12, "day"), (18, "dusk"), (22, "night")] {
+            let now = utc.date(byAdding: .hour, value: h, to: d0)!
+            write(HanjiBackdrop(now: now, calendar: utc),
+                  CGSize(width: 300, height: 600), "hanji_\(band).png")
+        }
     }
 }
 
