@@ -20,8 +20,6 @@ public struct WindowsillView: View {
 
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var chromeVisible = true
-    @State private var wake = 0
     @State private var bloomScale: CGFloat = 1   // bloom-open ceremony (spec §1.5, §2.2)
     @State private var sway = false              // ambient life; resting frame in renders
     @State private var pourDip = false           // brief dip on watering (the mockup "pour")
@@ -58,13 +56,6 @@ public struct WindowsillView: View {
                     .environment(\.colorScheme, chromeScheme)
             }
         }
-        .animation(.easeInOut(duration: 0.6), value: chromeVisible)
-        .task(id: wake) {
-            chromeVisible = true
-            guard !reduceMotion else { return }          // Reduce Motion → chrome stays put
-            try? await Task.sleep(for: .seconds(4))
-            chromeVisible = false                          // idle "just looking" → plant + room alone
-        }
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 3.5).repeatForever(autoreverses: true)) { sway = true }
@@ -76,10 +67,9 @@ public struct WindowsillView: View {
         }
     }
 
-    private func poke() { wake += 1 }                      // re-show chrome on interaction
 
     private func water() {
-        onWater(); poke()
+        onWater()
         guard !reduceMotion else { return }                // the mockup "pour" dip
         pourDip = true
         withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) { pourDip = false }
@@ -89,13 +79,12 @@ public struct WindowsillView: View {
     private func chrome(height: CGFloat) -> some View {
         ZStack {
             VStack(spacing: 0) {
-                statusBar.opacity(chromeVisible ? 1 : 0)
+                statusBar
                 Spacer()
                 nameBlock
                 MoistChip(fraction: model.moistureFraction, soil: soil,
                           watered: model.hasWateredToday(now: now))
                     .padding(.top, 14)
-                    .opacity(chromeVisible ? 1 : 0)
                 if model.wouldOverwater(now: now) { overwaterNudge.padding(.top, 8) }
             }
             .padding(.horizontal, Design.pad)
@@ -106,7 +95,6 @@ public struct WindowsillView: View {
                 .padding(.trailing, Design.pad)
                 .padding(.bottom, height * 0.155)          // floats clear of the name block
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .opacity(chromeVisible ? 1 : 0)
         }
     }
 
