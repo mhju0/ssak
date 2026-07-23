@@ -86,6 +86,11 @@ public struct StartGuide: View {
 
     // MARK: spotlight + bubble
 
+    // NOTE: no .ignoresSafeArea() here — the cutout rect is measured in the safe-area
+    // space the anchors resolve in, and ignoring it shifts the drawing origin to the
+    // physical screen top, landing the ring a status-bar-height too high on device.
+    // SpotlightDim already paints 200pt past its bounds, so the dim still covers the
+    // bleed. contentShape + the empty tap keep taps from leaking through the cutout.
     private func spotlight(rect: CGRect, in size: CGSize) -> some View {
         SpotlightDim(cutout: rect)
             .fill(Color(red: 0.08, green: 0.05, blue: 0.02).opacity(0.55),
@@ -95,7 +100,8 @@ public struct StartGuide: View {
                     .stroke(.white.opacity(0.9), lineWidth: 3)
                     .frame(width: rect.width, height: rect.height)
                     .position(x: rect.midX, y: rect.midY))
-            .ignoresSafeArea()
+            .contentShape(Rectangle())
+            .onTapGesture {}
     }
 
     private func bubble(for s: (id: String, title: String, body: String, pad: CGFloat),
