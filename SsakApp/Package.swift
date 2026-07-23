@@ -15,7 +15,7 @@ let package = Package(
         .target(name: "SsakApp", dependencies: [
             .product(name: "SsakCore", package: "SsakCore"),
             .product(name: "SsakArt", package: "SsakArt"),
-        ]),
+        ], resources: [.copy("Resources/Fonts")]),
         .executableTarget(name: "SsakAppRender", dependencies: [
             "SsakApp",
             .product(name: "SsakArt", package: "SsakArt"),

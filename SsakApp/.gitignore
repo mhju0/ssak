@@ -2,7 +2,8 @@ rendered/*.png
 !rendered/.gitkeep
 # curated reference screens (Liquid Glass redesign)
 !rendered/windowsill_bloom_day.png
-!rendered/windowsill_bloom_dark.png
+!rendered/windowsill_bloom_dusk.png
+!rendered/windowsill_bloom_night.png
 !rendered/shelf_partial.png
 !rendered/guide_welcome.png
 !rendered/share_card.png

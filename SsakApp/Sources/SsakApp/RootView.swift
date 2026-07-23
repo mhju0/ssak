@@ -13,7 +13,10 @@ public struct RootView: View {
     @Environment(\.colorScheme) private var scheme
     @State private var tab = 0
 
-    public init(model: GardenModel) { _model = StateObject(wrappedValue: model) }
+    public init(model: GardenModel) {
+        _model = StateObject(wrappedValue: model)
+        SsakFonts.register()
+    }
 
     public var body: some View {
         // A minute tick keeps the "read the clock only here" boundary honest over time:
@@ -55,8 +58,10 @@ public struct RootView: View {
                 ShelfView(model: model, onReplant: { model.pressAndReplant($0, now: Date()) })
                     .environment(\.colorScheme, chromeScheme)
             }
-            TopNavPill(tab: $tab)
+            InkNavTabs(tab: $tab)                          // round 3: ink text tabs, top-right
                 .padding(.top, 8)
+                .padding(.trailing, Design.pad)
+                .frame(maxWidth: .infinity, alignment: .trailing)
                 .environment(\.colorScheme, chromeScheme)
         }
     }

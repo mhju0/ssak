@@ -2,11 +2,12 @@ import SwiftUI
 import SsakCore
 import SsakArt
 
-/// The home screen (round 2, mockup in `docs/design/`): the plant gets the whole window.
-/// A living RoomScene fills the frame; the plant sits on the sill, gently swaying; the
-/// species name + a quiet moist chip rest near the bottom; Water is a small floating glass
-/// drop bottom-right. Streak / tick / Share stay as corner glass chips. At night the room
-/// goes dark and the chrome flips to dark ink via `TimeBand`, independent of system dark mode.
+/// The home screen (round 3, spec `2026-07-23-ssak-round3-hanji.md`): a page of the
+/// pressed-flower album. Hanji paper follows the real clock (`HanjiBackdrop`); the plant
+/// sits center-page over a soft ground shadow; chrome is ink — band clock and specimen
+/// label up top with the streak seal, KO-first name block and hairline gauge below,
+/// ink water drop bottom center. At night the paper darkens and the ink flips light via
+/// `TimeBand` (never system dark mode alone).
 public struct WindowsillView: View {
     @ObservedObject var model: GardenModel
     let now: Date
@@ -16,6 +17,7 @@ public struct WindowsillView: View {
     public init(model: GardenModel, now: Date,
                 onWater: @escaping () -> Void, onShare: @escaping () -> Void) {
         self.model = model; self.now = now; self.onWater = onWater; self.onShare = onShare
+        SsakFonts.register()
     }
 
     @Environment(\.colorScheme) private var scheme
@@ -24,11 +26,11 @@ public struct WindowsillView: View {
     @State private var sway = false              // ambient life; resting frame in renders
     @State private var pourDip = false           // brief dip on watering (the mockup "pour")
 
-    /// The soil's care category, decided by the model and handed to the moist chip and the
-    /// VoiceOver label (spec §3.2). Local alias so the view never reaches into `state.plant`.
+    /// The soil's care category, decided by the model and handed to the gauge and the
+    /// VoiceOver label. Local alias so the view never reaches into `state.plant`.
     private var soil: SoilState { model.soil }
 
-    /// Night flips the chrome to dark ink even in system light mode — the room is dark.
+    /// Night flips the chrome to light ink even in system light mode — the paper is dark.
     private var chromeScheme: ColorScheme {
         TimeBand(now: now, calendar: model.calendar) == .night ? .dark : scheme
     }
@@ -46,13 +48,15 @@ public struct WindowsillView: View {
     public var body: some View {
         GeometryReader { geo in
             ZStack {
-                RoomScene(now: now, calendar: model.calendar)
+                HanjiBackdrop(now: now, calendar: model.calendar)
                     .ignoresSafeArea()
 
+                // Anchored to the fixed-height bottom stack (name+gauge+actions ≈ 240pt),
+                // not proportional — so pot and name block can't collide at any height.
                 hero
-                    .position(x: geo.size.width / 2, y: geo.size.height * 0.80 - 194)   // 24pt clear of the name block
+                    .position(x: geo.size.width / 2, y: geo.size.height - 428)
 
-                chrome(height: geo.size.height)
+                chrome
                     .environment(\.colorScheme, chromeScheme)
             }
         }
@@ -67,7 +71,6 @@ public struct WindowsillView: View {
         }
     }
 
-
     private func water() {
         onWater()
         guard !reduceMotion else { return }                // the mockup "pour" dip
@@ -76,64 +79,69 @@ public struct WindowsillView: View {
     }
 
     // All chrome in one layer so the night ink flip applies uniformly.
-    private func chrome(height: CGFloat) -> some View {
+    private var chrome: some View {
         ZStack {
             VStack(spacing: 0) {
-                statusBar
+                HStack {                                   // top row: band clock (nav is RootView's)
+                    BandClock(now: now, calendar: model.calendar)
+                    Spacer()
+                }
+                .frame(height: 44)
+                .padding(.top, 8)
+
+                HStack(alignment: .top) {                  // album row: specimen label · seal
+                    specimenLabel
+                    Spacer()
+                    SealBadge(count: model.streak, alive: model.isStreakAlive(now: now))
+                }
+                .padding(.top, 10)
+
                 Spacer()
                 nameBlock
-                MoistChip(fraction: model.moistureFraction, soil: soil,
-                          watered: model.hasWateredToday(now: now))
-                    .padding(.top, 14)
-                if soil == .overfull { overwaterNudge.padding(.top, 8) }
+                InkGauge(fraction: model.moistureFraction, soil: soil,
+                         watered: model.hasWateredToday(now: now))
+                    .padding(.top, 18)
+                    .padding(.horizontal, 26)
+                if soil == .overfull { overwaterNudge.padding(.top, 10) }
             }
             .padding(.horizontal, Design.pad)
-            .padding(.bottom, 32)
+            .padding(.bottom, 112)                         // clears the bottom action row
 
-            WaterButton(action: water)
+            InkWaterButton(action: water)
                 .guideTarget("water")
-                .padding(.trailing, Design.pad)
-                .padding(.bottom, height * 0.155)          // floats clear of the name block
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 36)
+
+            InkShareButton(label: model.stage == .bloom ? "Share your bloom" : "Share",
+                           prominent: model.stage == .bloom) { onShare() }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(.trailing, Design.pad)
+                .padding(.bottom, 42)
         }
     }
 
-    // Corner chips: streak (left) · watered-tick + quiet glass Share (right). The centered
-    // nav pill lives in RootView on the same 44pt top row.
-    private var statusBar: some View {
-        HStack {
-            StreakBadge(count: model.streak, alive: model.isStreakAlive(now: now))
-            Spacer()
-            trailingChrome
+    // The album's specimen framing: 제 N 호 (next open album slot) over the day count.
+    private var specimenLabel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("제 \(model.collected.count + 1) 호 · 압화 예정")
+                .font(.myeongjo(13, relativeTo: .footnote)).tracking(1.5)
+            Rectangle().frame(width: 40, height: 1).opacity(0.5)
+            Text("함께한 지 \(model.currentDay(now: now))일")
+                .font(.myeongjo(13, relativeTo: .footnote)).tracking(1)
         }
-        .frame(height: 44)
-        .padding(.top, 8)
+        .inkText()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Album entry \(model.collected.count + 1), day \(model.currentDay(now: now))")
     }
 
-    @ViewBuilder private var trailingChrome: some View {
-        #if os(iOS)
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer { chromeCluster }
-        } else {
-            chromeCluster
-        }
-        #else
-        chromeCluster                                      // macOS render path → structural fallback
-        #endif
-    }
-
-    // Just the quiet Share — the watered-today seal lives in the MoistChip (the shared
-    // top row has no free width next to the centered nav pill).
-    private var chromeCluster: some View {
-        GlassIconButton(systemImage: "square.and.arrow.up",
-                        label: model.stage == .bloom ? "Share your bloom" : "Share",
-                        prominent: model.stage == .bloom) { onShare() }
-    }
-
-    // The plant on the sill — watermark behind, gentle sway, tap waters too.
+    // The plant on the page — ground shadow behind, gentle sway, tap waters too.
     private var hero: some View {
         ZStack {
-            SpeciesWatermark(species: model.species).frame(width: 150, height: 150)
+            Ellipse()
+                .fill(RadialGradient(colors: [Design.shadow.opacity(0.22), .clear],
+                                     center: .center, startRadius: 0, endRadius: 120))
+                .frame(width: 240, height: 26)
+                .offset(y: 172)
             PlantView(species: model.species, stage: model.stage, droop: droop,
                       wall: false, board: false)
                 .frame(width: 280, height: 340)
@@ -150,31 +158,31 @@ public struct WindowsillView: View {
         .accessibilityAction(named: "Water") { onWater() }
     }
 
-    // Name — serif EN display (.title, the Toss 28pt slot) + KO secondary at the 13pt floor.
+    // Name — KO-first (spec D1): 메리골드 in myeongjo display, MARIGOLD tracked beneath.
     private var nameBlock: some View {
-        VStack(spacing: 6) {
-            Text(model.species.nameEN)
-                .font(.system(.title, design: .serif).weight(.semibold))
-                .tracking(-0.3)
+        VStack(spacing: 10) {
             Text(model.species.nameKO)
-                .font(.footnote.weight(.medium)).foregroundStyle(.secondary)
+                .font(.myeongjoDisplay(40, relativeTo: .largeTitle)).tracking(4)
+            Text(model.species.nameEN.uppercased())
+                .font(.system(size: 12, weight: .medium)).tracking(5)
+                .opacity(0.6)
         }
         .inkText()
     }
 
-    // Gentle overwater nudge — deep amber-brown (light) / light amber (dark), 💧 non-color cue.
+    // Gentle overwater nudge — ink amber, 💧 non-color cue.
     // Shows whenever the soil is over-full (growth is paused), not only on watering day.
     private var overwaterNudge: some View {
         Text(model.hasWateredToday(now: now)
-             ? "Watered today — go easy on the water 💧"
-             : "Soil is over-full — let it dry out a little 💧")
-            .font(.footnote.weight(.medium))
+             ? "오늘은 물을 줬어요 — 이제 그만 💧"
+             : "물이 너무 많아요 — 조금 말려 주세요 💧")
+            .font(.myeongjo(12, relativeTo: .footnote)).tracking(1)
             .foregroundStyle(chromeScheme == .dark
-                ? Color(red: 0.941, green: 0.753, blue: 0.467)     // light amber for dark ground
+                ? Color(red: 0.941, green: 0.753, blue: 0.467)     // light amber for dark paper
                 : Color(red: 0.478, green: 0.306, blue: 0.031))    // #7A4E08, ≥4.5:1 on cream
     }
 
-    /// Combined VoiceOver label (spec §5) — omits "watered today" (the top-bar tick carries it).
+    /// Combined VoiceOver label (spec §5) — omits "watered today" (the gauge carries it).
     private var heroLabel: String {
         let soilWord: String
         switch soil {

@@ -10,6 +10,18 @@ struct Render {
             .appendingPathComponent("rendered", isDirectory: true)
         try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
 
+        // Warm the myeongjo faces before any real write: a freshly-registered custom
+        // font's FIRST one-shot ImageRenderer layout at a given size comes up zero-sized
+        // (deterministic; the app self-heals across frames, one-shot renders don't).
+        SsakFonts.register()
+        let warmup = VStack {
+            ForEach([9.0, 12, 13, 14, 24, 40], id: \.self) { s in
+                Text("압화 · 1").font(.myeongjo(s, relativeTo: .body))
+                Text("압화 · 1").font(.myeongjoDisplay(s, relativeTo: .body))
+            }
+        }
+        _ = pngData(for: warmup, size: CGSize(width: 300, height: 400))
+
         func write(_ view: some View, _ size: CGSize, _ name: String) {
             guard let data = pngData(for: view, size: size) else { print("RENDER FAILED: \(name)"); exit(1) }
             try? data.write(to: out.appendingPathComponent(name))
@@ -125,15 +137,17 @@ struct Render {
             // Composed like RootView: the top nav pill overlays the windowsill.
             return ZStack(alignment: .top) {
                 WindowsillView(model: model, now: now, onWater: {}, onShare: {})
-                TopNavPill(tab: .constant(0)).padding(.top, 8)
+                InkNavTabs(tab: .constant(0)).padding(.top, 8).padding(.trailing, 20)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        let phone = CGSize(width: 320, height: 640)
+        let phone = CGSize(width: 360, height: 780)   // round 3: realistic phone canvas
         let bloom: (inout PlantState) -> Void = { $0.progress = 1.0; $0.moisture = 0.7; $0.lastWateredAt = d0 }
+        _ = pngData(for: windowsill(bloom, now: Self.day0h(12)), size: phone)   // discard: first
+        // one-shot pass of a fresh custom font drops a glyph run; second is stable.
         write(windowsill(bloom, now: Self.day0h(12)), phone, "windowsill_bloom_day.png")
+        write(windowsill(bloom, now: Self.day0h(18)), phone, "windowsill_bloom_dusk.png")
         write(windowsill(bloom, now: Self.day0h(22)), phone, "windowsill_bloom_night.png")
-        write(windowsill(bloom, now: Self.day0h(12)).environment(\.colorScheme, .dark),
-              phone, "windowsill_bloom_dark.png")
         write(windowsill({ $0.progress = 0.6; $0.moisture = 0.05; $0.lastWateredAt = d0 }, now: d3),
               phone, "windowsill_dry.png")
         write(windowsill({ $0.progress = 0.4; $0.moisture = 0.0; $0.isNursing = true; $0.lastWateredAt = d0 }, now: d3),
