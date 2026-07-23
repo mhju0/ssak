@@ -22,7 +22,7 @@ public struct PlantView: View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
             let soilY = h * 0.66                       // the shared soil line
-            let potW = w * 0.54, potH = h * 0.40
+            let potW = w * 0.58, potH = h * 0.26       // round 3: low 사발 bowl
             ZStack {
                 Sill(wall: wall, board: board)
                 // Pot placed so its soil surface sits on the soil line.
