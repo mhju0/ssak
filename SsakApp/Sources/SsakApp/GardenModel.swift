@@ -65,6 +65,12 @@ public final class GardenModel: ObservableObject {
     public func currentDay(now: Date) -> Int {
         (calendar.dateComponents([.day], from: state.plant.plantedAt, to: now).day ?? 0) + 1
     }
+    /// The species to plant after pressing the current bloom: catalog order, skipping the
+    /// shelf and the plant being pressed. Nil once every other species is collected.
+    public var nextUncollected: Species? {
+        SpeciesCatalog.all.first { !state.collected.contains($0.id) && $0.id != state.plant.speciesID }
+    }
+
     public var isGardenComplete: Bool {
         Set(state.collected).isSuperset(of: SpeciesCatalog.all.map(\.id))
     }

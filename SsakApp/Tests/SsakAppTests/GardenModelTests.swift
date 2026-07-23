@@ -74,4 +74,33 @@ final class GardenModelTests: XCTestCase {
                              store: tempStore(), calendar: utcCal)
         XCTAssertTrue(m2.isGardenComplete)
     }
+
+    /// The press flow's "what grows next": catalog order, skipping the shelf AND the plant
+    /// being pressed — a fresh marigold's next is nasturtium, never marigold itself.
+    func testNextUncollectedSkipsShelfAndCurrentPlant() {
+        let s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        XCTAssertEqual(m.nextUncollected?.id, "nasturtium")
+
+        let mid = GardenModel(state: GameState(plant: s, collected: ["nasturtium", "cosmos"]),
+                              store: tempStore(), calendar: utcCal)
+        XCTAssertEqual(mid.nextUncollected?.id, "zinnia")
+
+        let allButCurrent = SpeciesCatalog.all.map(\.id).filter { $0 != "marigold" }
+        let last = GardenModel(state: GameState(plant: s, collected: allButCurrent),
+                               store: tempStore(), calendar: utcCal)
+        XCTAssertNil(last.nextUncollected)
+    }
+
+    /// The full first-press loop the UI drives: bloomed starter + empty shelf →
+    /// press lands marigold on the shelf and the next uncollected species is planted.
+    func testFirstBloomPressesViaNextUncollected() {
+        var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        s.progress = 1.0
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        m.pressAndReplant(m.nextUncollected ?? m.species, now: day(7))
+        XCTAssertEqual(m.collected, ["marigold"])
+        XCTAssertEqual(m.species.id, "nasturtium")
+        XCTAssertEqual(m.stage, .seed)
+    }
 }

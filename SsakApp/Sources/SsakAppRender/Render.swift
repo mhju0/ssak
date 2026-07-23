@@ -144,8 +144,9 @@ struct Render {
         // ignores \.dynamicTypeSize), and VoiceOver are all Simulator-verified — not headless-injectable.
 
         // Task 6: shelf states.
-        func shelf(_ collected: [String]) -> some View {
-            let plant = GrowthEngine.plant(SpeciesCatalog.marigold, at: d0)
+        func shelf(_ collected: [String], bloomed: Bool = false) -> some View {
+            var plant = GrowthEngine.plant(SpeciesCatalog.marigold, at: d0)
+            if bloomed { plant.progress = 1.0 }
             let model = GardenModel(state: GameState(plant: plant, collected: collected),
                                     store: PlantStore(url: URL(fileURLWithPath: "/dev/null")), calendar: Self.cal)
             return ZStack(alignment: .top) {
@@ -154,6 +155,7 @@ struct Render {
             }
         }
         write(shelf([]), phone, "shelf_empty.png")
+        write(shelf([], bloomed: true), phone, "shelf_press_here.png")
         write(shelf(["marigold", "cosmos", "sunflower"]), phone, "shelf_partial.png")
         write(shelf(SpeciesCatalog.all.map(\.id)), phone, "shelf_complete.png")
         write(shelf(["marigold", "cosmos", "sunflower"]).environment(\.colorScheme, .dark),

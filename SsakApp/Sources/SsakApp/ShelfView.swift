@@ -60,15 +60,21 @@ public struct ShelfView: View {
 
     @ViewBuilder private func slot(_ sp: Species) -> some View {
         let have = model.collected.contains(sp.id)
-        Button { onReplant(sp) } label: { card(sp, have: have) }
+        // The current plant's slot opens up the moment it blooms — THE way the first
+        // bloom (and every later one) gets pressed. Pressing plants the next species
+        // still missing from the shelf; once none are left, the same species replants.
+        let pressHere = !have && sp.id == model.species.id && model.stage == .bloom
+        Button { onReplant(pressHere ? (model.nextUncollected ?? sp) : sp) }
+            label: { card(sp, have: have, pressHere: pressHere) }
             .buttonStyle(.pressable)
-            .disabled(!have)                       // empty slots aren't tappable
-            .accessibilityLabel(have ? "\(sp.nameEN), collected. Replants this bloom." : "Empty slot")
+            .disabled(!have && !pressHere)         // other empty slots aren't tappable
+            .accessibilityLabel(pressHere ? "\(sp.nameEN), in bloom. Press to your shelf."
+                                : have ? "\(sp.nameEN), collected. Replants this bloom." : "Empty slot")
     }
 
-    private func card(_ sp: Species, have: Bool) -> some View {
+    private func card(_ sp: Species, have: Bool, pressHere: Bool) -> some View {
         ZStack(alignment: .bottom) {
-            if have {
+            if have || pressHere {
                 PlantView(species: sp, stage: .bloom, wall: false, board: false)
                     .padding(.top, 8)
                     .padding(.bottom, 30)          // room for the caption strip below the pot
@@ -76,8 +82,8 @@ public struct ShelfView: View {
                 SsakMark(.mono).frame(width: 40, height: 40).opacity(0.5)
                     .frame(maxHeight: .infinity, alignment: .center)
             }
-            Text(have ? sp.nameEN : "—")
-                .font(.system(.footnote, design: .serif))
+            Text(pressHere ? "Press here 🌸" : have ? sp.nameEN : "—")
+                .font(.system(.footnote, design: .serif).weight(pressHere ? .semibold : .regular))
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 8)
         }
