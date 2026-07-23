@@ -55,7 +55,8 @@ public struct RootView: View {
                                onWater: { model.water(now: Date()) },
                                onShare: { presentShare() })
             } else {
-                ShelfView(model: model, onReplant: { model.pressAndReplant($0, now: Date()) })
+                ShelfView(model: model, now: now,
+                          onReplant: { model.pressAndReplant($0, now: Date()) })
                     .environment(\.colorScheme, chromeScheme)
             }
             InkNavTabs(tab: $tab)                          // round 3: ink text tabs, top-right

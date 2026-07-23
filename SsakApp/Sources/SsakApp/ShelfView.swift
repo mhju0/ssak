@@ -2,46 +2,53 @@ import SwiftUI
 import SsakCore
 import SsakArt
 
-/// The collection (round 2): a left-aligned serif header and a 2-column grid of 3:4
-/// pressed-bloom cards — sized so the third row bleeds past the fold, the scroll
-/// affordance itself. Empty slots show the faint mono 싹 glyph; any bloom is replantable.
+/// The collection (round 3): the 압화집's own pages — hanji paper (band-driven like the
+/// windowsill), a myeongjo header, and a 2-column grid of 3:4 paper specimen cards with
+/// hairline ink borders. Empty slots show the faint mono 싹 glyph; the current plant's
+/// slot opens as a seal-red "지금 눌러 두기" target the moment it blooms; any collected
+/// bloom is replantable.
 public struct ShelfView: View {
     @ObservedObject var model: GardenModel
+    let now: Date
     var onReplant: (Species) -> Void
 
-    public init(model: GardenModel, onReplant: @escaping (Species) -> Void) {
-        self.model = model; self.onReplant = onReplant
+    public init(model: GardenModel, now: Date, onReplant: @escaping (Species) -> Void) {
+        self.model = model; self.now = now; self.onReplant = onReplant
     }
 
-    private static let counts = ["None", "One", "Two", "Three", "Four", "Five", "Six"]
+    @Environment(\.colorScheme) private var scheme
 
     public var body: some View {
         // ScrollView on device (the third row bleeds past the fold — the scroll cue);
         // ImageRenderer can't lay out a ScrollView on the macOS render path, so the
         // harness gets the same content top-aligned and clipped — visually identical.
-        #if os(iOS)
-        ScrollView { content }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ssakGround()
-        #else
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .clipped()
-            .ssakGround()
-        #endif
+        ZStack {
+            HanjiBackdrop(now: now, calendar: model.calendar).ignoresSafeArea()
+            #if os(iOS)
+            ScrollView { content }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            #else
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .clipped()
+            #endif
+        }
+    }
+
+    private var subtitle: String {
+        model.isGardenComplete ? "여섯 송이 모두 눌렀어요 · 어느 꽃이든 다시 심어요"
+        : model.collected.isEmpty ? "아직 눌러 둔 꽃이 없어요 · 첫 꽃이 여기 담겨요"
+        : "여섯 송이 중 \(model.collected.count)송이 눌렀어요"
     }
 
     private var content: some View {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(model.isGardenComplete ? "Garden complete 🌸" : "Your shelf")
-                    .font(.system(.title3, design: .serif).weight(.semibold))
+            VStack(alignment: .leading, spacing: 6) {
+                Text(model.isGardenComplete ? "압화집 · 완성 🌸" : "압화집")
+                    .font(.myeongjoDisplay(20, relativeTo: .title3)).tracking(3)
                     .inkText()
-                Text(model.isGardenComplete
-                     ? "All six pressed. Replant any bloom."
-                     : model.collected.isEmpty
-                     ? "Nothing pressed yet — your first bloom will live here."
-                     : "\(Self.counts[model.collected.count]) of six pressed. Keep growing.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                Text(subtitle)
+                    .font(.myeongjo(12, relativeTo: .footnote)).tracking(1)
+                    .inkText().opacity(0.65)
                 // Six fixed slots — a plain grid, not LazyVGrid (lazy children never
                 // materialize under ImageRenderer, so the reference renders came out empty).
                 VStack(spacing: 16) {
@@ -73,7 +80,8 @@ public struct ShelfView: View {
     }
 
     private func card(_ sp: Species, have: Bool, pressHere: Bool) -> some View {
-        ZStack(alignment: .bottom) {
+        let red = SealRed.color(scheme)
+        return ZStack(alignment: .bottom) {
             if have || pressHere {
                 PlantView(species: sp, stage: .bloom, wall: false, board: false)
                     .padding(.top, 8)
@@ -82,14 +90,29 @@ public struct ShelfView: View {
                 SsakMark(.mono).frame(width: 40, height: 40).opacity(0.5)
                     .frame(maxHeight: .infinity, alignment: .center)
             }
-            Text(pressHere ? "Press here 🌸" : have ? sp.nameEN : "—")
-                .font(.system(.footnote, design: .serif).weight(pressHere ? .semibold : .regular))
-                .foregroundStyle(.secondary)
+            Text(pressHere ? "지금 눌러 두기 🌸" : have ? sp.nameKO : "—")
+                .font(.myeongjo(12, relativeTo: .footnote)).tracking(1)
+                .foregroundStyle(pressHere ? red : .secondary)
                 .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity)
         .aspectRatio(3 / 4, contentMode: .fit)
-        .ssakGlass(RoundedRectangle(cornerRadius: Design.rMD))
+        .background(paperCard)
+        .overlay {
+            if pressHere {
+                RoundedRectangle(cornerRadius: Design.rMD)
+                    .strokeBorder(red, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+            }
+        }
         .accessibilityElement(children: .ignore)
+    }
+
+    /// A slightly raised page of paper: lighter fill + hairline ink border, no glass.
+    private var paperCard: some View {
+        RoundedRectangle(cornerRadius: Design.rMD)
+            .fill(scheme == .dark ? Color.white.opacity(0.05) : Color.white.opacity(0.35))
+            .overlay(RoundedRectangle(cornerRadius: Design.rMD)
+                .strokeBorder((scheme == .dark ? Color.white : Design.shadow).opacity(0.22)))
+            .shadow(color: Design.shadow.opacity(scheme == .dark ? 0 : 0.10), radius: 6, y: 3)
     }
 }

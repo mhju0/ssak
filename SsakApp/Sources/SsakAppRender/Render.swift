@@ -164,8 +164,9 @@ struct Render {
             let model = GardenModel(state: GameState(plant: plant, collected: collected),
                                     store: PlantStore(url: URL(fileURLWithPath: "/dev/null")), calendar: Self.cal)
             return ZStack(alignment: .top) {
-                ShelfView(model: model, onReplant: { _ in })
-                TopNavPill(tab: .constant(1)).padding(.top, 8)
+                ShelfView(model: model, now: Self.day0h(12), onReplant: { _ in })
+                InkNavTabs(tab: .constant(1)).padding(.top, 8).padding(.trailing, 20)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         write(shelf([]), phone, "shelf_empty.png")
