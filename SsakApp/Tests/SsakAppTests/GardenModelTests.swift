@@ -63,6 +63,16 @@ final class GardenModelTests: XCTestCase {
         XCTAssertTrue(m2.isGardenComplete)
     }
 
+    /// "Day N" counts calendar days like the rest of the game (dayGap semantics), not
+    /// 24-hour blocks: planted late evening, the next morning is Day 2 — not still Day 1.
+    func testCurrentDayCountsCalendarDays() {
+        let s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0, hour: 23))
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        XCTAssertEqual(m.currentDay(now: day(0, hour: 23)), 1)   // planting day is Day 1
+        XCTAssertEqual(m.currentDay(now: day(1, hour: 9)), 2)    // next calendar morning
+        XCTAssertEqual(m.currentDay(now: day(7, hour: 9)), 8)
+    }
+
     /// The press flow's "what grows next": catalog order, skipping the shelf AND the plant
     /// being pressed — a fresh marigold's next is nasturtium, never marigold itself.
     func testNextUncollectedSkipsShelfAndCurrentPlant() {

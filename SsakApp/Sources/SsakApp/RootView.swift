@@ -16,33 +16,39 @@ public struct RootView: View {
     public init(model: GardenModel) { _model = StateObject(wrappedValue: model) }
 
     public var body: some View {
-        main
-            .overlayPreferenceValue(GuideTargetKey.self) { anchors in
-                if !hasOnboarded {
-                    GeometryReader { proxy in
-                        StartGuide(anchors: anchors.mapValues { proxy[$0] },
-                                   speciesName: model.species.nameEN) {
-                            model.reconcileOnOpen(now: Date())
-                            hasOnboarded = true
-                        }
+        // A minute tick keeps the "read the clock only here" boundary honest over time:
+        // without it the sky band, night ink flip, and moist chip freeze at the last
+        // interaction for as long as the app stays foreground.
+        TimelineView(.periodic(from: .now, by: 60)) { ctx in
+            main(now: ctx.date)
+        }
+        .overlayPreferenceValue(GuideTargetKey.self) { anchors in
+            if !hasOnboarded {
+                GeometryReader { proxy in
+                    StartGuide(anchors: anchors.mapValues { proxy[$0] },
+                               speciesName: model.species.nameEN) {
+                        model.reconcileOnOpen(now: Date())
+                        hasOnboarded = true
                     }
                 }
             }
-            .onChange(of: scenePhase) { phase in
-                if phase == .active { model.reconcileOnOpen(now: Date()) }
-            }
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active { model.reconcileOnOpen(now: Date()) }
+        }
     }
 
     /// Night flips nav + shelf chrome to dark ink even in system light mode — the
     /// windowsill room behind them is dark (same rule as WindowsillView's chrome).
-    private var chromeScheme: ColorScheme {
-        TimeBand(now: Date(), calendar: model.calendar) == .night ? .dark : scheme
+    private func chromeScheme(now: Date) -> ColorScheme {
+        TimeBand(now: now, calendar: model.calendar) == .night ? .dark : scheme
     }
 
-    @ViewBuilder private var main: some View {
+    @ViewBuilder private func main(now: Date) -> some View {
+        let chromeScheme = chromeScheme(now: now)
         ZStack(alignment: .top) {
             if tab == 0 {
-                WindowsillView(model: model, now: Date(),
+                WindowsillView(model: model, now: now,
                                onWater: { model.water(now: Date()) },
                                onShare: { presentShare() })
             } else {

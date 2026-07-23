@@ -60,10 +60,11 @@ public final class GardenModel: ObservableObject {
     public var isNursing: Bool { state.plant.isNursing }
     public var collected: [String] { state.collected }
 
-    /// The plant's age in whole days, 1-based (planting day is Day 1). Time-injected like the
-    /// other derivations, so views (the share card) don't reach into `state.plant` themselves.
+    /// The plant's age in *calendar* days, 1-based (planting day is Day 1) — the same
+    /// day semantics as the streak's `dayGap`, so "Day" rolls over at midnight, not 24h
+    /// after planting. Time-injected so views don't reach into `state.plant` themselves.
     public func currentDay(now: Date) -> Int {
-        (calendar.dateComponents([.day], from: state.plant.plantedAt, to: now).day ?? 0) + 1
+        (calendar.dayGap(from: state.plant.plantedAt, to: now) ?? 0) + 1
     }
     /// The species to plant after pressing the current bloom: catalog order, skipping the
     /// shelf and the plant being pressed. Nil once every other species is collected.
