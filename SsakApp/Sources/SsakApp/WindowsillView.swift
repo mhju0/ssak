@@ -94,7 +94,7 @@ public struct WindowsillView: View {
                 nameBlock
                 MoistChip(fraction: model.moistureFraction, soil: soil,
                           watered: model.hasWateredToday(now: now))
-                    .padding(.top, 8)
+                    .padding(.top, 14)
                     .opacity(chromeVisible ? 1 : 0)
                 if model.wouldOverwater(now: now) { overwaterNudge.padding(.top, 8) }
             }
@@ -164,7 +164,7 @@ public struct WindowsillView: View {
 
     // Name — serif EN display (.title, the Toss 28pt slot) + KO secondary at the 13pt floor.
     private var nameBlock: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 6) {
             Text(model.species.nameEN)
                 .font(.system(.title, design: .serif).weight(.semibold))
                 .tracking(-0.3)
