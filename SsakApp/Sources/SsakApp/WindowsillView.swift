@@ -97,12 +97,14 @@ public struct WindowsillView: View {
                 .padding(.top, 10)
 
                 Spacer()
-                nameBlock
+                // A2 "museum rules": two hairlines bracket the whole label — name,
+                // gauge, and ONE status line (the nudge is folded into InkGauge).
+                labelRule
+                nameBlock.padding(.top, 24)
                 InkGauge(fraction: model.moistureFraction, soil: soil,
                          watered: model.hasWateredToday(now: now))
-                    .padding(.top, 18)
-                    .padding(.horizontal, 26)
-                if soil == .overfull { overwaterNudge.padding(.top, 10) }
+                    .padding(.top, 22)
+                labelRule.padding(.top, 20)
             }
             .padding(.horizontal, Design.pad)
             .padding(.bottom, 112)                         // clears the bottom action row
@@ -139,9 +141,9 @@ public struct WindowsillView: View {
         ZStack {
             Ellipse()
                 .fill(RadialGradient(colors: [Design.shadow.opacity(0.22), .clear],
-                                     center: .center, startRadius: 0, endRadius: 120))
-                .frame(width: 240, height: 26)
-                .offset(y: 172)
+                                     center: .center, startRadius: 0, endRadius: 110))
+                .frame(width: 216, height: 22)
+                .offset(y: 136)                            // hugs the low 사발 bowl's base
             PlantView(species: model.species, stage: model.stage, droop: droop,
                       wall: false, board: false)
                 .frame(width: 280, height: 340)
@@ -158,28 +160,23 @@ public struct WindowsillView: View {
         .accessibilityAction(named: "Water") { onWater() }
     }
 
+    /// The A2 hairline — brackets the label like a museum wall caption.
+    private var labelRule: some View {
+        Rectangle().frame(height: 1).opacity(0.28)
+            .padding(.horizontal, 40)
+            .inkText()
+    }
+
     // Name — KO-first (spec D1): 메리골드 in myeongjo display, MARIGOLD tracked beneath.
     private var nameBlock: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
             Text(model.species.nameKO)
-                .font(.myeongjoDisplay(40, relativeTo: .largeTitle)).tracking(4)
+                .font(.myeongjoDisplay(34, relativeTo: .largeTitle)).tracking(5)
             Text(model.species.nameEN.uppercased())
-                .font(.system(size: 12, weight: .medium)).tracking(5)
+                .font(.system(size: 11, weight: .medium)).tracking(5)
                 .opacity(0.6)
         }
         .inkText()
-    }
-
-    // Gentle overwater nudge — ink amber, 💧 non-color cue.
-    // Shows whenever the soil is over-full (growth is paused), not only on watering day.
-    private var overwaterNudge: some View {
-        Text(model.hasWateredToday(now: now)
-             ? "오늘은 물을 줬어요 — 이제 그만 💧"
-             : "물이 너무 많아요 — 조금 말려 주세요 💧")
-            .font(.myeongjo(12, relativeTo: .footnote)).tracking(1)
-            .foregroundStyle(chromeScheme == .dark
-                ? Color(red: 0.941, green: 0.753, blue: 0.467)     // light amber for dark paper
-                : Color(red: 0.478, green: 0.306, blue: 0.031))    // #7A4E08, ≥4.5:1 on cream
     }
 
     /// Combined VoiceOver label (spec §5) — omits "watered today" (the gauge carries it).

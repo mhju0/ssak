@@ -48,8 +48,10 @@ public struct SealBadge: View {
     }
 }
 
-/// The ink hairline moisture gauge (spec D4): soil-state colored fill over a faint
-/// track, soil word left, watered seal-word right (hidden while over-full).
+/// The ink hairline moisture gauge (spec D4, A2 revision): soil-state colored fill
+/// over a faint track, then ONE centered status line — the soil word plus, when it
+/// matters, a second phrase (the overwater nudge folded in, or the watered seal-word).
+/// One line, never two: the old separate nudge row said the same thing twice.
 public struct InkGauge: View {
     let fraction: Double
     let soil: SoilState
@@ -74,15 +76,26 @@ public struct InkGauge: View {
         case .overfull: return "물이 너무 많아요"
         }
     }
+    /// The second phrase, when there is one: over-full → the nudge; else the watered tick.
+    private var phrase: (text: String, warn: Bool)? {
+        if soil == .overfull {
+            return (watered ? "오늘은 그만 💧" : "조금 말려 주세요 💧", true)
+        }
+        return watered ? ("오늘 물 줌 ✓", false) : nil
+    }
     private var wordEN: String {   // VoiceOver stays English this round (spec D1)
         switch soil {
         case .dry: return "dry"; case .moist: return "moist"; case .overfull: return "over-full"
         }
     }
+    private var amber: Color {
+        scheme == .dark ? Color(red: 0.941, green: 0.753, blue: 0.467)
+                        : Color(red: 0.478, green: 0.306, blue: 0.031)   // ≥4.5:1 on cream
+    }
 
     public var body: some View {
         let f = min(1, max(0, fraction))
-        VStack(spacing: 9) {
+        VStack(spacing: 14) {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule().fill((scheme == .dark ? Color.white : Design.shadow).opacity(0.18))
@@ -90,13 +103,16 @@ public struct InkGauge: View {
                 }
             }
             .frame(height: 3)
-            HStack {
-                Text(word)
-                Spacer()
-                if watered && soil != .overfull { Text("오늘 물 줌 ✓") }
+            .padding(.horizontal, 26)
+            HStack(spacing: 14) {
+                Text(word).inkText().opacity(0.8)
+                if let phrase {
+                    Text(phrase.text)
+                        .foregroundStyle(phrase.warn ? amber : Color.primary.opacity(0.55))
+                }
             }
-            .font(.myeongjo(12, relativeTo: .footnote)).tracking(1)
-            .inkText().opacity(0.85)
+            .font(.myeongjo(12, relativeTo: .footnote)).tracking(1.5)
+            .frame(maxWidth: .infinity)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Soil moisture, \(Int((f * 100).rounded())) percent, \(wordEN)"
