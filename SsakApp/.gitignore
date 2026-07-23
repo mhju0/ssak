@@ -4,7 +4,7 @@ rendered/*.png
 !rendered/windowsill_bloom_day.png
 !rendered/windowsill_bloom_dark.png
 !rendered/shelf_partial.png
-!rendered/onboarding.png
+!rendered/guide_welcome.png
 !rendered/share_card.png
 !rendered/ssakmark_variants.png
 .build/
