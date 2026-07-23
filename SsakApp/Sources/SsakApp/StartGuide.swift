@@ -69,7 +69,7 @@ public struct StartGuide: View {
                 skip
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, Design.pad)
-                    .padding(.top, 8)
+                    .padding(.top, 56)                     // clears the top-right ink nav (round 3)
             }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.4), value: step)

@@ -28,51 +28,6 @@ struct Render {
             print("wrote \(name)")
         }
 
-        // Task 3: gauge states + status chrome, on a soft card.
-        // Demo fractions → the SoilState the real UI would derive (fraction × moistureMax).
-        func soilFor(_ f: Double) -> SoilState { SoilState(moisture: f * GrowthTuning.default.moistureMax) }
-        func gaugeCard(_ f: Double, _ label: String) -> some View {
-            VStack(spacing: 8) {
-                DropGauge(fraction: f, soil: soilFor(f)).frame(width: 70, height: 96)
-                Text(label).font(.system(size: 12)).foregroundStyle(.secondary)
-            }.padding(16)
-        }
-        let statusRow = HStack(spacing: 12) {
-            gaugeCard(0.10, "dry")
-            gaugeCard(0.55, "healthy")
-            gaugeCard(0.95, "over-full")
-            VStack(spacing: 12) {
-                WateredTodayTick().font(.system(size: 28))
-                StreakBadge(count: 4, alive: true)
-                StreakBadge(count: 2, alive: false)
-            }
-        }
-        .padding(20)
-        .background(Color(red: 0.99, green: 0.97, blue: 0.92))
-        write(statusRow, CGSize(width: 420, height: 180), "status_chrome.png")
-
-        // Round 2 T3: glass primitives — floating drop, top nav pill, chips (macOS = fallback path).
-        let glassCard = VStack(spacing: 16) {
-            TopNavPill(tab: .constant(0))
-            HStack(spacing: 16) {
-                WaterButton(action: {})
-                GlassIconButton(systemImage: "square.and.arrow.up", label: "Share", action: {})
-                GlassIconButton(systemImage: "square.and.arrow.up", label: "Share your bloom",
-                                prominent: true, action: {})
-            }
-            HStack(spacing: 16) {
-                StreakBadge(count: 4, alive: true)
-                MoistChip(fraction: 0.08, soil: soilFor(0.08))
-                MoistChip(fraction: 0.5, soil: soilFor(0.5))
-                MoistChip(fraction: 1.05, soil: soilFor(1.05))
-            }
-        }
-        .padding(24)
-        .frame(width: 400, height: 280)
-        .ssakGround()
-        write(glassCard, CGSize(width: 400, height: 280), "glass_primitives.png")
-        write(glassCard.environment(\.colorScheme, .dark), CGSize(width: 400, height: 280),
-              "glass_primitives_dark.png")
 
         // Redesign Plan A Task 2: real-time sky bands (pure now+calendar; UTC cal → reproducible).
         let skySize = CGSize(width: 300, height: 300)
