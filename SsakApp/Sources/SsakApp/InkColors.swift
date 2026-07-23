@@ -14,24 +14,9 @@ struct InkText: ViewModifier {
     }
 }
 
-/// The screen ground behind a scene: cream in light, warm-dark gradient in dark.
-struct SsakGround: ViewModifier {
-    @Environment(\.colorScheme) private var scheme
-    func body(content: Content) -> some View {
-        content.background(scheme == .dark
-            ? AnyShapeStyle(LinearGradient(
-                colors: [Color(red: 0.165, green: 0.141, blue: 0.110),    // #2A241C
-                         Color(red: 0.090, green: 0.075, blue: 0.059)],   // #17130F
-                startPoint: .top, endPoint: .bottom))
-            : AnyShapeStyle(Color(red: 0.99, green: 0.97, blue: 0.92)))    // cream
-    }
-}
-
 public extension View {
     /// Primary ink text color, adaptive to light/dark (spec §3.4).
     func inkText() -> some View { modifier(InkText()) }
-    /// Scene ground fill, adaptive to light/dark (spec §3.4).
-    func ssakGround() -> some View { modifier(SsakGround()) }
 }
 
 /// Round-2 Toss-pass tokens (mockup in `docs/design/`): one edge inset, one radius scale.
