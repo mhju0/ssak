@@ -3,13 +3,14 @@ import SsakCore
 import SsakArt
 
 /// The clean framed portrait shared from the windowsill (spec §7): the potted
-/// bloom, its name (EN + KO), and a day/streak line — no UI chrome.
+/// plant at its current stage, its name (EN + KO), and a day/streak line — no UI chrome.
 public struct BloomCard: View {
     let species: Species
+    let stage: GrowthStage
     let day: Int
     let streak: Int
-    public init(species: Species, day: Int, streak: Int) {
-        self.species = species; self.day = day; self.streak = streak
+    public init(species: Species, stage: GrowthStage, day: Int, streak: Int) {
+        self.species = species; self.stage = stage; self.day = day; self.streak = streak
     }
     public var body: some View {
         let accent = SpeciesPalette.palette(for: species.id).bloom
@@ -17,7 +18,7 @@ public struct BloomCard: View {
             ZStack {
                 SpeciesWatermark(species: species, opacity: 0.07)   // faint 싹 (spec §2.5); timeless, no sky
                     .frame(width: 200, height: 200)
-                PlantView(species: species, stage: .bloom, wall: false)   // wall:false so the watermark shows
+                PlantView(species: species, stage: stage, wall: false)   // wall:false so the watermark shows
                     .frame(width: 300, height: 340)
             }
             .frame(maxWidth: .infinity)

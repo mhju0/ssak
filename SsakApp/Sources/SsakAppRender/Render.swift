@@ -170,7 +170,9 @@ struct Render {
               phone, "guide_step_water.png")
 
         // Task 8: shareable bloom card (any species).
-        write(BloomCard(species: SpeciesCatalog.morningGlory, day: 13, streak: 5),
+        write(BloomCard(species: SpeciesCatalog.marigold, stage: .seed, day: 1, streak: 1),
+              CGSize(width: 360, height: 460), "share_card_seed.png")
+        write(BloomCard(species: SpeciesCatalog.morningGlory, stage: .bloom, day: 13, streak: 5),
               CGSize(width: 360, height: 460), "share_card.png")
     }
 

@@ -58,7 +58,8 @@ public struct RootView: View {
     private func presentShare() {
         #if canImport(UIKit)
         let now = Date()
-        let card = BloomCard(species: model.species, day: model.currentDay(now: now), streak: model.streak)
+        let card = BloomCard(species: model.species, stage: model.stage,
+                             day: model.currentDay(now: now), streak: model.streak)
         guard let image = card.shareImage(),
               let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
