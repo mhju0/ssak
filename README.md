@@ -42,7 +42,8 @@ bloom to your shelf.
 
 ### Run it
 
-**You'll need** macOS with Xcode 16 and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+**You'll need** macOS with Xcode 26 and [XcodeGen](https://github.com/yonaskolb/XcodeGen) —
+the UI adopts iOS 26 Liquid Glass, with graceful fallbacks back to iOS 16.
 
 ```sh
 brew install xcodegen     # once
@@ -66,7 +67,8 @@ No sound, no haptics — calm is the whole point ([ADR-0001](docs/adr/0001-no-so
 
 ### Docs
 
-- **Design spec** — [`docs/superpowers/specs/2026-07-20-ssak-redesign.md`](docs/superpowers/specs/2026-07-20-ssak-redesign.md)
+- **Design spec** — [`docs/superpowers/specs/2026-07-19-ssak-design.md`](docs/superpowers/specs/2026-07-19-ssak-design.md)
+- **UI redesign** — [round 1](docs/superpowers/specs/2026-07-20-ssak-redesign.md) · [round 2](docs/superpowers/plans/2026-07-22-ssak-redesign-round2.md)
 - **Domain glossary** — [`CONTEXT.md`](CONTEXT.md)
 - **Decision records** — [`docs/adr/`](docs/adr/)
 
