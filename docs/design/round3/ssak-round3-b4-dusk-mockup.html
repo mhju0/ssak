@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:390px; height:844px; overflow:hidden; }
+  body { position:relative; color:#2B2115;
+    font-family:"AppleMyungjo","Nanum Myeongjo",Georgia,serif;
+    background:
+      radial-gradient(400px 400px at 82% 12%, rgba(240,178,96,.32), transparent 65%),
+      radial-gradient(1.5px 1.5px at 60px 300px, rgba(208,184,140,.8) 50%, transparent 51%),
+      radial-gradient(1px 1px at 320px 480px, rgba(208,184,140,.7) 50%, transparent 51%),
+      linear-gradient(174deg,#E4D2AC 0%, #D9C49A 55%, #C7AF82 100%); }
+  /* dusk vignette */
+  body::after { content:""; position:absolute; inset:0;
+    background:radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(84,60,34,.28)); }
+  .band { position:absolute; top:16px; left:28px; font-size:11.5px; letter-spacing:.26em; color:#7A5F3C; }
+  .nav { position:absolute; top:14px; right:28px; font-size:12px; letter-spacing:.18em; color:#8A7350; }
+  .nav .on { color:#2B2115; border-bottom:1px solid #A03526; padding-bottom:3px; margin-right:18px; }
+
+  .label { position:absolute; top:66px; left:28px; font-size:12.5px; color:#57472E; letter-spacing:.08em; }
+  .label .rule { width:40px; height:1px; background:#2B2115; opacity:.5; margin:9px 0; }
+  .seal { position:absolute; top:60px; right:26px; width:60px; height:60px;
+          border:3px solid #A03526; border-radius:9px; color:#A03526; transform:rotate(4deg);
+          display:flex; flex-direction:column; align-items:center; justify-content:center;
+          box-shadow:inset 0 0 0 1.5px rgba(160,53,38,.4); }
+  .seal b { font-size:24px; line-height:1; }
+  .seal span { font-size:9px; letter-spacing:.26em; margin-top:2px; text-indent:.26em; }
+
+  .plant { position:absolute; left:50%; top:158px; transform:translateX(-50%); width:296px; }
+  .plant img { width:100%;
+    filter:drop-shadow(0 18px 26px rgba(64,44,18,.4)) sepia(.12) saturate(1.05) brightness(.96); }
+  /* long dusk shadow */
+  .shadow { position:absolute; left:50%; top:588px; transform:translateX(-38%) rotate(-4deg);
+            width:250px; height:26px; border-radius:50%;
+            background:radial-gradient(closest-side, rgba(64,44,18,.30), transparent 75%); }
+
+  .name { position:absolute; left:0; right:0; top:606px; text-align:center; }
+  .name .ko { font-size:42px; font-weight:700; letter-spacing:.10em; text-indent:.10em; }
+  .name .en { font-family:Georgia,serif; font-size:12px; letter-spacing:.34em; text-indent:.34em;
+              text-transform:uppercase; color:#6E5A3A; margin-top:9px; }
+  .gauge { position:absolute; left:64px; right:64px; top:706px; }
+  .gauge .track { height:3px; background:rgba(120,98,62,.4); border-radius:2px; }
+  .gauge .fill { width:72%; height:3px; border-radius:2px; background:linear-gradient(90deg,#55603E,#77835A); }
+  .gauge .row { display:flex; justify-content:space-between; margin-top:9px;
+                font-size:12px; color:#57472E; letter-spacing:.12em; }
+  .water { position:absolute; left:50%; bottom:40px; transform:translateX(-50%);
+           width:58px; height:58px; border:1.5px solid #2B2115; border-radius:50%;
+           display:flex; align-items:center; justify-content:center; background:rgba(250,240,214,.35); }
+  .water svg { width:20px; height:26px; }
+</style>
+<div class="band">저녁 · 7:38</div>
+<nav class="nav"><span class="on">창가</span><span>압화집</span></nav>
+<div class="label">제 1 호 · 압화 예정<div class="rule"></div>함께한 지 12일</div>
+<div class="seal"><b>12</b><span>연속</span></div>
+<div class="shadow"></div>
+<div class="plant"><img src="mock_plant.png"></div>
+<div class="name"><div class="ko">메리골드</div><div class="en">Marigold</div></div>
+<div class="gauge"><div class="track"><div class="fill"></div></div>
+  <div class="row"><span>흙이 촉촉해요</span><span>오늘 물 줌 ✓</span></div></div>
+<div class="water"><svg viewBox="0 0 20 26"><path d="M10 1 C13 7 19 12 19 17.5 A9 8.5 0 1 1 1 17.5 C1 12 7 7 10 1 Z" fill="none" stroke="#2B2115" stroke-width="1.6"/></svg></div>
