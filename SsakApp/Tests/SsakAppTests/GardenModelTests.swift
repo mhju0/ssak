@@ -90,6 +90,30 @@ final class GardenModelTests: XCTestCase {
         XCTAssertNil(last.nextUncollected)
     }
 
+    /// Onboarding pick: a fresh, untouched game can swap its starter seed for any species.
+    func testChoosePlantSwapsFreshSeed() {
+        let m = GardenModel(store: tempStore(), now: day(0), calendar: utcCal)
+        m.choosePlant(SpeciesCatalog.sunflower, now: day(0))
+        XCTAssertEqual(m.species.id, "sunflower")
+        XCTAssertEqual(m.stage, .seed)
+    }
+
+    /// …but never once the game has progressed past the fresh seed or pressed a flower.
+    func testChoosePlantIsNoOpOnceProgressed() {
+        var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        s.progress = 0.3
+        let m = GardenModel(state: GameState(plant: s, collected: []), store: tempStore(), calendar: utcCal)
+        m.choosePlant(SpeciesCatalog.sunflower, now: day(2))
+        XCTAssertEqual(m.species.id, "marigold")
+        XCTAssertEqual(m.state.plant.progress, 0.3)
+
+        let fresh = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
+        let m2 = GardenModel(state: GameState(plant: fresh, collected: ["cosmos"]),
+                             store: tempStore(), calendar: utcCal)
+        m2.choosePlant(SpeciesCatalog.sunflower, now: day(0))
+        XCTAssertEqual(m2.species.id, "marigold")
+    }
+
     /// The full first-press loop the UI drives: bloomed starter + empty shelf →
     /// press lands marigold on the shelf and the next uncollected species is planted.
     func testFirstBloomPressesViaNextUncollected() {

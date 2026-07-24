@@ -29,7 +29,9 @@ public struct RootView: View {
             if !hasOnboarded {
                 GeometryReader { proxy in
                     StartGuide(anchors: anchors.mapValues { proxy[$0] },
-                               speciesName: model.species.nameEN) {
+                               speciesName: model.species.nameEN,
+                               selectedID: model.species.id,
+                               onPick: { model.choosePlant($0, now: Date()) }) {
                         model.reconcileOnOpen(now: Date())
                         hasOnboarded = true
                     }

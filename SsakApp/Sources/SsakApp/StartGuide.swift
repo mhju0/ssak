@@ -1,4 +1,5 @@
 import SwiftUI
+import SsakCore
 import SsakArt
 
 // The first-run start guide (round 2, mockup in `docs/design/`): an Apple-style welcome
@@ -25,12 +26,19 @@ public extension View {
 public struct StartGuide: View {
     let anchors: [String: CGRect]
     let speciesName: String
+    let selectedID: String
+    let onPick: (Species) -> Void
     let onDone: () -> Void
 
     /// `startAt` exists for the render harness (−1 = welcome sheet, 0… = spotlight step).
+    /// `selectedID`/`onPick` drive the welcome sheet's seed picker; the model owns the
+    /// selection, so defaults keep harness/preview call sites picker-less but compiling.
     public init(anchors: [String: CGRect], speciesName: String,
+                selectedID: String = SpeciesCatalog.starter.id,
+                onPick: @escaping (Species) -> Void = { _ in },
                 startAt: Int = -1, onDone: @escaping () -> Void) {
-        self.anchors = anchors; self.speciesName = speciesName; self.onDone = onDone
+        self.anchors = anchors; self.speciesName = speciesName
+        self.selectedID = selectedID; self.onPick = onPick; self.onDone = onDone
         _step = State(initialValue: startAt)
     }
 
@@ -159,15 +167,12 @@ public struct StartGuide: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 260)
                 .padding(.bottom, 16)
-            VStack(alignment: .leading, spacing: 12) {
-                row("clock", tint: Color(red: 0.92, green: 0.95, blue: 0.87),
-                    icon: accent, "Grows on the real clock, not taps")
-                row("drop.fill", tint: Color(red: 0.98, green: 0.92, blue: 0.81),
-                    icon: Color(red: 0.89, green: 0.60, blue: 0.24), "A little water each day — gently")
-                row("square.grid.2x2", tint: Color(red: 0.92, green: 0.87, blue: 0.94),
-                    icon: Color(red: 0.56, green: 0.44, blue: 0.69), "Collect all six species")
-            }
-            .padding(.bottom, 24)
+            Text("CHOOSE YOUR FIRST SEED")
+                .font(.system(size: 11, weight: .semibold)).tracking(2)
+                .foregroundStyle(cardSoft)
+                .padding(.bottom, 10)
+            speciesGrid
+                .padding(.bottom, 20)
             Button(action: advance) {
                 Text("Plant a seed")
                     .font(.headline)                                   // the Toss 17/600 CTA slot
@@ -191,14 +196,31 @@ public struct StartGuide: View {
         .accessibilityElement(children: .contain)
     }
 
-    private func row(_ symbol: String, tint: Color, icon: Color, _ text: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: symbol)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(icon)
-                .frame(width: 32, height: 32)
-                .background(RoundedRectangle(cornerRadius: Design.rSM).fill(tint))
-            Text(text).font(.subheadline.weight(.medium))
+    // The seed picker: all six species as bloom portraits (the promise, not the seed —
+    // every seed cell would look identical). Selection lives in the model via onPick.
+    private var speciesGrid: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
+                  spacing: 8) {
+            ForEach(SpeciesCatalog.all) { sp in
+                let picked = sp.id == selectedID
+                Button { onPick(sp) } label: {
+                    VStack(spacing: 2) {
+                        PlantView(species: sp, stage: .bloom, wall: false, board: false)
+                            .frame(width: 56, height: 62)
+                        Text(sp.nameKO)
+                            .font(.footnote.weight(picked ? .semibold : .regular))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 96)
+                    .background(RoundedRectangle(cornerRadius: Design.rSM)
+                        .fill(picked ? accent.opacity(0.14) : Color.black.opacity(0.03)))
+                    .overlay(RoundedRectangle(cornerRadius: Design.rSM)
+                        .strokeBorder(picked ? accent : .black.opacity(0.08),
+                                      lineWidth: picked ? 2 : 1))
+                }
+                .buttonStyle(.pressable)
+                .accessibilityLabel(sp.nameEN)
+                .accessibilityAddTraits(picked ? [.isButton, .isSelected] : .isButton)
+            }
         }
     }
 
