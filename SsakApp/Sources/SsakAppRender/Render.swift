@@ -133,11 +133,11 @@ struct Render {
 
         // Round 2 T4: start guide over the live windowsill — welcome sheet + a spotlight step.
         let guideBase = windowsill(bloom, now: Self.day0h(12))
-        write(ZStack { guideBase; StartGuide(anchors: [:], speciesName: "Marigold", onDone: {}) },
+        write(ZStack { guideBase; StartGuide(anchors: [:], speciesName: "메리골드", onDone: {}) },
               phone, "guide_welcome.png")
-        let waterRect = CGRect(x: 238, y: 479, width: 62, height: 62)   // where the drop floats at 320×640
+        let waterRect = CGRect(x: 152, y: 688, width: 56, height: 56)   // where the drop floats at 360×780
         write(ZStack { guideBase
-                       StartGuide(anchors: ["water": waterRect], speciesName: "Marigold",
+                       StartGuide(anchors: ["water": waterRect], speciesName: "메리골드",
                                   startAt: 1, onDone: {}) },
               phone, "guide_step_water.png")
 

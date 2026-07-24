@@ -98,6 +98,18 @@ final class GardenModelTests: XCTestCase {
         XCTAssertEqual(m.stage, .seed)
     }
 
+    /// The real launch sequence: RootView reconciles on scene-active BEFORE the user can
+    /// tap the picker, accruing a sliver of progress — the pick must still work while
+    /// the plant is a seed. (Regression: a progress==0 guard silently ate every tap.)
+    func testChoosePlantStillWorksAfterOpeningReconcile() {
+        let m = GardenModel(store: tempStore(), now: day(0), calendar: utcCal)
+        m.reconcileOnOpen(now: day(0, hour: 10))
+        XCTAssertGreaterThan(m.state.plant.progress, 0)   // the sliver is real
+        XCTAssertEqual(m.stage, .seed)
+        m.choosePlant(SpeciesCatalog.sunflower, now: day(0, hour: 10))
+        XCTAssertEqual(m.species.id, "sunflower")
+    }
+
     /// …but never once the game has progressed past the fresh seed or pressed a flower.
     func testChoosePlantIsNoOpOnceProgressed() {
         var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))

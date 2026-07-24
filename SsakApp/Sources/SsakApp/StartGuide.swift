@@ -46,13 +46,14 @@ public struct StartGuide: View {
     @State private var bubbleHeight: CGFloat = 120
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    // KO-first copy (round 3, spec D1 — VoiceOver stays EN this round).
     private var steps: [(id: String, title: String, body: String, pad: CGFloat)] {
-        [("plant", "Your \(speciesName.lowercased())",
-          "It grows on the real clock — a little every day. No tapping to rush it.", 6),
-         ("water", "A drop of water",
-          "Tap the floating drop to water. Just a little — don\u{2019}t drown it.", 10),
-         ("shelf", "Press to your shelf",
-          "When it blooms, press it here. Six flowers to collect.", 6)]
+        [("plant", "나의 \(speciesName)",
+          "실제 시계를 따라 매일 조금씩 자라요. 톡톡 두드려도 빨리 자라지 않아요.", 6),
+         ("water", "물 한 방울",
+          "물방울을 눌러 물을 주세요. 조금만 — 흠뻑 주면 오히려 힘들어해요.", 10),
+         ("shelf", "압화집에 눌러 두기",
+          "꽃이 활짝 피면 여기에 눌러 간직해요. 여섯 송이를 모아 보세요.", 6)]
     }
 
     // Fixed warm-cream card colors (the mockup keeps the guide light on every band/scheme;
@@ -70,14 +71,24 @@ public struct StartGuide: View {
                 } else {
                     Color(red: 0.08, green: 0.05, blue: 0.02).opacity(0.4)
                         .ignoresSafeArea()
-                    welcomeSheet
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .transition(.move(edge: .bottom))
+                        .contentShape(Rectangle())
+                        .onTapGesture {}                   // a bare Color leaks taps to the
+                                                           // nav/share/water buttons beneath
+                    // The picker makes the sheet tall; SE-class screens (667pt) can't fit
+                    // it, so fall back to scrolling rather than clipping the title off.
+                    ViewThatFits(in: .vertical) {
+                        welcomeSheet
+                        ScrollView(showsIndicators: false) { welcomeSheet }
+                    }
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .transition(.move(edge: .bottom))
                 }
-                skip
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, Design.pad)
-                    .padding(.top, 56)                     // clears the top-right ink nav (round 3)
+                if step >= 0 {                             // no Skip on the seed-choice sheet —
+                    skip                                   // its CTA is the only sensible exit
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, Design.pad)
+                        .padding(.top, 8)                  // the dimmed nav's own slot — anything
+                }                                          // lower collides with the streak seal
             }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.4), value: step)
@@ -119,14 +130,14 @@ public struct StartGuide: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 SsakMark(.light).frame(width: 26, height: 26)
-                Text(s.title).font(.system(.subheadline, design: .serif).weight(.semibold))
+                Text(s.title).font(.myeongjoDisplay(15, relativeTo: .subheadline))
             }
             Text(s.body).font(.subheadline).foregroundStyle(cardSoft)
             HStack {
-                dots(current: step + 1)
+                dots(current: step)
                 Spacer()
                 Button(action: advance) {
-                    Text(step == steps.count - 1 ? "Let\u{2019}s grow 🌱" : "Next")
+                    Text(step == steps.count - 1 ? "키우러 가기 🌱" : "다음")
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
@@ -158,23 +169,22 @@ public struct StartGuide: View {
     private var welcomeSheet: some View {
         VStack(spacing: 0) {
             SsakMark(.light).frame(width: 52, height: 52).padding(.bottom, 12)
-            Text("Raise one flower")
-                .font(.system(.title, design: .serif).weight(.semibold))
-                .tracking(-0.3)
+            Text("꽃 한 송이 키우기")
+                .font(.myeongjoDisplay(24, relativeTo: .title2)).tracking(2)
                 .padding(.bottom, 8)
-            Text("From a single seed to full bloom — on the real clock, at your own pace.")
+            Text("씨앗에서 꽃이 필 때까지 — 실제 시간을 따라, 천천히.")
                 .font(.subheadline).foregroundStyle(cardSoft)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 260)
-                .padding(.bottom, 16)
-            Text("CHOOSE YOUR FIRST SEED")
-                .font(.system(size: 11, weight: .semibold)).tracking(2)
+                .padding(.bottom, 18)
+            Text("첫 씨앗을 골라 주세요")
+                .font(.myeongjo(12, relativeTo: .footnote)).tracking(2)
                 .foregroundStyle(cardSoft)
                 .padding(.bottom, 10)
             speciesGrid
                 .padding(.bottom, 20)
             Button(action: advance) {
-                Text("Plant a seed")
+                Text("씨앗 심기")
                     .font(.headline)                                   // the Toss 17/600 CTA slot
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, minHeight: 52)         // TDS BottomCTA: 52pt, r16
@@ -199,18 +209,19 @@ public struct StartGuide: View {
     // The seed picker: all six species as bloom portraits (the promise, not the seed —
     // every seed cell would look identical). Selection lives in the model via onPick.
     private var speciesGrid: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
-                  spacing: 8) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2),
+                  spacing: 12) {
             ForEach(SpeciesCatalog.all) { sp in
                 let picked = sp.id == selectedID
                 Button { onPick(sp) } label: {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 6) {
                         PlantView(species: sp, stage: .bloom, wall: false, board: false)
-                            .frame(width: 56, height: 62)
+                            .frame(width: 76, height: 84)
                         Text(sp.nameKO)
-                            .font(.footnote.weight(picked ? .semibold : .regular))
+                            .font(.myeongjo(13, relativeTo: .footnote)).tracking(1)
+                            .fontWeight(picked ? .semibold : .regular)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 96)
+                    .frame(maxWidth: .infinity, minHeight: 124)
                     .background(RoundedRectangle(cornerRadius: Design.rSM)
                         .fill(picked ? accent.opacity(0.14) : Color.black.opacity(0.03)))
                     .overlay(RoundedRectangle(cornerRadius: Design.rSM)
@@ -224,21 +235,22 @@ public struct StartGuide: View {
         }
     }
 
+    // One dot per coach mark — the welcome sheet is a choice, not a step.
     private func dots(current: Int) -> some View {
         HStack(spacing: 8) {
-            ForEach(0..<4, id: \.self) { i in
+            ForEach(0..<steps.count, id: \.self) { i in
                 Capsule()
                     .fill(i == current ? accent : Color(red: 0.85, green: 0.80, blue: 0.70))
                     .frame(width: i == current ? 18 : 6, height: 6)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Step \(current + 1) of 4")
+        .accessibilityLabel("Step \(current + 1) of \(steps.count)")
     }
 
     private var skip: some View {
         Button(action: onDone) {
-            Text("Skip")
+            Text("건너뛰기")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(cardInk)
                 .padding(.horizontal, 12)

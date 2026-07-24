@@ -41,10 +41,11 @@ public final class GardenModel: ObservableObject {
     }
 
     /// Onboarding pick: swap the starter seed for `species`. Only while the game is
-    /// untouched (fresh seed, empty shelf) — the picker exists only on the start screen,
-    /// and this guard keeps a replayed guide from ever eating a real plant.
+    /// untouched (still a seed, empty shelf) — the picker exists only on the start screen,
+    /// and this guard keeps a replayed guide from ever eating a real plant. Stage-based,
+    /// not progress==0: opening the app reconciles a sliver of growth before the first tap.
     public func choosePlant(_ species: Species, now: Date) {
-        guard state.plant.progress == 0, state.collected.isEmpty else { return }
+        guard stage == .seed, state.collected.isEmpty else { return }
         state.plant = GrowthEngine.plant(species, at: now)
         try? store.save(state)
     }
