@@ -101,8 +101,12 @@ public struct StartGuide: View {
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .transition(.move(edge: .bottom))
                 }
-                if step >= 0 {                             // no Skip on the seed-choice sheet —
-                    skip                                   // its CTA is the only sensible exit
+                // Skip shows only on steps it can't collide with: not the seed-choice
+                // sheet (its CTA is the only sensible exit) and not the last step, whose
+                // spotlight targets the 압화집 tab in skip's own corner — and whose CTA
+                // already finishes the guide, making skip redundant there anyway.
+                if step >= 0, step < steps.count - 1 {
+                    skip
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         .padding(.trailing, Design.pad)
                         .padding(.top, 8)                  // the dimmed nav's own slot — anything
