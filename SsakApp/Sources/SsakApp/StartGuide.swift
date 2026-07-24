@@ -30,20 +30,27 @@ public struct StartGuide: View {
     let onPick: (Species) -> Void
     let onDone: () -> Void
 
+    let hasWatered: Bool
+
     /// `startAt` exists for the render harness (−1 = welcome sheet, 0… = spotlight step).
     /// `selectedID`/`onPick` drive the welcome sheet's seed picker; the model owns the
     /// selection, so defaults keep harness/preview call sites picker-less but compiling.
+    /// `hasWatered` drives the water step's two phases: the model owns it, so the user's
+    /// real press (through the cutout) is what advances the guide.
     public init(anchors: [String: CGRect], speciesName: String,
                 selectedID: String = SpeciesCatalog.starter.id,
                 onPick: @escaping (Species) -> Void = { _ in },
+                hasWatered: Bool = false,
                 startAt: Int = -1, onDone: @escaping () -> Void) {
         self.anchors = anchors; self.speciesName = speciesName
-        self.selectedID = selectedID; self.onPick = onPick; self.onDone = onDone
+        self.selectedID = selectedID; self.onPick = onPick
+        self.hasWatered = hasWatered; self.onDone = onDone
         _step = State(initialValue: startAt)
     }
 
     @State private var step: Int
     @State private var bubbleHeight: CGFloat = 120
+    @State private var pulse = false              // the water beacon's breathing rings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // KO-first copy (round 3, spec D1 — VoiceOver stays EN this round).
@@ -51,7 +58,7 @@ public struct StartGuide: View {
         [("plant", "나의 \(speciesName)",
           "실제 시계를 따라 매일 조금씩 자라요. 톡톡 두드려도 빨리 자라지 않아요.", 6),
          ("water", "물 한 방울",
-          "물방울을 눌러 물을 주세요. 조금만 — 흠뻑 주면 오히려 힘들어해요.", 10),
+          "흙이 말라 있어요. 아래 물방울을 직접 눌러 물을 줘 보세요.", 10),
          ("shelf", "압화집에 눌러 두기",
           "꽃이 활짝 피면 여기에 눌러 간직해요. 여섯 송이를 모아 보세요.", 6)]
     }
@@ -66,7 +73,18 @@ public struct StartGuide: View {
         GeometryReader { geo in
             ZStack(alignment: .top) {
                 if step >= 0, let rect = spotRect(step) {
-                    spotlight(rect: rect, in: geo.size)
+                    // W1 water step: phase A lets the real press through the cutout;
+                    // phase B (after the press) rests the screen and shows the caution.
+                    let isWater = steps[step].id == "water"
+                    if isWater, hasWatered {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {}               // one drop was the lesson —
+                                                           // don't let a second one through
+                    } else {
+                        spotlight(rect: rect, in: geo.size, passThrough: isWater)
+                        if isWater { waterBeacon(rect: rect) }
+                    }
                     bubble(for: steps[step], near: rect, in: geo.size)
                 } else {
                     Color(red: 0.08, green: 0.05, blue: 0.02).opacity(0.4)
@@ -109,8 +127,9 @@ public struct StartGuide: View {
     // space the anchors resolve in, and ignoring it shifts the drawing origin to the
     // physical screen top, landing the ring a status-bar-height too high on device.
     // SpotlightDim already paints 200pt past its bounds, so the dim still covers the
-    // bleed. contentShape + the empty tap keep taps from leaking through the cutout.
-    private func spotlight(rect: CGRect, in size: CGSize) -> some View {
+    // bleed. The contentShape + empty tap block leaks — except when `passThrough`
+    // punches the hit-test hole too, so the real button under the cutout takes the tap.
+    private func spotlight(rect: CGRect, in size: CGSize, passThrough: Bool = false) -> some View {
         SpotlightDim(cutout: rect)
             .fill(Color(red: 0.08, green: 0.05, blue: 0.02).opacity(0.55),
                   style: FillStyle(eoFill: true))
@@ -119,32 +138,81 @@ public struct StartGuide: View {
                     .stroke(.white.opacity(0.9), lineWidth: 3)
                     .frame(width: rect.width, height: rect.height)
                     .position(x: rect.midX, y: rect.midY))
-            .contentShape(Rectangle())
+            .contentShape(SpotlightDim(cutout: rect), eoFill: passThrough)
             .onTapGesture {}
+    }
+
+    /// The W1 beacon: two breathing rings and a settling chevron over the water cutout.
+    /// Purely decorative — never intercepts the press it invites.
+    private func waterBeacon(rect: CGRect) -> some View {
+        ZStack {
+            Circle().stroke(.white.opacity(0.5), lineWidth: 2)
+                .frame(width: rect.width + 18, height: rect.width + 18)
+                .scaleEffect(pulse ? 1.16 : 1)
+                .opacity(pulse ? 0.2 : 0.7)
+            Circle().stroke(.white.opacity(0.3), lineWidth: 2)
+                .frame(width: rect.width + 42, height: rect.width + 42)
+                .scaleEffect(pulse ? 1.1 : 1)
+                .opacity(pulse ? 0.12 : 0.45)
+            Image(systemName: "chevron.down")
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.95))
+                .shadow(color: .black.opacity(0.4), radius: 4, y: 1)
+                .offset(y: -rect.height / 2 - 30 + (pulse ? 5 : 0))
+        }
+        .position(x: rect.midX, y: rect.midY)
+        .allowsHitTesting(false)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { pulse = true }
+        }
+        .accessibilityHidden(true)
     }
 
     private func bubble(for s: (id: String, title: String, body: String, pad: CGFloat),
                         near rect: CGRect, in size: CGSize) -> some View {
         let below = rect.midY < size.height * 0.5
-        let y = below ? rect.maxY + 14 : rect.minY - 14 - bubbleHeight
+        // The water step floats its card higher — the beacon chevron lives in the gap.
+        let gap: CGFloat = s.id == "water" ? 64 : 14
+        let y = below ? rect.maxY + gap : rect.minY - gap - bubbleHeight
+        // The water step's two phases: A asks for the real press (no Next — the press
+        // itself advances), B confirms it and carries the overwater caution.
+        let watered = s.id == "water" && hasWatered
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 SsakMark(.light).frame(width: 26, height: 26)
-                Text(s.title).font(.myeongjoDisplay(15, relativeTo: .subheadline))
+                Text(watered ? "촉촉해졌어요 🌱" : s.title)
+                    .font(.myeongjoDisplay(15, relativeTo: .subheadline))
             }
-            Text(s.body).font(.subheadline).foregroundStyle(cardSoft)
+            Text(watered ? "오늘 물 주기는 이걸로 충분해요. 내일 또 한 방울이면 돼요." : s.body)
+                .font(.subheadline).foregroundStyle(cardSoft)
+            if watered {
+                Text("💧 흠뻑 주면 오히려 뿌리가 힘들어해요 — 하루 한 번이면 넉넉해요.")
+                    .font(.footnote)
+                    .foregroundStyle(Color(red: 0.48, green: 0.31, blue: 0.03))
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(red: 0.97, green: 0.92, blue: 0.83)))
+            }
             HStack {
                 dots(current: step)
                 Spacer()
-                Button(action: advance) {
-                    Text(step == steps.count - 1 ? "키우러 가기 🌱" : "다음")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
+                if s.id == "water", !watered {
+                    Text("물을 주면 다음으로 넘어가요")
+                        .font(.footnote).foregroundStyle(cardSoft)
                         .frame(minHeight: 44)
-                        .background(RoundedRectangle(cornerRadius: Design.rSM).fill(accent))
+                } else {
+                    Button(action: advance) {
+                        Text(step == steps.count - 1 ? "키우러 가기 🌱" : "다음")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 44)
+                            .background(RoundedRectangle(cornerRadius: Design.rSM).fill(accent))
+                    }
+                    .buttonStyle(.pressable)
                 }
-                .buttonStyle(.pressable)
             }
             .padding(.top, 8)
         }

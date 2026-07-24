@@ -12,6 +12,26 @@ final class GardenModelTests: XCTestCase {
         XCTAssertTrue(m.collected.isEmpty)
     }
 
+    /// Day 1 is the watering tutorial: a fresh game starts thirsty and unwatered, and
+    /// the user's first real press flips it to moist — the guide's phase-A → phase-B.
+    func testFreshGameStartsThirstyUntilFirstWater() {
+        let m = GardenModel(store: tempStore(), now: day(0), calendar: utcCal)
+        XCTAssertEqual(m.soil, .dry)
+        XCTAssertFalse(m.hasWateredToday(now: day(0)))
+        m.water(now: day(0, hour: 10))
+        XCTAssertEqual(m.soil, .moist)
+        XCTAssertTrue(m.hasWateredToday(now: day(0, hour: 11)))
+        XCTAssertEqual(m.streak, 1)
+    }
+
+    /// choosePlant (a replant mid-tutorial) must keep the thirsty tutorial start.
+    func testChoosePlantKeepsTheThirstyStart() {
+        let m = GardenModel(store: tempStore(), now: day(0), calendar: utcCal)
+        m.choosePlant(SpeciesCatalog.cosmos, now: day(0))
+        XCTAssertEqual(m.soil, .dry)
+        XCTAssertFalse(m.hasWateredToday(now: day(0)))
+    }
+
     func testReconcileOnOpenAccruesHealthyGrowth() {
         var s = GrowthEngine.plant(SpeciesCatalog.marigold, at: day(0))
         s.moisture = 1.0                      // well-watered → stays in the healthy band
@@ -98,15 +118,15 @@ final class GardenModelTests: XCTestCase {
         XCTAssertEqual(m.stage, .seed)
     }
 
-    /// The real launch sequence: RootView reconciles on scene-active BEFORE the user can
-    /// tap the picker, accruing a sliver of progress — the pick must still work while
-    /// the plant is a seed. (Regression: a progress==0 guard silently ate every tap.)
+    /// Once watered, reconciles accrue a sliver of progress — the pick must still work
+    /// while the plant is a seed. (Regression: a progress==0 guard silently ate taps.)
     func testChoosePlantStillWorksAfterOpeningReconcile() {
         let m = GardenModel(store: tempStore(), now: day(0), calendar: utcCal)
-        m.reconcileOnOpen(now: day(0, hour: 10))
+        m.water(now: day(0, hour: 9))
+        m.reconcileOnOpen(now: day(0, hour: 12))
         XCTAssertGreaterThan(m.state.plant.progress, 0)   // the sliver is real
         XCTAssertEqual(m.stage, .seed)
-        m.choosePlant(SpeciesCatalog.sunflower, now: day(0, hour: 10))
+        m.choosePlant(SpeciesCatalog.sunflower, now: day(0, hour: 12))
         XCTAssertEqual(m.species.id, "sunflower")
     }
 

@@ -31,7 +31,8 @@ public struct RootView: View {
                     StartGuide(anchors: anchors.mapValues { proxy[$0] },
                                speciesName: model.species.nameKO,
                                selectedID: model.species.id,
-                               onPick: { model.choosePlant($0, now: Date()) }) {
+                               onPick: { model.choosePlant($0, now: Date()) },
+                               hasWatered: model.hasWateredToday(now: Date())) {
                         model.reconcileOnOpen(now: Date())
                         hasOnboarded = true
                     }

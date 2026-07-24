@@ -16,9 +16,20 @@ public final class GardenModel: ObservableObject {
                             tuning: GrowthTuning = .default, calendar: Calendar = .current) {
         let loaded = store.load()
         let initial = loaded ?? GameState(
-            plant: GrowthEngine.plant(SpeciesCatalog.starter, at: now), collected: [])
+            plant: Self.firstSeed(SpeciesCatalog.starter, at: now), collected: [])
         self.init(state: initial, store: store, tuning: tuning, calendar: calendar)
         if loaded == nil { try? store.save(state) }
+    }
+
+    /// Day 1 is the watering tutorial: the very first seed starts thirsty and unwatered,
+    /// so the start guide's "press the drop" step has a real effect to show — and the
+    /// first press honestly lights the streak seal. Later replants use the engine's
+    /// healthy default.
+    private static func firstSeed(_ species: Species, at now: Date) -> PlantState {
+        var p = GrowthEngine.plant(species, at: now)
+        p.moisture = 0.15
+        p.lastWateredAt = nil
+        return p
     }
 
     /// Construct from a known state — used by SwiftUI previews and render harnesses.
@@ -46,7 +57,7 @@ public final class GardenModel: ObservableObject {
     /// not progress==0: opening the app reconciles a sliver of growth before the first tap.
     public func choosePlant(_ species: Species, now: Date) {
         guard stage == .seed, state.collected.isEmpty else { return }
-        state.plant = GrowthEngine.plant(species, at: now)
+        state.plant = Self.firstSeed(species, at: now)
         try? store.save(state)
     }
 

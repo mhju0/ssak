@@ -136,10 +136,18 @@ struct Render {
         write(ZStack { guideBase; StartGuide(anchors: [:], speciesName: "메리골드", onDone: {}) },
               phone, "guide_welcome.png")
         let waterRect = CGRect(x: 152, y: 688, width: 56, height: 56)   // where the drop floats at 360×780
-        write(ZStack { guideBase
+        // W1 water tutorial, both phases over honest day-1 bases: thirsty seed → watered.
+        let guideDry = windowsill({ $0.progress = 0; $0.moisture = 0.15; $0.lastWateredAt = nil },
+                                  now: Self.day0h(12))
+        let guideWet = windowsill({ $0.progress = 0; $0.moisture = 0.75 }, now: Self.day0h(12))
+        write(ZStack { guideDry
                        StartGuide(anchors: ["water": waterRect], speciesName: "메리골드",
                                   startAt: 1, onDone: {}) },
               phone, "guide_step_water.png")
+        write(ZStack { guideWet
+                       StartGuide(anchors: ["water": waterRect], speciesName: "메리골드",
+                                  hasWatered: true, startAt: 1, onDone: {}) },
+              phone, "guide_step_watered.png")
 
         // Task 8: shareable bloom card (any species).
         write(BloomCard(species: SpeciesCatalog.marigold, stage: .seed, day: 1, streak: 1),
