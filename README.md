@@ -9,12 +9,18 @@
 <p>
   <img src="https://img.shields.io/badge/iOS-16%2B-5F8F45?style=flat-square&amp;logo=apple&amp;logoColor=white" alt="iOS 16+" />
   <img src="https://img.shields.io/badge/Swift_5.9-SwiftUI-F05138?style=flat-square&amp;logo=swift&amp;logoColor=white" alt="Swift 5.9 · SwiftUI" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-5F8F45?style=flat-square" alt="License: MIT" /></a>
 </p>
 
 <img src="art/hero.png" width="266" alt="The Ssak windowsill — a marigold in bloom on a sunlit sill" />
 
 </div>
+
+---
+
+## License
+
+Copyright (c) 2026 Michael Ju. All rights reserved.
+No license is granted for use, copying, modification, or distribution of this code as of 2026-07-30. This repository is public for portfolio review purposes only.
 
 ---
 
@@ -71,7 +77,3 @@ No sound, no haptics — calm is the whole point ([ADR-0001](docs/adr/0001-no-so
 - **UI redesign** — [round 1](docs/superpowers/specs/2026-07-20-ssak-redesign.md) · [round 2](docs/superpowers/plans/2026-07-22-ssak-redesign-round2.md)
 - **Domain glossary** — [`CONTEXT.md`](CONTEXT.md)
 - **Decision records** — [`docs/adr/`](docs/adr/)
-
-### License
-
-MIT © 2026 Michael Ju — see [LICENSE](LICENSE).
