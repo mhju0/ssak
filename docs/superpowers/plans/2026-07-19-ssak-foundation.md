@@ -15,7 +15,7 @@
 - **Local-only, no backend, no dependencies.**
 - **The six species (id, EN, KO, bloomDays):** marigold/Marigold/메리골드/7 (starter), nasturtium/Nasturtium/한련화/8, cosmos/Cosmos/코스모스/9, zinnia/Zinnia/백일홍/10, sunflower/Sunflower/해바라기/11, morning_glory/Morning glory/나팔꽃/13. `bloomDays` = real days of *healthy* growth to bloom; all values tunable.
 - **Growth model:** progress ∈ [0,1] accrues with real elapsed time **only while moisture is in the healthy band**; stalls otherwise; never punishes beyond delay. See `GrowthTuning` for the calibration constants — they are feel knobs, not derived truths.
-- **License:** MIT, `Copyright (c) 2026 Michael Ju (github.com/mhju0)`.
+- **License:** none — no `LICENSE` file, all rights reserved. `Copyright (c) 2026 Michael Ju (github.com/mhju0)`.
 
 ---
 

@@ -17,7 +17,7 @@
 - **Detail ramps to the bloom:** sprout/leaves refined but restrained; **bud and bloom are lavish hero art** — the screenshot moment; detail bar = the dense-tonal-petal marigold sample from the design session. (Spec §5.1.) — verbatim.
 - **Droop/overwater is one reusable effect** (sag transform + yellow/desaturate tint) layered over any stage — never drawn per stage. (Spec §5.2.) — verbatim.
 - Reuse SsakCore types; do **not** redefine `GrowthStage` or species identity/data in SsakArt.
-- MIT license, Copyright (c) 2026 Michael Ju (github.com/mhju0). Swift 6 concurrency: `ImageRenderer` is main-actor; render entry points are `@MainActor`, and the executable uses an `@main struct` with `@MainActor static func main()` (a top-level `main.swift` calling main-actor code fails to compile under Swift 6).
+- No license file, all rights reserved. Copyright (c) 2026 Michael Ju (github.com/mhju0). Swift 6 concurrency: `ImageRenderer` is main-actor; render entry points are `@MainActor`, and the executable uses an `@main struct` with `@MainActor static func main()` (a top-level `main.swift` calling main-actor code fails to compile under Swift 6).
 
 ---
 
