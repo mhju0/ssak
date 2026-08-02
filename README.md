@@ -17,13 +17,6 @@
 
 ---
 
-## License
-
-Copyright (c) 2026 Michael Ju. All rights reserved.
-No license is granted for use, copying, modification, or distribution of this code as of 2026-07-30. This repository is public for portfolio review purposes only.
-
----
-
 **Ssak** (싹, *"sprout"*) is a calm, quiet iOS game. You keep **one** plant on your
 windowsill and raise it at the speed of a real plant — no timers to beat, nothing to
 spend. Water a little, come back tomorrow, watch it grow.
@@ -77,3 +70,10 @@ No sound, no haptics — calm is the whole point ([ADR-0001](docs/adr/0001-no-so
 - **UI redesign** — [round 1](docs/superpowers/specs/2026-07-20-ssak-redesign.md) · [round 2](docs/superpowers/plans/2026-07-22-ssak-redesign-round2.md)
 - **Domain glossary** — [`CONTEXT.md`](CONTEXT.md)
 - **Decision records** — [`docs/adr/`](docs/adr/)
+
+---
+
+## License
+
+Copyright (c) 2026 Michael Ju. All rights reserved.
+No license is granted for use, copying, modification, or distribution of this code as of 2026-07-30. This repository is public for portfolio review purposes only.
