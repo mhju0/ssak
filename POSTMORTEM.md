@@ -61,7 +61,7 @@ distinct stages on a compressed real-time schedule (~1 real day ≈ 1 plant-week
 neglect wilts it back exactly one stage, never below seed, never to death. Bloom, press it
 to the shelf, pick the next seed. Six pressed blooms completes the garden.
 
-**Shape** — 63 Swift files, 5,720 lines, three SwiftPM packages:
+**Shape** — 59 Swift files, 4,066 lines, three SwiftPM packages:
 
 | Package | What it is |
 |---|---|
