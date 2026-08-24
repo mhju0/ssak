@@ -24,7 +24,7 @@
 > the real clock, 58 tests green — and it was never submitted to the App Store. I'm not
 > continuing it.
 >
-> **[Read the postmortem →](POSTMORTEM.md)** — the game I scrapped first and why, where the
+> **[Read the retrospective →](RETROSPECTIVE.md)** — the game I scrapped first and why, where the
 > agent workflow broke (with commits), and what I'd do differently.
 
 **Ssak** (싹, *"sprout"*) is a calm, quiet iOS game. You keep **one** plant on your
@@ -82,7 +82,7 @@ No sound, no haptics — calm is the whole point ([ADR-0001](docs/adr/0001-no-so
 
 ### Docs
 
-- **Postmortem** — [`POSTMORTEM.md`](POSTMORTEM.md)
+- **Retrospective** — [`RETROSPECTIVE.md`](RETROSPECTIVE.md)
 - **Design spec** — [`docs/superpowers/specs/2026-07-19-ssak-design.md`](docs/superpowers/specs/2026-07-19-ssak-design.md)
 - **UI redesign** — [round 1](docs/superpowers/specs/2026-07-20-ssak-redesign.md) · [round 2](docs/superpowers/plans/2026-07-22-ssak-redesign-round2.md)
 - **Domain glossary** — [`CONTEXT.md`](CONTEXT.md)

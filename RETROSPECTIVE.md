@@ -1,4 +1,4 @@
-# Ssak — postmortem
+# Ssak — retrospective
 
 **2026-07-15 → 2026-08-02 · 186 commits · closed on purpose.**
 
