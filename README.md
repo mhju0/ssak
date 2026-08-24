@@ -17,6 +17,16 @@
 
 ---
 
+> ### Status — complete and closed
+>
+> Ssak was an 18-day experiment: my first game, and my first project built end to end by
+> driving Claude Code on Anthropic's Fable model. It works — six species, seed to bloom, on
+> the real clock, 58 tests green — and it was never submitted to the App Store. I'm not
+> continuing it.
+>
+> **[Read the postmortem →](POSTMORTEM.md)** — the game I scrapped first and why, where the
+> agent workflow broke (with commits), and what I'd do differently.
+
 **Ssak** (싹, *"sprout"*) is a calm, quiet iOS game. You keep **one** plant on your
 windowsill and raise it at the speed of a real plant — no timers to beat, nothing to
 spend. Water a little, come back tomorrow, watch it grow.
@@ -29,6 +39,12 @@ spend. Water a little, come back tomorrow, watch it grow.
   seed to bloom.
 - **Forgiving by design.** Droop and gentle nudges, never punishment — no permadeath,
   and your shelf of past blooms is never lost.
+
+<div align="center">
+<img src="art/walkthrough.gif" width="300" alt="Ssak running: choosing a seed, planting it, the first watering, and the empty 압화집 shelf" />
+<br />
+<sub>A first run, start to finish — pick a seed, plant it, water it once, open the 압화집 shelf. <br />Recorded on the iOS 26.5 simulator.</sub>
+</div>
 
 ### Collect six
 
@@ -66,6 +82,7 @@ No sound, no haptics — calm is the whole point ([ADR-0001](docs/adr/0001-no-so
 
 ### Docs
 
+- **Postmortem** — [`POSTMORTEM.md`](POSTMORTEM.md)
 - **Design spec** — [`docs/superpowers/specs/2026-07-19-ssak-design.md`](docs/superpowers/specs/2026-07-19-ssak-design.md)
 - **UI redesign** — [round 1](docs/superpowers/specs/2026-07-20-ssak-redesign.md) · [round 2](docs/superpowers/plans/2026-07-22-ssak-redesign-round2.md)
 - **Domain glossary** — [`CONTEXT.md`](CONTEXT.md)
