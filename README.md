@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/Swift_5.9-SwiftUI-F05138?style=flat-square&amp;logo=swift&amp;logoColor=white" alt="Swift 5.9 · SwiftUI" />
 </p>
 
-<img src="art/hero.png" width="266" alt="The Ssak windowsill — a marigold in bloom on a sunlit sill" />
+<img src="art/hero.png" width="266" alt="The final Ssak hanji interface — a marigold in bloom" />
 
 </div>
 
@@ -22,7 +22,7 @@
 > Ssak was an 18-day experiment: my first game, and my first project built end to end by
 > driving Claude Code on Anthropic's Fable model. It works — six species, seed to bloom, on
 > the real clock, 58 tests green — and it was never submitted to the App Store. I'm not
-> continuing it.
+> continuing it. The final documentation and asset archive is dated **2026-09-05**.
 >
 > **[Read the retrospective →](RETROSPECTIVE.md)** — the game I scrapped first and why, where the
 > agent workflow broke (with commits), and what I'd do differently.
@@ -46,6 +46,16 @@ spend. Water a little, come back tomorrow, watch it grow.
 <sub>A first run, start to finish — pick a seed, plant it, water it once, open the 압화집 shelf. <br />Recorded on the iOS 26.5 simulator.</sub>
 </div>
 
+### Final screens
+
+<div align="center">
+<img src="SsakApp/rendered/windowsill_bloom_dusk.png" width="240" alt="Bloom on dusk hanji paper" />
+<img src="SsakApp/rendered/shelf_complete.png" width="240" alt="The complete six-species pressed-flower collection" />
+<img src="SsakApp/rendered/share_card.png" width="240" alt="Morning glory specimen share card" />
+</div>
+
+[All reference images and their provenance](art/README.md).
+
 ### Collect six
 
 <div align="center">
@@ -57,8 +67,9 @@ bloom to your shelf.
 
 ### Run it
 
-**You'll need** macOS with Xcode 26 and [XcodeGen](https://github.com/yonaskolb/XcodeGen) —
-the UI adopts iOS 26 Liquid Glass, with graceful fallbacks back to iOS 16.
+**You'll need** macOS with Xcode 26 and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+The final UI uses hanji paper and ink, with an iOS 16 deployment target.
+The README hero is a headless render of this final UI; the walkthrough is a simulator recording.
 
 ```sh
 brew install xcodegen     # once
@@ -82,9 +93,13 @@ No sound, no haptics — calm is the whole point ([ADR-0001](docs/adr/0001-no-so
 
 ### Docs
 
-- **Retrospective** — [`RETROSPECTIVE.md`](RETROSPECTIVE.md)
+- **Final archive record** — [`docs/FINAL_ARCHIVE.md`](docs/FINAL_ARCHIVE.md)
+- **Project handoff** — [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md)
+- **Decision ledger** — [`docs/DECISIONS.md`](docs/DECISIONS.md)
+- **Closed roadmap** — [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- **Retrospective** — [`RETROSPECTIVE.md`](RETROSPECTIVE.md) · [Korean archival draft](docs/ko/RETROSPECTIVE.ko.md)
 - **Design spec** — [`docs/superpowers/specs/2026-07-19-ssak-design.md`](docs/superpowers/specs/2026-07-19-ssak-design.md)
-- **UI redesign** — [round 1](docs/superpowers/specs/2026-07-20-ssak-redesign.md) · [round 2](docs/superpowers/plans/2026-07-22-ssak-redesign-round2.md)
+- **UI redesign** — [round 1](docs/superpowers/specs/2026-07-20-ssak-redesign.md) · [round 2](docs/superpowers/plans/2026-07-22-ssak-redesign-round2.md) · [final hanji design](docs/superpowers/specs/2026-07-23-ssak-round3-hanji.md)
 - **Domain glossary** — [`CONTEXT.md`](CONTEXT.md)
 - **Decision records** — [`docs/adr/`](docs/adr/)
 

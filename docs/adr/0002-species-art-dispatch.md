@@ -1,4 +1,4 @@
-# ADR 0003: Keep PlantView's (species, stage) switch — don't abstract art dispatch
+# ADR 0002: Keep PlantView's (species, stage) switch — don't abstract art dispatch
 
 - **Date:** 2026-07-20
 - **Status:** Accepted

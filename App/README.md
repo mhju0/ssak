@@ -30,5 +30,5 @@ Everything visual is verifiable headless via `cd SsakApp && swift run SsakAppRen
 (writes screen PNGs to `SsakApp/rendered/`). Only these need a running app:
 
 - the share sheet (`RootView.presentShare` → `UIActivityViewController`)
-- tap-to-water / swipe-between-tabs gestures
+- tap-to-water / tap-between-tabs interactions
 - `scenePhase`-driven reconcile-on-open (grow the plant after backgrounding)

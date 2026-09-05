@@ -103,6 +103,38 @@ struct Render {
         write(windowsill(bloom, now: Self.day0h(12)), phone, "windowsill_bloom_day.png")
         write(windowsill(bloom, now: Self.day0h(18)), phone, "windowsill_bloom_dusk.png")
         write(windowsill(bloom, now: Self.day0h(22)), phone, "windowsill_bloom_night.png")
+
+        // Final archive portfolio assets, rendered directly from the current UI.
+        // Run from SsakApp, then copy these two outputs into ../art/.
+        write(windowsill(bloom, now: Self.day0h(12)), phone, "hero.png")
+        let social = HStack(spacing: 64) {
+            VStack(alignment: .leading, spacing: 28) {
+                SsakMark(.light).frame(width: 84, height: 84)
+                Text("Ssak · 싹").font(.myeongjoDisplay(64, relativeTo: .largeTitle))
+                Text("Raise one flower from seed to bloom.\nOn the real clock, six to collect.")
+                    .font(.system(size: 26, design: .serif)).lineSpacing(8)
+                Text("SwiftUI · No backend · Finished & archived")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(Color(red: 0.43, green: 0.48, blue: 0.32))
+            }
+            .frame(width: 620, alignment: .leading)
+            windowsill(bloom, now: Self.day0h(12))
+                .frame(width: phone.width, height: phone.height)
+                .scaleEffect(0.7)
+                .frame(width: 252, height: 546)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .foregroundStyle(Color(red: 0.29, green: 0.24, blue: 0.18))
+        .frame(width: 1280, height: 640)
+        .background(Color(red: 0.96, green: 0.93, blue: 0.85))
+        guard let socialData = pngData(for: social, size: CGSize(width: 1280, height: 640), scale: 1) else {
+            print("RENDER FAILED: social-preview.png"); exit(1)
+        }
+        do {
+            try socialData.write(to: out.appendingPathComponent("social-preview.png"))
+        } catch {
+            print("WRITE FAILED: social-preview.png: \(error)"); exit(1)
+        }
         write(windowsill({ $0.progress = 0.6; $0.moisture = 0.05; $0.lastWateredAt = d0 }, now: d3),
               phone, "windowsill_dry.png")
         write(windowsill({ $0.progress = 0.4; $0.moisture = 0.0; $0.isNursing = true; $0.lastWateredAt = d0 }, now: d3),
