@@ -32,5 +32,5 @@ Generated Xcode projects, build caches, macOS metadata, local permissions, priva
 session scratch and tokens remain ignored and local. Reproducible uncurated renders also
 remain ignored. The Korean retrospective is preserved in git as a draft, not posted to a blog.
 
-The final PR records the merge and verification. GitHub's archived flag and the matching
+[Final PR #37](https://github.com/mhju0/ssak/pull/37) records the merge and verification. GitHub's archived flag and the matching
 local/remote `main` refs are verified after merge, before this session concludes.
