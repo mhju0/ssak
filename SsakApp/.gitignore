@@ -1,6 +1,6 @@
 rendered/*.png
 !rendered/.gitkeep
-# curated reference screens (Liquid Glass redesign)
+# curated reference screens (final hanji UI)
 !rendered/windowsill_bloom_day.png
 !rendered/windowsill_bloom_dusk.png
 !rendered/windowsill_bloom_night.png
@@ -9,3 +9,13 @@ rendered/*.png
 !rendered/share_card.png
 !rendered/ssakmark_variants.png
 .build/
+!rendered/windowsill_dry.png
+!rendered/windowsill_nursing.png
+!rendered/windowsill_overwater.png
+!rendered/shelf_empty.png
+!rendered/shelf_press_here.png
+!rendered/shelf_complete.png
+!rendered/shelf_partial_dark.png
+!rendered/guide_step_water.png
+!rendered/guide_step_watered.png
+!rendered/share_card_seed.png

@@ -2,6 +2,10 @@
 
 **2026-07-15 → 2026-08-02 · 186 commits · closed on purpose.**
 
+> Archived retrospective, preserved from the original close. Commit counts below are
+> contemporary estimates; the verified pre-handoff baseline is 190 commits (67 Meok,
+> 123 Ssak) at `a46f851`. See [the final archive record](docs/FINAL_ARCHIVE.md).
+
 This is the write-up for a project that is finished and will not continue. It covers what
 I set out to do, the game I scrapped first, what actually got built, what Fable was and
 wasn't good at, and why it stops here.
@@ -41,7 +45,7 @@ tables for all six, visitors, a gallery — was *larger than everything already 
 I was five days in. The design ledger for a first game shouldn't have six interlocking
 progression systems in it. I had confused "ambitious" with "good."
 
-**Everything survives at the git tag [`meok-archive`](../../tree/meok-archive)** (66
+**Everything survives at the git tag [`meok-archive`](https://github.com/mhju0/ssak/tree/meok-archive)** (66
 commits, nothing deleted). The scrap is inspectable, which is the point — deciding to stop
 is only credible if you can see what was stopped.
 
@@ -106,9 +110,9 @@ rough order of how much they surprised me:
   `pressAndReplant` was only reachable by tapping an *already-collected* shelf card, so a
   first bloom could never be pressed and the six-species collection was literally
   unreachable from the UI. The core loop was a dead end. Every test passed. Fixed in
-  [`72c3b95`](../../commit/72c3b95). Nothing in a test suite catches "the game has no
+  [`72c3b95`](https://github.com/mhju0/ssak/commit/72c3b95). Nothing in a test suite catches "the game has no
   second half" — only playing it does.
-- **It writes tests that don't discriminate.** In [`b68d872`](../../commit/b68d872) the
+- **It writes tests that don't discriminate.** In [`b68d872`](https://github.com/mhju0/ssak/commit/b68d872) the
   agent added a regression test for a `0/0` NaN at the dry-moisture boundary — and the
   test passed on the *unfixed* code, because Swift's `max(x, y)` returns `x` when `y` is
   NaN. It documented this honestly in the commit message rather than claiming a red-green
@@ -117,7 +121,7 @@ rough order of how much they surprised me:
 - **Taste doesn't come from a spec.** Three full UI redesign rounds. The agent will
   faithfully build the interface you described and it will be lifeless. Every round was me
   looking at a screenshot and saying "no, not that." That loop never got shorter.
-- **Simulator ≠ device.** [`ba0cb00`](../../commit/ba0cb00) — a coach-mark spotlight that
+- **Simulator ≠ device.** [`ba0cb00`](https://github.com/mhju0/ssak/commit/ba0cb00) — a coach-mark spotlight that
   landed correctly in the simulator missed its target on device and leaked taps through
   the cutout.
 
